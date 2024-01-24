@@ -228,11 +228,11 @@ jobs:
           name: sing-box-${{ matrix.name }}
           path: sing-box*
 
-#      - name: Upload binaries to release
-#        uses: svenstaro/upload-release-action@v2
-#        with:
-#          repo_token: ${{ secrets.GITHUB_TOKEN }}
-#          file: sing-box*
-#          tag: ${{ github.ref }}
-#          file_glob: true
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box*
+          tag: ${{ github.ref }}
+          file_glob: true
 
