@@ -174,7 +174,7 @@ jobs:
           - name: darwin-arm64
             goos: darwin
             goarch: arm64
-           freebsd
+#           freebsd
           - name: freebsd-amd64
             goos: freebsd
             goarch: amd64
