@@ -2,11 +2,6 @@ name: Debug build
 
 on:
   push:
-    branches:
-      - stable-next
-      - main-next
-      - dev-next
-      - aes
     paths-ignore:
       - '**.md'
       - '.github/**'
