@@ -111,57 +111,57 @@ jobs:
             goarm: 7
           
           # linux
-#          - name: linux-amd64
-#            goos: linux
-#            goarch: amd64
-#            goamd64: v1
-#          - name: linux-amd64-v3
-#            goos: linux
-#            goarch: amd64
-#            goamd64: v3
-#          - name: linux-386
-#            goos: linux
-#            goarch: 386
-#          - name: linux-arm64
-#            goos: linux
-#            goarch: arm64
-#          - name: linux-armv5
-#            goos: linux
-#            goarch: arm
-#            goarm: 5
-#          - name: linux-armv6
-#            goos: linux
-#            goarch: arm
-#            goarm: 6
-#          - name: linux-armv7
-#            goos: linux
-#            goarch: arm
-#            goarm: 7
-#          - name: linux-mips-softfloat
-#            goos: linux
-#            goarch: mips
-#            gomips: softfloat
-#          - name: linux-mips-hardfloat
-#            goos: linux
-#            goarch: mips
-#            gomips: hardfloat
-#          - name: linux-mipsel-softfloat
-#            goos: linux
-#            goarch: mipsle
-#            gomips: softfloat
-#          - name: linux-mipsel-hardfloat
-#            goos: linux
-#            goarch: mipsle
-#            gomips: hardfloat
-#          - name: linux-mips64
-#            goos: linux
-#            goarch: mips64
-#          - name: linux-mips64el
-#            goos: linux
-#            goarch: mips64le
-#          - name: linux-s390x
-#            goos: linux
-#            goarch: s390x
+          - name: linux-amd64
+            goos: linux
+            goarch: amd64
+            goamd64: v1
+          - name: linux-amd64-v3
+            goos: linux
+            goarch: amd64
+            goamd64: v3
+          - name: linux-386
+            goos: linux
+            goarch: 386
+          - name: linux-arm64
+            goos: linux
+            goarch: arm64
+          - name: linux-armv5
+            goos: linux
+            goarch: arm
+            goarm: 5
+          - name: linux-armv6
+            goos: linux
+            goarch: arm
+            goarm: 6
+          - name: linux-armv7
+            goos: linux
+            goarch: arm
+            goarm: 7
+          - name: linux-mips-softfloat
+            goos: linux
+            goarch: mips
+            gomips: softfloat
+          - name: linux-mips-hardfloat
+            goos: linux
+            goarch: mips
+            gomips: hardfloat
+          - name: linux-mipsel-softfloat
+            goos: linux
+            goarch: mipsle
+            gomips: softfloat
+          - name: linux-mipsel-hardfloat
+            goos: linux
+            goarch: mipsle
+            gomips: hardfloat
+          - name: linux-mips64
+            goos: linux
+            goarch: mips64
+          - name: linux-mips64el
+            goos: linux
+            goarch: mips64le
+          - name: linux-s390x
+            goos: linux
+            goarch: s390x
           # darwin
           - name: darwin-amd64
             goos: darwin
@@ -174,7 +174,7 @@ jobs:
           - name: darwin-arm64
             goos: darwin
             goarch: arm64
-#           freebsd
+          # freebsd
           - name: freebsd-amd64
             goos: freebsd
             goarch: amd64
