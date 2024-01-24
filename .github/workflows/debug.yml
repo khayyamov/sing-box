@@ -233,6 +233,6 @@ jobs:
 #            release/*.rpm
 #            release/*.tar.gz
 #            release/*.zip
-            release/*
+            release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
