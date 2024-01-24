@@ -225,10 +225,10 @@ jobs:
         with:
           tag_name: AES
           files: |
-            release/*.deb
-            release/*.exe
-            release/*.rpm
-            release/*.tar.gz
-            release/*.zip
+            *.deb
+            *.exe
+            *.rpm
+            *.tar.gz
+            *.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
