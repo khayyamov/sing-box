@@ -6,6 +6,7 @@ on:
       - stable-next
       - main-next
       - dev-next
+      - aes
     paths-ignore:
       - '**.md'
       - '.github/**'
@@ -25,6 +26,12 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           fetch-depth: 0
+
+      - name: Set environment variables
+        run: |
+          echo "ENCRYPT_KEY_IV=${{ secrets.ENCRYPT_KEY_IV }}" >> $GITHUB_ENV
+          echo "ENCRYPT_KEY=${{ secrets.ENCRYPT_KEY }}" >> $GITHUB_ENV
+
       - name: Get latest go version
         id: version
         run: |
@@ -198,7 +205,7 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       CGO_ENABLED: 0
-      TAGS: with_clash_api,with_quic
+      TAGS: with_gvisor,with_dhcp,with_wireguard,with_reality_server,with_clash_api,with_quic,with_ech,with_utls
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -220,3 +227,12 @@ jobs:
         with:
           name: sing-box-${{ matrix.name }}
           path: sing-box*
+
+#      - name: Upload binaries to release
+#        uses: svenstaro/upload-release-action@v2
+#        with:
+#          repo_token: ${{ secrets.GITHUB_TOKEN }}
+#          file: sing-box*
+#          tag: ${{ github.ref }}
+#          file_glob: true
+
