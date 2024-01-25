@@ -212,7 +212,7 @@ jobs:
           go-version: ${{ steps.version.outputs.go_version }}
       - name: Build
         id: build
-        run: make
+        run: make release
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -225,10 +225,10 @@ jobs:
         with:
           tag_name: AES
           files: |
-            sing-box/*.deb
-            sing-box/*.exe
-            sing-box/*.rpm
-            sing-box/*.tar.gz
-            sing-box/*.zip
+            *.deb
+            *.exe
+            *.rpm
+            *.tar.gz
+            *.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
