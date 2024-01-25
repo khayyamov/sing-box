@@ -216,13 +216,15 @@ jobs:
         id: build
         run: make
 
+
       - name: Rename build file unix
-        if: ${{ matrix.goos }} != 'windows'
+        if: matrix.goos != 'windows'
         run: mv sing-box sing-box-${{ matrix.name }}
 
-      - name: Rename build file widows
-        if: ${{ matrix.goos }} == 'windows'
+      - name: Rename build file windows
+        if: matrix.goos == 'windows'
         run: Rename-Item -Path sing-box -NewName "sing-box-${{ matrix.name }}"
+
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
