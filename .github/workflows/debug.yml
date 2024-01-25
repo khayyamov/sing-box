@@ -212,7 +212,7 @@ jobs:
           go-version: ${{ steps.version.outputs.go_version }}
       - name: Build
         id: build
-        run: make release
+        run: make
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -225,10 +225,6 @@ jobs:
         with:
           tag_name: AES
           files: |
-            *.deb
-            *.exe
-            *.rpm
-            *.tar.gz
-            *.zip
+            sing-box-${{ matrix.name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
