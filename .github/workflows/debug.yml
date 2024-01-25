@@ -219,6 +219,10 @@ jobs:
       - name: Rename build file
         run: mv sing-box sing-box-${{ matrix.name }}
 
+      - name: Rename build file
+        if: runner.os == 'Windows'
+        run: Rename-Item -Path sing-box -NewName "sing-box-${{ matrix.name }}"
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
