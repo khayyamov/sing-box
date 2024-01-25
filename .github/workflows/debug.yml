@@ -217,11 +217,11 @@ jobs:
         run: make
 
       - name: Rename build file unix
-        if: ${{ matrix.name }} != 'windows'
+        if: ${{ matrix.goos }} != 'windows'
         run: mv sing-box sing-box-${{ matrix.name }}
 
       - name: Rename build file widows
-        if: ${{ matrix.name }} == 'windows'
+        if: ${{ matrix.goos }} == 'windows'
         run: Rename-Item -Path sing-box -NewName "sing-box-${{ matrix.name }}"
 
       - name: Upload binaries to release
