@@ -215,16 +215,14 @@ jobs:
         run: make
 
 
-#      - name: Rename build file unix
-#        if: matrix.goos != 'windows'
-#        run: mv sing-box sing-box-${{ matrix.name }}
-#
-#      - name: Rename build file windows
-#        if: matrix.goos == 'windows'
-#        run: Rename-Item -Path sing-box -NewName "sing-box-${{ matrix.name }}"
-
       - name: Rename build file unix
+        if: matrix.goos != 'windows'
         run: mv sing-box sing-box-${{ matrix.name }}
+
+      - name: Rename build file windows
+        if: matrix.goos == 'windows'
+        run: move sing-box sing-box-${{ matrix.name }}
+
 
 
 
@@ -233,7 +231,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: sing-box-${{ matrix.name }}
-          tag: AES
+          tag: ${{ github.ref }}
           file_glob: true
 
 #      - name: Upload artifact
