@@ -221,7 +221,7 @@ jobs:
 
       - name: Rename build file windows
         if: matrix.goos == 'windows'
-        run: move sing-box sing-box-${{ matrix.name }}
+        run: mv sing-box.exe sing-box-${{ matrix.name }}.exe
 
 
 
