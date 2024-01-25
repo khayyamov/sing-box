@@ -210,23 +210,41 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ steps.version.outputs.go_version }}
+
+
       - name: Build
         id: build
         run: make
-      - name: Upload artifact
+
+      - name: Upload files to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sing-box-${{ matrix.name }}
-          path: sing-box*
+          name: sing-box-${{ env.ASSET_NAME }}
+          path: |
+            ./sing-box-${{ env.ASSET_NAME }}/*
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          tag_name: AES
-          files: |
-            *.zip
-            sing-box/*.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./sing-box-${{ env.ASSET_NAME }}.zip*
+          tag: ${{ github.ref }}
+          file_glob: true
 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: sing-box-${{ matrix.name }}
+#          path: sing-box*
+#
+#      - name: Create GitHub Release
+#        id: create_release
+#        uses: softprops/action-gh-release@v1
+#        with:
+#          tag_name: AES
+#          files: |
+#            *.zip
+#            sing-box/*.zip
+#
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
