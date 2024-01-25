@@ -225,6 +225,8 @@ jobs:
         with:
           tag_name: AES
           files: |
-            sing-box-${{ matrix.name }}.zip
+            *.zip
+            sing-box/*.zip
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
