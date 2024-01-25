@@ -217,6 +217,7 @@ jobs:
         run: make
 
       - name: Rename build file
+        if: runner.os != 'Windows'
         run: mv sing-box sing-box-${{ matrix.name }}
 
       - name: Rename build file
