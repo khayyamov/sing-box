@@ -228,7 +228,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./sing-box-${{ matrix.name }}.zip*
-          tag: ${{ github.ref }}
+          tag: AES
           file_glob: true
 
 #      - name: Upload artifact
