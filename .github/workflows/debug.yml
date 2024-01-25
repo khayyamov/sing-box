@@ -216,11 +216,11 @@ jobs:
         id: build
         run: make
 
-      - name: Rename build file
+      - name: Rename build file unix
         if: runner.os != 'Windows'
         run: mv sing-box sing-box-${{ matrix.name }}
 
-      - name: Rename build file
+      - name: Rename build file widows
         if: runner.os == 'Windows'
         run: Rename-Item -Path sing-box -NewName "sing-box-${{ matrix.name }}"
 
