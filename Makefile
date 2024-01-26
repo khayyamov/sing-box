@@ -9,9 +9,7 @@ GOHOSTOS = $(shell go env GOHOSTOS)
 GOHOSTARCH = $(shell go env GOHOSTARCH)
 VERSION=$(shell CGO_ENABLED=0 GOOS=$(GOHOSTOS) GOARCH=$(GOHOSTARCH) go run ./cmd/internal/read_tag)
 
-ENCRYPT_KEY_SET := -X github.com/sagernet/sing-box/constant.ENCRYPT_KEY=$(shell echo $$ENCRYPT_KEY)
-ENCRYPT_KEY_IV_SET := -X github.com/sagernet/sing-box/constant.ENCRYPT_KEY_IV=$(shell echo $$ENCRYPT_KEY_IV)
-PARAMS = -v -trimpath -ldflags "$(ENCRYPT_KEY_SET) $(ENCRYPT_KEY_IV_SET) -X 'github.com/sagernet/sing-box/constant.Version=$(VERSION)' -s -w -buildid="
+PARAMS = -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=$(VERSION)' -s -w -buildid="
 MAIN_PARAMS = $(PARAMS) -tags $(TAGS)
 MAIN = ./cmd/sing-box
 PREFIX ?= $(shell go env GOPATH)

@@ -18,11 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set environment variables
-        run: |
-          echo "ENCRYPT_KEY_IV=${{ secrets.ENCRYPT_KEY_IV }}" >> $GITHUB_ENV
-          echo "ENCRYPT_KEY=${{ secrets.ENCRYPT_KEY }}" >> $GITHUB_ENV
-
       - name: Get latest go version
         id: version
         run: |
@@ -31,6 +26,20 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ steps.version.outputs.go_version }}
+
+      - name: Run Shell Script
+        run: |
+          #!/bin/bash
+          cat <<EOF > ./constant/constants.go
+          package constant
+
+          var (
+              ENCRYPTED_CONFIG = false
+              ENCRYPT_KEY      = "${{ vars.ENCRYPT_KEY }}"
+              ENCRYPT_KEY_IV   = "${{ vars.ENCRYPT_KEY_IV }}"
+          )
+          EOF
+
       - name: Add cache to Go proxy
         run: |
           version=`git rev-parse HEAD`
