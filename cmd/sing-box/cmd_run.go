@@ -55,9 +55,18 @@ func readConfigAt(path string) (*OptionsEntry, error) {
 		configContent, err = os.ReadFile(path)
 	}
 
-	if C.ENCRYPTED_CONFIG {
-		configContent, err = box.DecryptAES(configContent)
+	if err != nil {
+		if C.ENCRYPTED_CONFIG {
+			configContent = []byte(box.Decrypt(path))
+			err = nil
+		}
+	} else {
+		if C.ENCRYPTED_CONFIG {
+			configContent = []byte(box.Decrypt(string(configContent)))
+			err = nil
+		}
 	}
+
 	if err != nil {
 		return nil, E.Cause(err, "read config at ", path)
 	}
