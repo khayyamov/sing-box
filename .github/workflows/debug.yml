@@ -27,19 +27,6 @@ jobs:
         with:
           go-version: ${{ steps.version.outputs.go_version }}
 
-      - name: Run Shell Script
-        run: |
-          #!/bin/bash
-          cat <<EOF > ./constant/constants.go
-          package constant
-
-          var (
-              ENCRYPTED_CONFIG = false
-              ENCRYPT_KEY      = "${{ vars.ENCRYPT_KEY }}"
-              ENCRYPT_KEY_IV   = "${{ vars.ENCRYPT_KEY_IV }}"
-          )
-          EOF
-
       - name: Add cache to Go proxy
         run: |
           version=`git rev-parse HEAD`
@@ -178,6 +165,18 @@ jobs:
         with:
           go-version: ${{ steps.version.outputs.go_version }}
 
+      - name: Run Shell Script
+        run: |
+          #!/bin/bash
+          cat <<EOF > ./constant/constants.go
+          package constant
+
+          var (
+              ENCRYPTED_CONFIG = false
+              ENCRYPT_KEY      = "${{ vars.ENCRYPT_KEY }}"
+              ENCRYPT_KEY_IV   = "${{ vars.ENCRYPT_KEY_IV }}"
+          )
+          EOF
 
       - name: Build
         id: build
@@ -207,21 +206,3 @@ jobs:
           file: sing-box-${{ matrix.name }}.exe
           tag: ${{ github.ref }}
           file_glob: true
-
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: sing-box-${{ matrix.name }}
-#          path: sing-box*
-#
-#      - name: Create GitHub Release
-#        id: create_release
-#        uses: softprops/action-gh-release@v1
-#        with:
-#          tag_name: AES
-#          files: |
-#            *.zip
-#            sing-box/*.zip
-#
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
