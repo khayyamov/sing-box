@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -67,6 +68,7 @@ func readConfigAt(path string) (*OptionsEntry, error) {
 		}
 	}
 
+	fmt.Print(string(configContent))
 	if err != nil {
 		return nil, E.Cause(err, "read config at ", path)
 	}
