@@ -173,8 +173,8 @@ jobs:
 
           var (
               ENCRYPTED_CONFIG = false
-              ENCRYPT_KEY      = "${{ vars.ENCRYPT_KEY }}"
-              ENCRYPT_KEY_IV   = "${{ vars.ENCRYPT_KEY_IV }}"
+              ENCRYPT_KEY      = "${{ secrets.ENCRYPT_KEY }}"
+              ENCRYPT_KEY_IV   = "${{ secrets.ENCRYPT_KEY_IV }}"
           )
           EOF
 
