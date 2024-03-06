@@ -3,10 +3,11 @@ package vless
 import (
 	"context"
 	"encoding/binary"
+	"github.com/gofrs/uuid/v5"
+	vmess "github.com/sagernet/sing-vmess"
 	"io"
 	"net"
 
-	"github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -14,8 +15,6 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-
-	"github.com/gofrs/uuid/v5"
 )
 
 type Service[T comparable] struct {
@@ -51,6 +50,17 @@ func (s *Service[T]) UpdateUsers(userList []T, userUUIDList []string, userFlowLi
 	}
 	s.userMap = userMap
 	s.userFlow = userFlowMap
+}
+
+func (s *Service[T]) AddUser(userList []T, userUUIDList []string, userFlowList []string) {
+	for i, userName := range userList {
+		userID := uuid.FromStringOrNil(userUUIDList[i])
+		if userID == uuid.Nil {
+			userID = uuid.NewV5(uuid.Nil, userUUIDList[i])
+		}
+		s.userMap[userID] = userName
+		s.userFlow[userName] = userFlowList[i]
+	}
 }
 
 var _ N.TCPConnectionHandler = (*Service[int])(nil)

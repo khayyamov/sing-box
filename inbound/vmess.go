@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	vmess "github.com/sagernet/sing-vmess"
 	"net"
 	"os"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/v2ray"
-	"github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
@@ -32,8 +32,8 @@ var (
 type VMess struct {
 	myInboundAdapter
 	ctx       context.Context
-	service   *vmess.Service[int]
-	users     []option.VMessUser
+	Service   *vmess.Service[int]
+	Users     []option.VMessUser
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
@@ -47,10 +47,10 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			router:        uot.NewRouter(router, logger),
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 		ctx:   ctx,
-		users: options.Users,
+		Users: options.Users,
 	}
 	var err error
 	inbound.router, err = mux.NewRouterWithOptions(inbound.router, logger, common.PtrValueOrDefault(options.Multiplex))
@@ -65,7 +65,7 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 		serviceOptions = append(serviceOptions, vmess.ServiceWithDisableHeaderProtection())
 	}
 	service := vmess.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
-	inbound.service = service
+	inbound.Service = service
 	err = service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.VMessUser) int {
 		return index
 	}), common.Map(options.Users, func(it option.VMessUser) string {
@@ -94,7 +94,7 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 
 func (h *VMess) Start() error {
 	err := common.Start(
-		h.service,
+		h.Service,
 		h.tlsConfig,
 	)
 	if err != nil {
@@ -132,7 +132,7 @@ func (h *VMess) Start() error {
 
 func (h *VMess) Close() error {
 	return common.Close(
-		h.service,
+		h.Service,
 		&h.myInboundAdapter,
 		h.tlsConfig,
 		h.transport,
@@ -152,7 +152,7 @@ func (h *VMess) NewConnection(ctx context.Context, conn net.Conn, metadata adapt
 			return err
 		}
 	}
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *VMess) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
@@ -164,7 +164,7 @@ func (h *VMess) newConnection(ctx context.Context, conn net.Conn, metadata adapt
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {
@@ -179,7 +179,7 @@ func (h *VMess) newPacketConnection(ctx context.Context, conn N.PacketConn, meta
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {

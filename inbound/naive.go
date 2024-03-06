@@ -31,7 +31,7 @@ var _ adapter.Inbound = (*Naive)(nil)
 
 type Naive struct {
 	myInboundAdapter
-	authenticator *auth.Authenticator
+	Authenticator *auth.Authenticator
 	tlsConfig     tls.ServerConfig
 	httpServer    *http.Server
 	h3Server      any
@@ -46,9 +46,9 @@ func NewNaive(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			router:        uot.NewRouter(router, logger),
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
-		authenticator: auth.NewAuthenticator(options.Users),
+		Authenticator: auth.NewAuthenticator(options.Users),
 	}
 	if common.Contains(inbound.network, N.NetworkUDP) {
 		if options.TLS == nil || !options.TLS.Enabled {
@@ -140,7 +140,7 @@ func (n *Naive) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 	userName, password, authOk := sHttp.ParseBasicAuth(request.Header.Get("Proxy-Authorization"))
 	if authOk {
-		authOk = n.authenticator.Verify(userName, password)
+		authOk = n.Authenticator.Verify(userName, password)
 	}
 	if !authOk {
 		rejectHTTP(writer, http.StatusProxyAuthRequired)

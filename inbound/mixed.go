@@ -41,7 +41,7 @@ func NewMixed(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			router:         uot.NewRouter(router, logger),
 			logger:         logger,
 			tag:            tag,
-			listenOptions:  options.ListenOptions,
+			ListenOptions:  options.ListenOptions,
 			setSystemProxy: options.SetSystemProxy,
 		},
 		auth.NewAuthenticator(options.Users),

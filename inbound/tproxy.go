@@ -35,7 +35,7 @@ func NewTProxy(ctx context.Context, router adapter.Router, logger log.ContextLog
 			router:        router,
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 	}
 	var udpTimeout time.Duration

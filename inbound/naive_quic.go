@@ -30,7 +30,7 @@ func (n *Naive) configureHTTP3Listener() error {
 	}
 
 	h3Server := &http3.Server{
-		Port:    int(n.listenOptions.ListenPort),
+		Port:    int(n.ListenOptions.ListenPort),
 		Handler: n,
 	}
 

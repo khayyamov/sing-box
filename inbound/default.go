@@ -25,7 +25,7 @@ type myInboundAdapter struct {
 	router           adapter.ConnectionRouter
 	logger           log.ContextLogger
 	tag              string
-	listenOptions    option.ListenOptions
+	ListenOptions    option.ListenOptions
 	connHandler      adapter.ConnectionHandler
 	packetHandler    adapter.PacketHandler
 	oobPacketHandler adapter.OOBPacketHandler
@@ -93,7 +93,7 @@ func (a *myInboundAdapter) Start() error {
 	if a.setSystemProxy {
 		listenPort := M.SocksaddrFromNet(a.tcpListener.Addr()).Port
 		var listenAddrString string
-		listenAddr := a.listenOptions.Listen.Build()
+		listenAddr := a.ListenOptions.Listen.Build()
 		if listenAddr.IsUnspecified() {
 			listenAddrString = "127.0.0.1"
 		} else {
@@ -153,8 +153,8 @@ func (a *myInboundAdapter) newPacketConnection(ctx context.Context, conn N.Packe
 func (a *myInboundAdapter) createMetadata(conn net.Conn, metadata adapter.InboundContext) adapter.InboundContext {
 	metadata.Inbound = a.tag
 	metadata.InboundType = a.protocol
-	metadata.InboundDetour = a.listenOptions.Detour
-	metadata.InboundOptions = a.listenOptions.InboundOptions
+	metadata.InboundDetour = a.ListenOptions.Detour
+	metadata.InboundOptions = a.ListenOptions.InboundOptions
 	if !metadata.Source.IsValid() {
 		metadata.Source = M.SocksaddrFromNet(conn.RemoteAddr()).Unwrap()
 	}
@@ -170,8 +170,8 @@ func (a *myInboundAdapter) createMetadata(conn net.Conn, metadata adapter.Inboun
 func (a *myInboundAdapter) createPacketMetadata(conn N.PacketConn, metadata adapter.InboundContext) adapter.InboundContext {
 	metadata.Inbound = a.tag
 	metadata.InboundType = a.protocol
-	metadata.InboundDetour = a.listenOptions.Detour
-	metadata.InboundOptions = a.listenOptions.InboundOptions
+	metadata.InboundDetour = a.ListenOptions.Detour
+	metadata.InboundOptions = a.ListenOptions.InboundOptions
 	if !metadata.Destination.IsValid() {
 		metadata.Destination = M.SocksaddrFromNet(conn.LocalAddr()).Unwrap()
 	}

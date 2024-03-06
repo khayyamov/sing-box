@@ -1,5 +1,3 @@
-//go:build with_quic
-
 package inbound
 
 import (
@@ -28,8 +26,9 @@ var _ adapter.Inbound = (*Hysteria2)(nil)
 type Hysteria2 struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
-	service      *hysteria2.Service[int]
+	Service      *hysteria2.Service[int]
 	userNameList []string
+	Users        []option.Hysteria2User
 }
 
 func NewHysteria2(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.Hysteria2InboundOptions) (*Hysteria2, error) {
@@ -84,9 +83,10 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 			router:        router,
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 		tlsConfig: tlsConfig,
+		Users:     options.Users,
 	}
 	var udpTimeout time.Duration
 	if options.UDPTimeout != 0 {
@@ -119,7 +119,7 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	service.UpdateUsers(userList, userPasswordList)
-	inbound.service = service
+	inbound.Service = service
 	inbound.userNameList = userNameList
 	return inbound, nil
 }
@@ -161,13 +161,13 @@ func (h *Hysteria2) Start() error {
 	if err != nil {
 		return err
 	}
-	return h.service.Start(packetConn)
+	return h.Service.Start(packetConn)
 }
 
 func (h *Hysteria2) Close() error {
 	return common.Close(
 		&h.myInboundAdapter,
 		h.tlsConfig,
-		common.PtrOrNil(h.service),
+		common.PtrOrNil(h.Service),
 	)
 }

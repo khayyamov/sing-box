@@ -40,7 +40,7 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 			router:        uot.NewRouter(router, logger),
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 		destinations: options.Destinations,
 	}

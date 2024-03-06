@@ -1,9 +1,8 @@
-//go:build with_quic
-
 package inbound
 
 import (
 	"context"
+	"github.com/gofrs/uuid/v5"
 	"net"
 	"time"
 
@@ -18,8 +17,6 @@ import (
 	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
 	N "github.com/sagernet/sing/common/network"
-
-	"github.com/gofrs/uuid/v5"
 )
 
 var _ adapter.Inbound = (*TUIC)(nil)
@@ -27,7 +24,8 @@ var _ adapter.Inbound = (*TUIC)(nil)
 type TUIC struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
-	server       *tuic.Service[int]
+	Service      *tuic.Service[int]
+	Users        []option.TUICUser
 	userNameList []string
 }
 
@@ -48,9 +46,10 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 			router:        uot.NewRouter(router, logger),
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 		tlsConfig: tlsConfig,
+		Users:     options.Users,
 	}
 	var udpTimeout time.Duration
 	if options.UDPTimeout != 0 {
@@ -90,7 +89,7 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	service.UpdateUsers(userList, userUUIDList, userPasswordList)
-	inbound.server = service
+	inbound.Service = service
 	inbound.userNameList = userNameList
 	return inbound, nil
 }
@@ -132,13 +131,13 @@ func (h *TUIC) Start() error {
 	if err != nil {
 		return err
 	}
-	return h.server.Start(packetConn)
+	return h.Service.Start(packetConn)
 }
 
 func (h *TUIC) Close() error {
 	return common.Close(
 		&h.myInboundAdapter,
 		h.tlsConfig,
-		common.PtrOrNil(h.server),
+		common.PtrOrNil(h.Service),
 	)
 }

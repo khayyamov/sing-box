@@ -28,8 +28,8 @@ var (
 
 type Trojan struct {
 	myInboundAdapter
-	service                  *trojan.Service[int]
-	users                    []option.TrojanUser
+	Service                  *trojan.Service[int]
+	Users                    []option.TrojanUser
 	tlsConfig                tls.ServerConfig
 	fallbackAddr             M.Socksaddr
 	fallbackAddrTLSNextProto map[string]M.Socksaddr
@@ -45,9 +45,9 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 			router:        router,
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
-		users: options.Users,
+		Users: options.Users,
 	}
 	if options.TLS != nil {
 		tlsConfig, err := tls.NewServer(ctx, logger, common.PtrValueOrDefault(options.TLS))
@@ -99,7 +99,7 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 	if err != nil {
 		return nil, err
 	}
-	inbound.service = service
+	inbound.Service = service
 	inbound.connHandler = inbound
 	return inbound, nil
 }
@@ -162,7 +162,7 @@ func (h *Trojan) NewConnection(ctx context.Context, conn net.Conn, metadata adap
 			return err
 		}
 	}
-	return h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(ctx, &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *Trojan) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
@@ -174,7 +174,7 @@ func (h *Trojan) newConnection(ctx context.Context, conn net.Conn, metadata adap
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {
@@ -212,7 +212,7 @@ func (h *Trojan) newPacketConnection(ctx context.Context, conn N.PacketConn, met
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {

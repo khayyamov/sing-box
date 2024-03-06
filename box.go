@@ -31,7 +31,7 @@ var _ adapter.Service = (*Box)(nil)
 type Box struct {
 	createdAt    time.Time
 	router       adapter.Router
-	inbounds     []adapter.Inbound
+	Inbounds     []adapter.Inbound
 	outbounds    []adapter.Outbound
 	logFactory   log.Factory
 	logger       log.ContextLogger
@@ -184,7 +184,7 @@ func New(options Options) (*Box, error) {
 	}
 	return &Box{
 		router:       router,
-		inbounds:     inbounds,
+		Inbounds:     inbounds,
 		outbounds:    outbounds,
 		createdAt:    createdAt,
 		logFactory:   logFactory,
@@ -290,7 +290,7 @@ func (s *Box) start() error {
 			return E.Cause(err, "start ", serviceName)
 		}
 	}
-	for i, in := range s.inbounds {
+	for i, in := range s.Inbounds {
 		var tag string
 		if in.Tag() == "" {
 			tag = F.ToString(i)
@@ -340,7 +340,7 @@ func (s *Box) Close() error {
 		})
 		monitor.Finish()
 	}
-	for i, in := range s.inbounds {
+	for i, in := range s.Inbounds {
 		monitor.Start("close inbound/", in.Type(), "[", i, "]")
 		errors = E.Append(errors, in.Close(), func(err error) error {
 			return E.Cause(err, "close inbound/", in.Type(), "[", i, "]")

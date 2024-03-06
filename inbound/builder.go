@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
@@ -11,43 +12,80 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 )
 
+var TunPtr = &Tun{}
+var RedirectPtr = &Redirect{}
+var TProxyPtr = &TProxy{}
+var DirectPtr = &Direct{}
+var HTTPPtr = &HTTP{}
+var SocksPtr = &Socks{}
+var MixedPtr = &Mixed{}
+var TrojanPtr = &Trojan{}
+var NaivePtr = &Naive{}
+var ShadowTlsPtr = &ShadowTLS{}
+var VLESSPtr = &VLESS{}
+var VMessPtr = &VMess{}
+
+var ShadowsocksPtr = &Shadowsocks{}
+var TUICPtr = &TUIC{}
+var HysteriaPtr = &Hysteria{}
+var Hysteria2Ptr = &Hysteria2{}
+
+// TODO: get users from db for each protocol in first run
 func New(ctx context.Context, router adapter.Router, logger log.ContextLogger, options option.Inbound, platformInterface platform.Interface) (adapter.Inbound, error) {
 	if options.Type == "" {
 		return nil, E.New("missing inbound type")
 	}
+	var err = errors.New("")
 	switch options.Type {
 	case C.TypeTun:
-		return NewTun(ctx, router, logger, options.Tag, options.TunOptions, platformInterface)
+		TunPtr, err = NewTun(ctx, router, logger, options.Tag, options.TunOptions, platformInterface)
+		return TunPtr, err
 	case C.TypeRedirect:
-		return NewRedirect(ctx, router, logger, options.Tag, options.RedirectOptions), nil
+		RedirectPtr = NewRedirect(ctx, router, logger, options.Tag, options.RedirectOptions)
+		return RedirectPtr, nil
 	case C.TypeTProxy:
-		return NewTProxy(ctx, router, logger, options.Tag, options.TProxyOptions), nil
+		TProxyPtr = NewTProxy(ctx, router, logger, options.Tag, options.TProxyOptions)
+		return TProxyPtr, nil
 	case C.TypeDirect:
-		return NewDirect(ctx, router, logger, options.Tag, options.DirectOptions), nil
+		DirectPtr = NewDirect(ctx, router, logger, options.Tag, options.DirectOptions)
+		return DirectPtr, nil
 	case C.TypeSOCKS:
-		return NewSocks(ctx, router, logger, options.Tag, options.SocksOptions), nil
+		SocksPtr = NewSocks(ctx, router, logger, options.Tag, options.SocksOptions)
+		return SocksPtr, nil
 	case C.TypeHTTP:
-		return NewHTTP(ctx, router, logger, options.Tag, options.HTTPOptions)
+		HTTPPtr, err = NewHTTP(ctx, router, logger, options.Tag, options.HTTPOptions)
+		return HTTPPtr, err
 	case C.TypeMixed:
-		return NewMixed(ctx, router, logger, options.Tag, options.MixedOptions), nil
-	case C.TypeShadowsocks:
-		return NewShadowsocks(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
+		MixedPtr = NewMixed(ctx, router, logger, options.Tag, options.MixedOptions)
+		return MixedPtr, nil
 	case C.TypeVMess:
-		return NewVMess(ctx, router, logger, options.Tag, options.VMessOptions)
+		VMessPtr, err = NewVMess(ctx, router, logger, options.Tag, options.VMessOptions)
+		return VMessPtr, err
 	case C.TypeTrojan:
-		return NewTrojan(ctx, router, logger, options.Tag, options.TrojanOptions)
+		TrojanPtr, err = NewTrojan(ctx, router, logger, options.Tag, options.TrojanOptions)
+		return TrojanPtr, err
 	case C.TypeNaive:
-		return NewNaive(ctx, router, logger, options.Tag, options.NaiveOptions)
-	case C.TypeHysteria:
-		return NewHysteria(ctx, router, logger, options.Tag, options.HysteriaOptions)
+		NaivePtr, err = NewNaive(ctx, router, logger, options.Tag, options.NaiveOptions)
+		return NaivePtr, err
 	case C.TypeShadowTLS:
-		return NewShadowTLS(ctx, router, logger, options.Tag, options.ShadowTLSOptions)
+		ShadowTlsPtr, err = NewShadowTLS(ctx, router, logger, options.Tag, options.ShadowTLSOptions)
+		return ShadowTlsPtr, err
 	case C.TypeVLESS:
-		return NewVLESS(ctx, router, logger, options.Tag, options.VLESSOptions)
+		VLESSPtr, err = NewVLESS(ctx, router, logger, options.Tag, options.VLESSOptions)
+		return VLESSPtr, err
+
+	case C.TypeShadowsocks:
+		ShadowsocksPtr, err = newShadowsocks(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
+		return ShadowsocksPtr, err
+	case C.TypeHysteria:
+		HysteriaPtr, err = NewHysteria(ctx, router, logger, options.Tag, options.HysteriaOptions)
+		return HysteriaPtr, err
 	case C.TypeTUIC:
-		return NewTUIC(ctx, router, logger, options.Tag, options.TUICOptions)
+		TUICPtr, err = NewTUIC(ctx, router, logger, options.Tag, options.TUICOptions)
+		return TUICPtr, err
 	case C.TypeHysteria2:
-		return NewHysteria2(ctx, router, logger, options.Tag, options.Hysteria2Options)
+		Hysteria2Ptr, err = NewHysteria2(ctx, router, logger, options.Tag, options.Hysteria2Options)
+		return Hysteria2Ptr, err
 	default:
 		return nil, E.New("unknown inbound type: ", options.Type)
 	}

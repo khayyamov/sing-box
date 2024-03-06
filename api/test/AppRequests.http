@@ -1,0 +1,18 @@
+### /api/singbox/addUserToVmess
+POST {{host}}/api/singbox/addUserToVmess
+Content-Type: application/json
+
+{
+    "uuid": "12345",
+    "name": "vmess"
+
+}
+
+### /api/singbox/addUserToVless
+POST {{host}}/api/singbox/addUserToVless
+Content-Type: application/json
+
+{
+    "uuid": "test2",
+    "name": "vless"
+}

@@ -1,6 +1,7 @@
 package box
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -13,8 +14,6 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/json/badjson"
-
-	"github.com/go-chi/chi/v5"
 )
 
 var debugHTTPServer *http.Server

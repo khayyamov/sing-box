@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/rest"
 	"io"
 	"os"
 	"os/signal"
@@ -167,6 +168,7 @@ func create() (*box.Box, context.CancelFunc, error) {
 }
 
 func run() error {
+	rest.HandleApiRoutes()
 	osSignals := make(chan os.Signal, 1)
 	signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	defer signal.Stop(osSignals)

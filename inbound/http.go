@@ -39,7 +39,7 @@ func NewHTTP(ctx context.Context, router adapter.Router, logger log.ContextLogge
 			router:         uot.NewRouter(router, logger),
 			logger:         logger,
 			tag:            tag,
-			listenOptions:  options.ListenOptions,
+			ListenOptions:  options.ListenOptions,
 			setSystemProxy: options.SetSystemProxy,
 		},
 		authenticator: auth.NewAuthenticator(options.Users),

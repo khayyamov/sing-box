@@ -27,7 +27,7 @@ func NewRedirect(ctx context.Context, router adapter.Router, logger log.ContextL
 			router:        router,
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 	}
 	redirect.connHandler = redirect

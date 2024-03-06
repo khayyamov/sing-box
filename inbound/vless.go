@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	vmess "github.com/sagernet/sing-vmess"
 	"net"
 	"os"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/v2ray"
 	"github.com/sagernet/sing-box/transport/vless"
-	"github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
@@ -32,8 +32,8 @@ var (
 type VLESS struct {
 	myInboundAdapter
 	ctx       context.Context
-	users     []option.VLESSUser
-	service   *vless.Service[int]
+	Users     []option.VLESSUser
+	Service   *vless.Service[int]
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
@@ -47,10 +47,10 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			router:        uot.NewRouter(router, logger),
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 		ctx:   ctx,
-		users: options.Users,
+		Users: options.Users,
 	}
 	var err error
 	inbound.router, err = mux.NewRouterWithOptions(inbound.router, logger, common.PtrValueOrDefault(options.Multiplex))
@@ -58,14 +58,14 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 		return nil, err
 	}
 	service := vless.NewService[int](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
-	service.UpdateUsers(common.MapIndexed(inbound.users, func(index int, _ option.VLESSUser) int {
+	service.UpdateUsers(common.MapIndexed(inbound.Users, func(index int, _ option.VLESSUser) int {
 		return index
-	}), common.Map(inbound.users, func(it option.VLESSUser) string {
+	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
 		return it.UUID
-	}), common.Map(inbound.users, func(it option.VLESSUser) string {
+	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
 		return it.Flow
 	}))
-	inbound.service = service
+	inbound.Service = service
 	if options.TLS != nil {
 		inbound.tlsConfig, err = tls.NewServer(ctx, logger, common.PtrValueOrDefault(options.TLS))
 		if err != nil {
@@ -84,7 +84,7 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 
 func (h *VLESS) Start() error {
 	err := common.Start(
-		h.service,
+		h.Service,
 		h.tlsConfig,
 	)
 	if err != nil {
@@ -122,7 +122,7 @@ func (h *VLESS) Start() error {
 
 func (h *VLESS) Close() error {
 	return common.Close(
-		h.service,
+		h.Service,
 		&h.myInboundAdapter,
 		h.tlsConfig,
 		h.transport,
@@ -142,7 +142,7 @@ func (h *VLESS) NewConnection(ctx context.Context, conn net.Conn, metadata adapt
 			return err
 		}
 	}
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *VLESS) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
@@ -154,7 +154,7 @@ func (h *VLESS) newConnection(ctx context.Context, conn net.Conn, metadata adapt
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {
@@ -169,7 +169,7 @@ func (h *VLESS) newPacketConnection(ctx context.Context, conn N.PacketConn, meta
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {

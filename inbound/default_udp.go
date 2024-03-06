@@ -15,13 +15,13 @@ import (
 )
 
 func (a *myInboundAdapter) ListenUDP() (net.PacketConn, error) {
-	bindAddr := M.SocksaddrFrom(a.listenOptions.Listen.Build(), a.listenOptions.ListenPort)
+	bindAddr := M.SocksaddrFrom(a.ListenOptions.Listen.Build(), a.ListenOptions.ListenPort)
 	var lc net.ListenConfig
 	var udpFragment bool
-	if a.listenOptions.UDPFragment != nil {
-		udpFragment = *a.listenOptions.UDPFragment
+	if a.ListenOptions.UDPFragment != nil {
+		udpFragment = *a.ListenOptions.UDPFragment
 	} else {
-		udpFragment = a.listenOptions.UDPFragmentDefault
+		udpFragment = a.ListenOptions.UDPFragmentDefault
 	}
 	if !udpFragment {
 		lc.Control = control.Append(lc.Control, control.DisableUDPFragment())
@@ -53,7 +53,7 @@ func (a *myInboundAdapter) loopUDPIn() {
 		var metadata adapter.InboundContext
 		metadata.Inbound = a.tag
 		metadata.InboundType = a.protocol
-		metadata.InboundOptions = a.listenOptions.InboundOptions
+		metadata.InboundOptions = a.ListenOptions.InboundOptions
 		metadata.Source = M.SocksaddrFromNetIP(addr).Unwrap()
 		metadata.OriginDestination = a.udpAddr
 		err = a.packetHandler.NewPacket(a.ctx, packetService, buffer, metadata)
@@ -81,7 +81,7 @@ func (a *myInboundAdapter) loopUDPOOBIn() {
 		var metadata adapter.InboundContext
 		metadata.Inbound = a.tag
 		metadata.InboundType = a.protocol
-		metadata.InboundOptions = a.listenOptions.InboundOptions
+		metadata.InboundOptions = a.ListenOptions.InboundOptions
 		metadata.Source = M.SocksaddrFromNetIP(addr).Unwrap()
 		metadata.OriginDestination = a.udpAddr
 		err = a.oobPacketHandler.NewPacket(a.ctx, packetService, buffer, oob[:oobN], metadata)
@@ -105,7 +105,7 @@ func (a *myInboundAdapter) loopUDPInThreadSafe() {
 		var metadata adapter.InboundContext
 		metadata.Inbound = a.tag
 		metadata.InboundType = a.protocol
-		metadata.InboundOptions = a.listenOptions.InboundOptions
+		metadata.InboundOptions = a.ListenOptions.InboundOptions
 		metadata.Source = M.SocksaddrFromNetIP(addr).Unwrap()
 		metadata.OriginDestination = a.udpAddr
 		err = a.packetHandler.NewPacket(a.ctx, packetService, buffer, metadata)
@@ -131,7 +131,7 @@ func (a *myInboundAdapter) loopUDPOOBInThreadSafe() {
 		var metadata adapter.InboundContext
 		metadata.Inbound = a.tag
 		metadata.InboundType = a.protocol
-		metadata.InboundOptions = a.listenOptions.InboundOptions
+		metadata.InboundOptions = a.ListenOptions.InboundOptions
 		metadata.Source = M.SocksaddrFromNetIP(addr).Unwrap()
 		metadata.OriginDestination = a.udpAddr
 		err = a.oobPacketHandler.NewPacket(a.ctx, packetService, buffer, oob[:oobN], metadata)

@@ -29,7 +29,7 @@ func NewShadowTLS(ctx context.Context, router adapter.Router, logger log.Context
 			router:        router,
 			logger:        logger,
 			tag:           tag,
-			listenOptions: options.ListenOptions,
+			ListenOptions: options.ListenOptions,
 		},
 	}
 
