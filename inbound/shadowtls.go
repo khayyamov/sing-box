@@ -17,7 +17,7 @@ import (
 
 type ShadowTLS struct {
 	myInboundAdapter
-	service *shadowtls.Service
+	Service *shadowtls.Service
 }
 
 func NewShadowTLS(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowTLSInboundOptions) (*ShadowTLS, error) {
@@ -73,13 +73,13 @@ func NewShadowTLS(ctx context.Context, router adapter.Router, logger log.Context
 	if err != nil {
 		return nil, err
 	}
-	inbound.service = service
+	inbound.Service = service
 	inbound.connHandler = inbound
 	return inbound, nil
 }
 
 func (h *ShadowTLS) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *ShadowTLS) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {

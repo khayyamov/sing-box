@@ -60,6 +60,8 @@ replace github.com/sagernet/sing-quic => github.com/khayyamov/sing-quic v0.0.4
 
 replace github.com/sagernet/sing-vmess => github.com/khayyamov/sing-vmess v0.0.3
 
+replace github.com/sagernet/sing-shadowtls => github.com/khayyamov/sing-shadowtls v0.0.1
+
 //replace github.com/sagernet/sing => ../sing
 
 require (
