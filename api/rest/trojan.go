@@ -14,10 +14,15 @@ func AddUserToTrojan(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	inbound.TrojanPtr.Users = append(inbound.TrojanPtr.Users, rq)
-	inbound.TrojanPtr.Service.UpdateUsers(common.MapIndexed(inbound.TrojanPtr.Users, func(index int, it option.TrojanUser) int {
+	newUsers := []option.TrojanUser{rq}
+	err := inbound.TrojanPtr.Service.AddUser(common.MapIndexed(newUsers, func(index int, it option.TrojanUser) int {
 		return index
 	}), common.Map(inbound.TrojanPtr.Users, func(it option.TrojanUser) string {
 		return it.Password
 	}))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+
+	}
 }

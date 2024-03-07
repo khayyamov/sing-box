@@ -1,0 +1,11 @@
+package constant
+
+//rename this class to .go and set new value for constants
+
+const DbUsername = ""
+const DbPassword = ""
+const DbConnection = "tcp"
+const DbHost = "localhost"
+const DbPort = "3306"
+const DbName = "users_db"
+const DbCharset = "utf8"

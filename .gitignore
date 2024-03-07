@@ -15,3 +15,4 @@
 .DS_Store
 /config.d/
 POW
+api/constant/mysql_constants.go

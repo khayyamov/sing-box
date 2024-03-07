@@ -3,7 +3,6 @@ package inbound
 import (
 	"context"
 	"errors"
-
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"

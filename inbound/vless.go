@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	vmess "github.com/sagernet/sing-vmess"
 	"net"
 	"os"
@@ -39,6 +40,7 @@ type VLESS struct {
 }
 
 func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VLESSInboundOptions) (*VLESS, error) {
+	options.Users, _ = db.GetDb().GetVlessUsers()
 	inbound := &VLESS{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeVLESS,

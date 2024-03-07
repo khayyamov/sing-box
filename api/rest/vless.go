@@ -2,6 +2,7 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/inbound"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
@@ -22,5 +23,8 @@ func AddUserToVless(c *gin.Context) {
 	}), common.Map(newUsers, func(it option.VLESSUser) string {
 		return it.Flow
 	}))
-	print("")
+	err := db.GetDb().AddVlessUser(newUsers)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 }

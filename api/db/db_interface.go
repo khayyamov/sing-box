@@ -1,5 +1,8 @@
 package db
 
+import "github.com/sagernet/sing-box/option"
+
 type DbInterface interface {
-	UserIdIsRequired() string
+	GetVlessUsers() ([]option.VLESSUser, error)
+	AddVlessUser(users []option.VLESSUser) error
 }
