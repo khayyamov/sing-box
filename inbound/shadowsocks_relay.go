@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"os"
 	"time"
@@ -27,11 +28,15 @@ var (
 
 type ShadowsocksRelay struct {
 	myInboundAdapter
-	service      *shadowaead_2022.RelayService[int]
-	destinations []option.ShadowsocksDestination
+	Service      *shadowaead_2022.RelayService[int]
+	Destinations []option.ShadowsocksDestination
 }
 
 func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksRelay, error) {
+	dbUsers, _ := db.GetDb().GetShadowsocksRelayUsers()
+	if len(dbUsers) > 0 {
+		options.Destinations = append(options.Destinations, dbUsers...)
+	}
 	inbound := &ShadowsocksRelay{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeShadowsocks,
@@ -42,7 +47,7 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 			tag:           tag,
 			ListenOptions: options.ListenOptions,
 		},
-		destinations: options.Destinations,
+		Destinations: options.Destinations,
 	}
 	inbound.connHandler = inbound
 	inbound.packetHandler = inbound
@@ -74,17 +79,17 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	inbound.service = service
+	inbound.Service = service
 	inbound.packetUpstream = service
 	return inbound, err
 }
 
 func (h *ShadowsocksRelay) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *ShadowsocksRelay) NewPacket(ctx context.Context, conn N.PacketConn, buffer *buf.Buffer, metadata adapter.InboundContext) error {
-	return h.service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *ShadowsocksRelay) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
@@ -96,7 +101,7 @@ func (h *ShadowsocksRelay) newConnection(ctx context.Context, conn net.Conn, met
 	if !loaded {
 		return os.ErrInvalid
 	}
-	destination := h.destinations[destinationIndex].Name
+	destination := h.Destinations[destinationIndex].Name
 	if destination == "" {
 		destination = F.ToString(destinationIndex)
 	} else {
@@ -111,7 +116,7 @@ func (h *ShadowsocksRelay) newPacketConnection(ctx context.Context, conn N.Packe
 	if !loaded {
 		return os.ErrInvalid
 	}
-	destination := h.destinations[destinationIndex].Name
+	destination := h.Destinations[destinationIndex].Name
 	if destination == "" {
 		destination = F.ToString(destinationIndex)
 	} else {

@@ -13,6 +13,102 @@ POST {{host}}/api/singbox/addUserToVless
 Content-Type: application/json
 
 {
-    "uuid": "test2",
+    "uuid": "test4",
     "name": "vless"
+}
+
+### /api/singbox/addUserToTrojan
+POST {{host}}/api/singbox/addUserToTrojan
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/addUserToShadowsocksRelay
+POST {{host}}/api/singbox/addUserToShadowsocksRelay
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless",
+    "server_address": "127.0.0.1",
+    "server_port": 443
+}
+
+### /api/singbox/addUserToShadowsocksRelay
+POST {{host}}/api/singbox/addUserToShadowsocksMulti
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/addUserToNaive
+POST {{host}}/api/singbox/addUserToNaive
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/addUserToHysteria2
+POST {{host}}/api/singbox/addUserToHysteria2
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/addUserToHysteria
+POST {{host}}/api/singbox/addUserToHysteria2
+Content-Type: application/json
+
+{
+    "auth": "test4",
+    "auth_str": "test4",
+    "name": "vless"
+}
+
+
+
+
+
+### /api/singbox/addVlessInbound
+POST {{host}}/api/singbox/addVlessInbound
+Content-Type: application/json
+
+{
+  "tag": "vless-in",
+  "tls": {
+    "enabled": true,
+    "reality": {
+      "enabled": true,
+      "short_id": [
+        "6ba85179e30d4fc2"
+      ],
+      "handshake": {
+        "server": "www.speedtest.net",
+        "server_port": 443
+      },
+      "private_key": "-OWVurYGpeIm77rjkS0T1pxUmDRf-XxayHN-0jeSs0s"
+    },
+    "server_name": "www.speedtest.net"
+  },
+  "type": "vless",
+  "sniff": true,
+  "listen": "127.0.0.1",
+  "listen_port": 2089,
+  "domain_strategy": "ipv4_only",
+  "sniff_override_destination": true,
+  "users": [
+    {
+      "name": "0064e030-0209-4aa5-88de-a3659e5c587c",
+      "uuid": "0064e030-0209-4aa5-88de-a3659e5c587c"
+    }
+  ]
 }

@@ -3,6 +3,7 @@ package inbound
 import (
 	"context"
 	"encoding/binary"
+	"github.com/sagernet/sing-box/api/db"
 	"io"
 	"math/rand"
 	"net"
@@ -38,6 +39,10 @@ type Naive struct {
 }
 
 func NewNaive(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.NaiveInboundOptions) (*Naive, error) {
+	dbUsers, _ := db.GetDb().GetNaiveUsers()
+	if len(dbUsers) > 0 {
+		options.Users = append(options.Users, dbUsers...)
+	}
 	inbound := &Naive{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeNaive,

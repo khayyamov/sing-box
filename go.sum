@@ -90,6 +90,8 @@ github.com/khayyamov/sing v0.0.4 h1:h5G9RFL7pW1UoLk/61dWSx/QfOvPeD+gVNdqKwT248g=
 github.com/khayyamov/sing v0.0.4/go.mod h1:+60H3Cm91RnL9dpVGWDPHt0zTQImO9Vfqt9a4rSambI=
 github.com/khayyamov/sing-quic v0.0.4 h1:ix3Q6jgToardpOFJy+E9ZRB27YlSqjCN5NB9I0sHg8U=
 github.com/khayyamov/sing-quic v0.0.4/go.mod h1:g1Ogcy2KSwKvC7eDXEUu9AnHbjotC+2xsSP+A1i/VOA=
+github.com/khayyamov/sing-shadowsocks v0.0.2 h1:KiZOYrtrRhDCujGfIlZN7zVYdto6bpO/SRwohLfSbwI=
+github.com/khayyamov/sing-shadowsocks v0.0.2/go.mod h1:j2YZBIpWIuElPFL/5sJAj470bcn/3QQ5lxZUNKLDNAM=
 github.com/khayyamov/sing-shadowtls v0.0.1 h1:5JaUDfveBs1/E7IkZR2wjZq+hXxmxckuIL3soB/yiW0=
 github.com/khayyamov/sing-shadowtls v0.0.1/go.mod h1:F8NBgsY5YN2beQavdgdm1DPlhaKQlaL6lpDdcBglGK4=
 github.com/khayyamov/sing-vmess v0.0.3 h1:Pe6/1WXFqM6ASf/WmnOg/BuuEkx355EwdegDqPmVnFg=
@@ -163,8 +165,6 @@ github.com/sagernet/sing-dns v0.1.12 h1:1HqZ+ln+Rezx/aJMStaS0d7oPeX2EobSV1NT537k
 github.com/sagernet/sing-dns v0.1.12/go.mod h1:rx/DTOisneQpCgNQ4jbFU/JNEtnz0lYcHXenlVzpjEU=
 github.com/sagernet/sing-mux v0.2.0 h1:4C+vd8HztJCWNYfufvgL49xaOoOHXty2+EAjnzN3IYo=
 github.com/sagernet/sing-mux v0.2.0/go.mod h1:khzr9AOPocLa+g53dBplwNDz4gdsyx/YM3swtAhlkHQ=
-github.com/sagernet/sing-shadowsocks v0.2.6 h1:xr7ylAS/q1cQYS8oxKKajhuQcchd5VJJ4K4UZrrpp0s=
-github.com/sagernet/sing-shadowsocks v0.2.6/go.mod h1:j2YZBIpWIuElPFL/5sJAj470bcn/3QQ5lxZUNKLDNAM=
 github.com/sagernet/sing-shadowsocks2 v0.2.0 h1:wpZNs6wKnR7mh1wV9OHwOyUr21VkS3wKFHi+8XwgADg=
 github.com/sagernet/sing-shadowsocks2 v0.2.0/go.mod h1:RnXS0lExcDAovvDeniJ4IKa2IuChrdipolPYWBv9hWQ=
 github.com/sagernet/sing-tun v0.2.0 h1:/WloeRTWvwKIuiIvY+HVJaaZsTGb3XqJXZUbn6wVhz4=

@@ -48,6 +48,39 @@ type Options struct {
 	PlatformLogWriter log.PlatformWriter
 }
 
+var Ctx context.Context
+var BoxInstance = &Box{}
+
+func AddInbound(options Options) error {
+	ctx := service.ContextWithDefaultRegistry(Ctx)
+	ctx = pause.WithDefaultManager(Ctx)
+	inbounds := make([]adapter.Inbound, 0, len(options.Inbounds))
+	for i, inboundOptions := range options.Inbounds {
+		var in adapter.Inbound
+		var tag string
+		if inboundOptions.Tag != "" {
+			tag = inboundOptions.Tag
+		} else {
+			tag = F.ToString(i)
+		}
+		in, err := inbound.New(
+			ctx,
+			BoxInstance.router,
+			BoxInstance.logFactory.NewLogger(F.ToString("inbound/", inboundOptions.Type, "[", tag, "]")),
+			inboundOptions,
+			options.PlatformInterface,
+		)
+		if err != nil {
+			return E.Cause(err, "parse inbound[", i, "]")
+		}
+		inbounds = append(inbounds, in)
+		err = in.Start()
+		if err != nil {
+			return E.Cause(err, "initialize inbound/", in.Type(), "[", tag, "]")
+		}
+	}
+	return nil
+}
 func New(options Options) (*Box, error) {
 	createdAt := time.Now()
 	ctx := options.Context

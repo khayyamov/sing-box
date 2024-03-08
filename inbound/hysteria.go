@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"time"
 
@@ -28,6 +29,10 @@ type Hysteria struct {
 }
 
 func NewHysteria(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.HysteriaInboundOptions) (*Hysteria, error) {
+	dbUsers, _ := db.GetDb().GetHysteriaUsers()
+	if len(dbUsers) > 0 {
+		options.Users = append(options.Users, dbUsers...)
+	}
 	options.UDPFragmentDefault = true
 	if options.TLS == nil || !options.TLS.Enabled {
 		return nil, C.ErrTLSRequired

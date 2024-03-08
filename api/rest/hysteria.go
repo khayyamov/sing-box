@@ -2,6 +2,8 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sagernet/sing-box/api/db"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
 	"github.com/sagernet/sing-box/option"
 	"net/http"
@@ -30,5 +32,12 @@ func AddUserToHysteria(c *gin.Context) {
 		}
 		userPasswordList = append(userPasswordList, password)
 	}
-	inbound.HysteriaPtr.Service.AddUser(userList, userPasswordList)
+	for i := range inbound.HysteriaPtr {
+		inbound.HysteriaPtr[i].Service.AddUser(userList, userPasswordList)
+	}
+	users, err := db.ConvertProtocolModelToDbUser(newUsers)
+	err = db.GetDb().AddUserToDb(users, C.TypeHysteria)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 }

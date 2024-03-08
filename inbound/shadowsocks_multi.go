@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	shadowsocks "github.com/sagernet/sing-shadowsocks"
 	"net"
 	"os"
@@ -31,11 +32,15 @@ var (
 
 type ShadowsocksMulti struct {
 	myInboundAdapter
-	service shadowsocks.MultiService[int]
+	Service shadowsocks.MultiService[int]
 	users   []option.ShadowsocksUser
 }
 
 func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksMulti, error) {
+	dbUsers, _ := db.GetDb().GetShadowsocksMultiUsers()
+	if len(dbUsers) > 0 {
+		options.Users = append(options.Users, dbUsers...)
+	}
 	inbound := &ShadowsocksMulti{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeShadowsocks,
@@ -88,18 +93,18 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	inbound.service = service
+	inbound.Service = service
 	inbound.packetUpstream = service
 	inbound.users = options.Users
 	return inbound, err
 }
 
 func (h *ShadowsocksMulti) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *ShadowsocksMulti) NewPacket(ctx context.Context, conn N.PacketConn, buffer *buf.Buffer, metadata adapter.InboundContext) error {
-	return h.service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *ShadowsocksMulti) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {

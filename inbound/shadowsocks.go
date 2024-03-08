@@ -42,7 +42,7 @@ var (
 
 type Shadowsocks struct {
 	myInboundAdapter
-	service shadowsocks.Service
+	Service shadowsocks.Service
 }
 
 func newShadowsocks(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*Shadowsocks, error) {
@@ -74,24 +74,24 @@ func newShadowsocks(ctx context.Context, router adapter.Router, logger log.Conte
 	}
 	switch {
 	case options.Method == shadowsocks.MethodNone:
-		inbound.service = shadowsocks.NewNoneService(int64(udpTimeout.Seconds()), inbound.upstreamContextHandler())
+		inbound.Service = shadowsocks.NewNoneService(int64(udpTimeout.Seconds()), inbound.upstreamContextHandler())
 	case common.Contains(shadowaead.List, options.Method):
-		inbound.service, err = shadowaead.NewService(options.Method, nil, options.Password, int64(udpTimeout.Seconds()), inbound.upstreamContextHandler())
+		inbound.Service, err = shadowaead.NewService(options.Method, nil, options.Password, int64(udpTimeout.Seconds()), inbound.upstreamContextHandler())
 	case common.Contains(shadowaead_2022.List, options.Method):
-		inbound.service, err = shadowaead_2022.NewServiceWithPassword(options.Method, options.Password, int64(udpTimeout.Seconds()), inbound.upstreamContextHandler(), ntp.TimeFuncFromContext(ctx))
+		inbound.Service, err = shadowaead_2022.NewServiceWithPassword(options.Method, options.Password, int64(udpTimeout.Seconds()), inbound.upstreamContextHandler(), ntp.TimeFuncFromContext(ctx))
 	default:
 		err = E.New("unsupported method: ", options.Method)
 	}
-	inbound.packetUpstream = inbound.service
+	inbound.packetUpstream = inbound.Service
 	return inbound, err
 }
 
 func (h *Shadowsocks) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	return h.service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewConnection(adapter.WithContext(log.ContextWithNewID(ctx), &metadata), conn, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *Shadowsocks) NewPacket(ctx context.Context, conn N.PacketConn, buffer *buf.Buffer, metadata adapter.InboundContext) error {
-	return h.service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
+	return h.Service.NewPacket(adapter.WithContext(ctx, &metadata), conn, buffer, adapter.UpstreamMetadata(metadata))
 }
 
 func (h *Shadowsocks) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {

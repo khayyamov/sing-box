@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"os"
 
@@ -37,6 +38,10 @@ type Trojan struct {
 }
 
 func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TrojanInboundOptions) (*Trojan, error) {
+	dbUsers, _ := db.GetDb().GetTrojanUsers()
+	if len(dbUsers) > 0 {
+		options.Users = dbUsers
+	}
 	inbound := &Trojan{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeTrojan,

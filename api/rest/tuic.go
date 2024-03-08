@@ -3,6 +3,8 @@ package rest
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/sagernet/sing-box/api/db"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
 	"github.com/sagernet/sing-box/option"
 	"net/http"
@@ -34,6 +36,13 @@ func AddUserToTuic(c *gin.Context) {
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)
 	}
-	inbound.TUICPtr.Service.AddUser(userList, userUUIDList, userPasswordList)
+	for i := range inbound.TUICPtr {
+		inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
+	}
+	users, err := db.ConvertProtocolModelToDbUser(newUsers)
+	err = db.GetDb().AddUserToDb(users, C.TypeTUIC)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 
 }

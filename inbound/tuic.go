@@ -3,6 +3,7 @@ package inbound
 import (
 	"context"
 	"github.com/gofrs/uuid/v5"
+	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"time"
 
@@ -30,6 +31,10 @@ type TUIC struct {
 }
 
 func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (*TUIC, error) {
+	dbUsers, _ := db.GetDb().GetTuicUsers()
+	if len(dbUsers) > 0 {
+		options.Users = dbUsers
+	}
 	options.UDPFragmentDefault = true
 	if options.TLS == nil || !options.TLS.Enabled {
 		return nil, C.ErrTLSRequired

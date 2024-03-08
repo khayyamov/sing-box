@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	vmess "github.com/sagernet/sing-vmess"
 	"net"
 	"os"
@@ -39,6 +40,10 @@ type VMess struct {
 }
 
 func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VMessInboundOptions) (*VMess, error) {
+	dbUsers, _ := db.GetDb().GetVmessUsers()
+	if len(dbUsers) > 0 {
+		options.Users = dbUsers
+	}
 	inbound := &VMess{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeVMess,

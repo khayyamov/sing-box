@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/db"
 	"net"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -21,6 +22,13 @@ type ShadowTLS struct {
 }
 
 func NewShadowTLS(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowTLSInboundOptions) (*ShadowTLS, error) {
+	dbUsers, _ := db.GetDb().GetShadowtlsUsers()
+	for i := range dbUsers {
+		options.Users = append(options.Users, option.ShadowTLSUser{
+			Name:     dbUsers[i].Name,
+			Password: dbUsers[i].Password,
+		})
+	}
 	inbound := &ShadowTLS{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeShadowTLS,

@@ -2,7 +2,6 @@ package inbound
 
 import (
 	"context"
-	"errors"
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
@@ -11,80 +10,113 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 )
 
-var TunPtr = &Tun{}
-var RedirectPtr = &Redirect{}
-var TProxyPtr = &TProxy{}
-var DirectPtr = &Direct{}
-var HTTPPtr = &HTTP{}
-var SocksPtr = &Socks{}
-var MixedPtr = &Mixed{}
-var TrojanPtr = &Trojan{}
-var NaivePtr = &Naive{}
-var ShadowTlsPtr = &ShadowTLS{}
-var VLESSPtr = &VLESS{}
-var VMessPtr = &VMess{}
+var TunPtr = option.Listable[*Tun]{}
+var RedirectPtr = option.Listable[*Redirect]{}
+var TProxyPtr = option.Listable[*TProxy]{}
+var DirectPtr = option.Listable[*Direct]{}
+var HTTPPtr = option.Listable[*HTTP]{}
+var SocksPtr = option.Listable[*Socks]{}
+var MixedPtr = option.Listable[*Mixed]{}
 
-var ShadowsocksPtr = &Shadowsocks{}
-var TUICPtr = &TUIC{}
-var HysteriaPtr = &Hysteria{}
-var Hysteria2Ptr = &Hysteria2{}
+var TrojanPtr = option.Listable[*Trojan]{}
+var VLESSPtr = option.Listable[*VLESS]{}
+var VMessPtr = option.Listable[*VMess]{}
+
+var NaivePtr = option.Listable[*Naive]{}
+var ShadowTlsPtr = option.Listable[*ShadowTLS]{}
+var ShadowsocksPtr = option.Listable[*Shadowsocks]{}
+var ShadowsocksMultiPtr = option.Listable[*ShadowsocksMulti]{}
+var ShadowsocksRelayPtr = option.Listable[*ShadowsocksRelay]{}
+var TUICPtr = option.Listable[*TUIC]{}
+var HysteriaPtr = option.Listable[*Hysteria]{}
+var Hysteria2Ptr = option.Listable[*Hysteria2]{}
 
 // TODO: get users from db for each protocol in first run
 func New(ctx context.Context, router adapter.Router, logger log.ContextLogger, options option.Inbound, platformInterface platform.Interface) (adapter.Inbound, error) {
 	if options.Type == "" {
 		return nil, E.New("missing inbound type")
 	}
-	var err = errors.New("")
 	switch options.Type {
+	//TODO: remove if need it
 	case C.TypeTun:
-		TunPtr, err = NewTun(ctx, router, logger, options.Tag, options.TunOptions, platformInterface)
-		return TunPtr, err
-	case C.TypeRedirect:
-		RedirectPtr = NewRedirect(ctx, router, logger, options.Tag, options.RedirectOptions)
-		return RedirectPtr, nil
-	case C.TypeTProxy:
-		TProxyPtr = NewTProxy(ctx, router, logger, options.Tag, options.TProxyOptions)
-		return TProxyPtr, nil
-	case C.TypeDirect:
-		DirectPtr = NewDirect(ctx, router, logger, options.Tag, options.DirectOptions)
-		return DirectPtr, nil
-	case C.TypeSOCKS:
-		SocksPtr = NewSocks(ctx, router, logger, options.Tag, options.SocksOptions)
-		return SocksPtr, nil
-	case C.TypeHTTP:
-		HTTPPtr, err = NewHTTP(ctx, router, logger, options.Tag, options.HTTPOptions)
-		return HTTPPtr, err
-	case C.TypeMixed:
-		MixedPtr = NewMixed(ctx, router, logger, options.Tag, options.MixedOptions)
-		return MixedPtr, nil
+		tun, err := NewTun(ctx, router, logger, options.Tag, options.TunOptions, platformInterface)
+		TunPtr = append(TunPtr, tun)
+		return tun, err
+	//case C.TypeRedirect:
+	//	redirect := NewRedirect(ctx, router, logger, options.Tag, options.RedirectOptions)
+	//	RedirectPtr = append(RedirectPtr, redirect)
+	//	return redirect, nil
+	//case C.TypeTProxy:
+	//	tproxy := NewTProxy(ctx, router, logger, options.Tag, options.TProxyOptions)
+	//	TProxyPtr = append(TProxyPtr, tproxy)
+	//	return tproxy, nil
+	//case C.TypeDirect:
+	//	DirectPtr = NewDirect(ctx, router, logger, options.Tag, options.DirectOptions)
+	//	RedirectPtr = append(RedirectPtr, tun)
+	//	return DirectPtr, nil
+	//case C.TypeSOCKS:
+	//	SocksPtr = NewSocks(ctx, router, logger, options.Tag, options.SocksOptions)
+	//	RedirectPtr = append(RedirectPtr, tun)
+	//	return SocksPtr, nil
+	//case C.TypeHTTP:
+	//	HTTPPtr, err = NewHTTP(ctx, router, logger, options.Tag, options.HTTPOptions)
+	//	RedirectPtr = append(RedirectPtr, tun)
+	//	return HTTPPtr, err
+	//case C.TypeMixed:
+	//	MixedPtr = NewMixed(ctx, router, logger, options.Tag, options.MixedOptions)
+	//	RedirectPtr = append(RedirectPtr, tun)
+	//	return MixedPtr, nil
+
 	case C.TypeVMess:
-		VMessPtr, err = NewVMess(ctx, router, logger, options.Tag, options.VMessOptions)
-		return VMessPtr, err
+		vmess, err := NewVMess(ctx, router, logger, options.Tag, options.VMessOptions)
+		VMessPtr = append(VMessPtr, vmess)
+		return vmess, err
 	case C.TypeTrojan:
-		TrojanPtr, err = NewTrojan(ctx, router, logger, options.Tag, options.TrojanOptions)
-		return TrojanPtr, err
+		trojan, err := NewTrojan(ctx, router, logger, options.Tag, options.TrojanOptions)
+		TrojanPtr = append(TrojanPtr, trojan)
+		return trojan, err
 	case C.TypeNaive:
-		NaivePtr, err = NewNaive(ctx, router, logger, options.Tag, options.NaiveOptions)
-		return NaivePtr, err
+		naive, err := NewNaive(ctx, router, logger, options.Tag, options.NaiveOptions)
+		NaivePtr = append(NaivePtr, naive)
+		return naive, err
 	case C.TypeShadowTLS:
-		ShadowTlsPtr, err = NewShadowTLS(ctx, router, logger, options.Tag, options.ShadowTLSOptions)
-		return ShadowTlsPtr, err
+		shadowtls, err := NewShadowTLS(ctx, router, logger, options.Tag, options.ShadowTLSOptions)
+		ShadowTlsPtr = append(ShadowTlsPtr, shadowtls)
+		return shadowtls, err
 	case C.TypeVLESS:
-		VLESSPtr, err = NewVLESS(ctx, router, logger, options.Tag, options.VLESSOptions)
-		return VLESSPtr, err
+		vless, err := NewVLESS(ctx, router, logger, options.Tag, options.VLESSOptions)
+		VLESSPtr = append(VLESSPtr, vless)
+		return vless, err
 
 	case C.TypeShadowsocks:
-		ShadowsocksPtr, err = newShadowsocks(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
-		return ShadowsocksPtr, err
+		if len(options.ShadowsocksOptions.Users) > 0 && len(options.ShadowsocksOptions.Destinations) > 0 {
+			return nil, E.New("users and destinations options must not be combined")
+		}
+		if len(options.ShadowsocksOptions.Users) > 0 {
+			shadowsocks, err := newShadowsocksMulti(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
+			ShadowsocksMultiPtr = append(ShadowsocksMultiPtr, shadowsocks)
+			return shadowsocks, err
+		} else if len(options.ShadowsocksOptions.Destinations) > 0 {
+			shadowsocks, err := newShadowsocksRelay(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
+			ShadowsocksRelayPtr = append(ShadowsocksRelayPtr, shadowsocks)
+			return shadowsocks, err
+		} else {
+			shadowsocks, err := newShadowsocks(ctx, router, logger, options.Tag, options.ShadowsocksOptions)
+			ShadowsocksPtr = append(ShadowsocksPtr, shadowsocks)
+			return shadowsocks, err
+		}
 	case C.TypeHysteria:
-		HysteriaPtr, err = NewHysteria(ctx, router, logger, options.Tag, options.HysteriaOptions)
-		return HysteriaPtr, err
+		hysteria, err := NewHysteria(ctx, router, logger, options.Tag, options.HysteriaOptions)
+		HysteriaPtr = append(HysteriaPtr, hysteria)
+		return hysteria, err
 	case C.TypeTUIC:
-		TUICPtr, err = NewTUIC(ctx, router, logger, options.Tag, options.TUICOptions)
-		return TUICPtr, err
+		tuic, err := NewTUIC(ctx, router, logger, options.Tag, options.TUICOptions)
+		TUICPtr = append(TUICPtr, tuic)
+		return tuic, err
 	case C.TypeHysteria2:
-		Hysteria2Ptr, err = NewHysteria2(ctx, router, logger, options.Tag, options.Hysteria2Options)
-		return Hysteria2Ptr, err
+		hysteria2, err := NewHysteria2(ctx, router, logger, options.Tag, options.Hysteria2Options)
+		Hysteria2Ptr = append(Hysteria2Ptr, hysteria2)
+		return hysteria2, err
 	default:
 		return nil, E.New("unknown inbound type: ", options.Type)
 	}

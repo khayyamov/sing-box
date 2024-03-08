@@ -135,6 +135,7 @@ func create() (*box.Box, context.CancelFunc, error) {
 		options.Log.DisableColor = true
 	}
 	ctx, cancel := context.WithCancel(globalCtx)
+	box.Ctx = ctx
 	instance, err := box.New(box.Options{
 		Context: ctx,
 		Options: options,
@@ -174,6 +175,7 @@ func run() error {
 	defer signal.Stop(osSignals)
 	for {
 		instance, cancel, err := create()
+		box.BoxInstance = instance
 		if err != nil {
 			return err
 		}

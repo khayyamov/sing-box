@@ -40,7 +40,10 @@ type VLESS struct {
 }
 
 func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VLESSInboundOptions) (*VLESS, error) {
-	options.Users, _ = db.GetDb().GetVlessUsers()
+	dbUsers, _ := db.GetDb().GetVlessUsers()
+	if len(dbUsers) > 0 {
+		options.Users = dbUsers
+	}
 	inbound := &VLESS{
 		myInboundAdapter: myInboundAdapter{
 			protocol:      C.TypeVLESS,

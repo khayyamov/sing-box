@@ -64,6 +64,8 @@ replace github.com/sagernet/sing-vmess => github.com/khayyamov/sing-vmess v0.0.3
 
 replace github.com/sagernet/sing-shadowtls => github.com/khayyamov/sing-shadowtls v0.0.1
 
+replace github.com/sagernet/sing-shadowsocks => github.com/khayyamov/sing-shadowsocks v0.0.2
+
 //replace github.com/sagernet/sing => ../sing
 
 require (

@@ -40,12 +40,17 @@ CREATE TABLE shadowtls
 );
 
 
-CREATE TABLE shadowsocks
+CREATE TABLE shadowsocks_multi
 (
     id           INT AUTO_INCREMENT     NOT NULL PRIMARY KEY,
     user_json     VARCHAR(255)            NOT NULL UNIQUE
 );
 
+CREATE TABLE shadowsocks_relay
+(
+    id           INT AUTO_INCREMENT     NOT NULL PRIMARY KEY,
+    user_json     VARCHAR(255)            NOT NULL UNIQUE
+);
 
 CREATE TABLE naive
 (

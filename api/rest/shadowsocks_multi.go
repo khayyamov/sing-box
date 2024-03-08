@@ -10,28 +10,25 @@ import (
 	"net/http"
 )
 
-func AddUserToVmess(c *gin.Context) {
-	var rq option.VMessUser
+func AddUserToShadowsocksMulti(c *gin.Context) {
+	var rq option.ShadowsocksUser
 	if err := c.ShouldBindJSON(&rq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	newUsers := []option.VMessUser{rq}
-	for i := range inbound.VMessPtr {
-		err := inbound.VMessPtr[i].Service.AddUser(common.MapIndexed(newUsers, func(index int, it option.VMessUser) int {
+	newUsers := []option.ShadowsocksUser{rq}
+	for i := range inbound.ShadowsocksMultiPtr {
+		err := inbound.ShadowsocksMultiPtr[i].Service.AddUsersWithPasswords(common.MapIndexed(newUsers, func(index int, user option.ShadowsocksUser) int {
 			return index
-		}), common.Map(newUsers, func(it option.VMessUser) string {
-			return it.UUID
-		}), common.Map(newUsers, func(it option.VMessUser) int {
-			return it.AlterId
+		}), common.Map(newUsers, func(user option.ShadowsocksUser) string {
+			return user.Password
 		}))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 	}
-
 	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().AddUserToDb(users, C.TypeVMess)
+	err = db.GetDb().AddUserToDb(users, C.TypeShadowsocksMulti)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
