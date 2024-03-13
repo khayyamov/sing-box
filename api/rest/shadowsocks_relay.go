@@ -1,34 +1,94 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
+	"io"
 	"net/http"
 )
 
 func AddUserToShadowsocksRelay(c *gin.Context) {
+	domesticLogicShadowsocksRelay(c, false)
+}
+
+func DeleteUserToShadowsocksRelay(c *gin.Context) {
+	domesticLogicShadowsocksRelay(c, true)
+}
+
+func domesticLogicShadowsocksRelay(c *gin.Context, delete bool) {
 	var rq option.ShadowsocksDestination
-	if err := c.ShouldBindJSON(&rq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var rqArr []option.ShadowsocksDestination
+
+	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
+	jsonBody := string(bodyAsByteArray)
+	haveErr := false
+
+	err := json.Unmarshal([]byte(jsonBody), &rq)
+	if err == nil {
+		haveErr = false
+		EditShadowsocksRelayUsers(c, []option.ShadowsocksDestination{rq}, delete)
 		return
+	} else {
+		haveErr = true
 	}
-	newUsers := []option.ShadowsocksDestination{rq}
+	err = json.Unmarshal([]byte(jsonBody), &rqArr)
+	if err == nil {
+		haveErr = false
+		EditShadowsocksRelayUsers(c, rqArr, delete)
+		return
+	} else {
+		haveErr = true
+	}
+
+	if haveErr {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+}
+
+func EditShadowsocksRelayUsers(c *gin.Context, newUsers []option.ShadowsocksDestination, delete bool) {
 	for i := range inbound.ShadowsocksRelayPtr {
-		err := inbound.ShadowsocksRelayPtr[i].Service.AddUsersWithPasswords(common.MapIndexed(newUsers, func(index int, user option.ShadowsocksDestination) int {
-			return index
-		}), common.Map(newUsers, func(user option.ShadowsocksDestination) string {
-			return user.Password
-		}), common.Map(newUsers, option.ShadowsocksDestination.Build))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if !delete {
+			ArrayLen := len(inbound.ShadowsocksRelayPtr[i].Destinations)
+			inbound.ShadowsocksRelayPtr[i].Destinations = append(
+				inbound.ShadowsocksRelayPtr[i].Destinations, newUsers...)
+			err := inbound.ShadowsocksRelayPtr[i].Service.AddUsersWithPasswords(
+				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksDestination) int {
+					return index + ArrayLen
+				}), common.Map(newUsers, func(user option.ShadowsocksDestination) string {
+					return user.Password
+				}), common.Map(newUsers, option.ShadowsocksDestination.Build))
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
+		} else {
+			for j := range newUsers {
+				for k := range inbound.ShadowsocksRelayPtr[i].Destinations {
+					if newUsers[j].Password == inbound.ShadowsocksRelayPtr[i].Destinations[k].Password {
+						inbound.ShadowsocksRelayPtr[i].Destinations = append(
+							inbound.ShadowsocksRelayPtr[i].Destinations[:k],
+							inbound.ShadowsocksRelayPtr[i].Destinations[k+1:]...)
+						break
+					}
+				}
+			}
+			err := inbound.ShadowsocksRelayPtr[i].Service.DeleteUsersWithPasswords(
+				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksDestination) int {
+					return index
+				}), common.Map(newUsers, func(user option.ShadowsocksDestination) string {
+					return user.Password
+				}))
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
 		}
 	}
 	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().AddUserToDb(users, C.TypeShadowsocksRelay)
+	err = db.GetDb().EditDbUser(users, C.TypeShadowsocksRelay, delete)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}

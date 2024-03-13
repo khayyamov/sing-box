@@ -1,24 +1,56 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
 	"github.com/sagernet/sing-box/option"
+	"io"
 	"net/http"
 )
 
 func AddUserToTuic(c *gin.Context) {
+	domesticLogicTuic(c, true)
+}
+
+func DeleteUserToTuic(c *gin.Context) {
+	domesticLogicTuic(c, true)
+}
+
+func domesticLogicTuic(c *gin.Context, delete bool) {
 	var rq option.TUICUser
-	if err := c.ShouldBindJSON(&rq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var rqArr []option.TUICUser
+
+	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
+	jsonBody := string(bodyAsByteArray)
+	haveErr := false
+
+	err := json.Unmarshal([]byte(jsonBody), &rq)
+	if err == nil {
+		haveErr = false
+		EditTuicUsers(c, []option.TUICUser{rq}, delete)
 		return
+	} else {
+		haveErr = true
+	}
+	err = json.Unmarshal([]byte(jsonBody), &rqArr)
+	if err == nil {
+		haveErr = false
+		EditTuicUsers(c, rqArr, delete)
+		return
+	} else {
+		haveErr = true
 	}
 
-	newUsers := []option.TUICUser{rq}
+	if haveErr {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+}
 
+func EditTuicUsers(c *gin.Context, newUsers []option.TUICUser, delete bool) {
 	var userList []int
 	var userNameList []string
 	var userUUIDList [][16]byte
@@ -37,10 +69,14 @@ func AddUserToTuic(c *gin.Context) {
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	for i := range inbound.TUICPtr {
-		inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
+		if !delete {
+			inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
+		} else {
+			inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
+		}
 	}
 	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().AddUserToDb(users, C.TypeTUIC)
+	err = db.GetDb().EditDbUser(users, C.TypeTUIC, delete)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}

@@ -28,5 +28,5 @@ type DbInterface interface {
 
 	GetShadowsocksRelayUsers() ([]option.ShadowsocksDestination, error)
 
-	AddUserToDb(v []entity.DbUser, protocolType string) error
+	EditDbUser(v []entity.DbUser, protocolType string, delete bool) error
 }

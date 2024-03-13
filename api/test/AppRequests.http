@@ -3,22 +3,77 @@ POST {{host}}/api/singbox/addUserToVmess
 Content-Type: application/json
 
 {
-    "uuid": "12345",
-    "name": "vmess"
-
+    "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
+    "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
+    "alterId": 2
 }
+
+### /api/singbox/deleteUserToVmess
+POST {{host}}/api/singbox/deleteUserToVmess
+Content-Type: application/json
+
+{
+  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "alterId": 2
+}
+
+### /api/singbox/addUserToVlessArray
+POST {{host}}/api/singbox/addUserToVless
+Content-Type: application/json
+
+[
+  {
+    "uuid": "1",
+    "name": "vmesaasgss"
+  },
+  {
+    "uuid": "11",
+    "name": "vmesaasgss"
+  },
+  {
+    "uuid": "111",
+    "name": "vmesaasgss"
+  },
+  {
+    "uuid": "1111",
+    "name": "vmesaasgss"
+  },
+  {
+    "uuid": "11111",
+    "name": "vmesaasgss"
+  }
+]
 
 ### /api/singbox/addUserToVless
 POST {{host}}/api/singbox/addUserToVless
 Content-Type: application/json
 
 {
-    "uuid": "test4",
-    "name": "vless"
+  "uuid": "21234sadg521",
+  "name": "vmesaasgss"
+}
+
+### /api/singbox/deleteUserToVless
+POST {{host}}/api/singbox/deleteUserToVless
+Content-Type: application/json
+
+{
+  "uuid": "21234sadg521",
+  "name": "vmesaasgss"
 }
 
 ### /api/singbox/addUserToTrojan
 POST {{host}}/api/singbox/addUserToTrojan
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/deleteUserToTrojan
+POST {{host}}/api/singbox/deleteUserToTrojan
 Content-Type: application/json
 
 {
@@ -37,8 +92,37 @@ Content-Type: application/json
     "server_port": 443
 }
 
-### /api/singbox/addUserToShadowsocksRelay
+### /api/singbox/deleteUserToShadowsocksRelay
+POST {{host}}/api/singbox/deleteUserToShadowsocksRelay
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless",
+    "server_address": "127.0.0.1",
+    "server_port": 443
+}
+
+### /api/singbox/addUserToShadowsocksMulti
 POST {{host}}/api/singbox/addUserToShadowsocksMulti
+Content-Type: application/json
+
+{
+    "password": "11",
+    "name": "11"
+}
+
+### /api/singbox/deleteUserToShadowsocksMulti
+POST {{host}}/api/singbox/deleteUserToShadowsocksMulti
+Content-Type: application/json
+
+{
+  "password": "11",
+  "name": "11"
+}
+
+### /api/singbox/addUserToNaive
+POST {{host}}/api/singbox/addUserToNaive
 Content-Type: application/json
 
 {
@@ -46,8 +130,8 @@ Content-Type: application/json
     "name": "vless"
 }
 
-### /api/singbox/addUserToNaive
-POST {{host}}/api/singbox/addUserToNaive
+### /api/singbox/deleteUserToNaive
+POST {{host}}/api/singbox/deleteUserToNaive
 Content-Type: application/json
 
 {
@@ -64,14 +148,90 @@ Content-Type: application/json
     "name": "vless"
 }
 
+### /api/singbox/deleteUserToHysteria2
+POST {{host}}/api/singbox/deleteUserToHysteria2
+Content-Type: application/json
+
+{
+    "password": "test4",
+    "name": "vless"
+}
+
 ### /api/singbox/addUserToHysteria
-POST {{host}}/api/singbox/addUserToHysteria2
+POST {{host}}/api/singbox/addUserToHysteria
 Content-Type: application/json
 
 {
     "auth": "test4",
     "auth_str": "test4",
     "name": "vless"
+}
+
+### /api/singbox/addUserToHysteria
+POST {{host}}/api/singbox/deleteUserToHysteria
+Content-Type: application/json
+
+{
+    "auth": "test4",
+    "auth_str": "test4",
+    "name": "vless"
+}
+
+### /api/singbox/addToAll
+POST {{host}}/api/singbox/addToAll
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": "password",
+  "name": "name",
+  "uuid": "uuid",
+  "flow": "flow",
+  "auth": "auth",
+  "auth_string": "auth_string",
+  "server_address": "127.0.0.1",
+  "server_port": 0,
+  "alterId": 0,
+  "add_to_all": false,
+  "hysteria": false,
+  "hysteria2": false,
+  "naive": false,
+  "shadowsocks_multi": false,
+  "shadowsocks_relay": false,
+  "shadowtls": false,
+  "trojan": false,
+  "tuic": false,
+  "vless": true,
+  "vmess": false
+}
+
+
+### /api/singbox/deleteToAll
+POST {{host}}/api/singbox/deleteToAll
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": "password",
+  "name": "name",
+  "uuid": "uuid",
+  "flow": "flow",
+  "auth": "auth",
+  "auth_string": "auth_string",
+  "server_address": "127.0.0.1",
+  "server_port": 0,
+  "alterId": 0,
+  "add_to_all": true,
+  "hysteria": false,
+  "hysteria2": false,
+  "naive": false,
+  "shadowsocks_multi": false,
+  "shadowsocks_relay": false,
+  "shadowtls": false,
+  "trojan": false,
+  "tuic": false,
+  "vless": false,
+  "vmess": false
 }
 
 

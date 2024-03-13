@@ -31,7 +31,6 @@ var TUICPtr = option.Listable[*TUIC]{}
 var HysteriaPtr = option.Listable[*Hysteria]{}
 var Hysteria2Ptr = option.Listable[*Hysteria2]{}
 
-// TODO: get users from db for each protocol in first run
 func New(ctx context.Context, router adapter.Router, logger log.ContextLogger, options option.Inbound, platformInterface platform.Interface) (adapter.Inbound, error) {
 	if options.Type == "" {
 		return nil, E.New("missing inbound type")

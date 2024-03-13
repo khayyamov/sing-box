@@ -63,6 +63,14 @@ func (s *Service[T]) AddUser(userList []T, userUUIDList []string, userFlowList [
 	}
 }
 
+func (s *Service[T]) DeleteUser(userList []T, userUUIDList []string) {
+	for i, userName := range userList {
+		userID := uuid.FromStringOrNil(userUUIDList[i])
+		delete(s.userMap, userID)
+		delete(s.userFlow, userName)
+	}
+}
+
 var _ N.TCPConnectionHandler = (*Service[int])(nil)
 
 func (s *Service[T]) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {

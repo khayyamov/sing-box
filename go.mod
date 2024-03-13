@@ -56,15 +56,15 @@ require (
 	howett.net/plist v1.0.1
 )
 
-replace github.com/sagernet/sing => github.com/khayyamov/sing v0.0.4
+replace github.com/sagernet/sing => github.com/khayyamov/sing v0.0.5
 
-replace github.com/sagernet/sing-quic => github.com/khayyamov/sing-quic v0.0.4
+replace github.com/sagernet/sing-quic => github.com/khayyamov/sing-quic v0.0.5
 
-replace github.com/sagernet/sing-vmess => github.com/khayyamov/sing-vmess v0.0.3
+replace github.com/sagernet/sing-vmess => github.com/khayyamov/sing-vmess v0.0.4
 
-replace github.com/sagernet/sing-shadowtls => github.com/khayyamov/sing-shadowtls v0.0.1
+replace github.com/sagernet/sing-shadowtls => github.com/khayyamov/sing-shadowtls v0.0.2
 
-replace github.com/sagernet/sing-shadowsocks => github.com/khayyamov/sing-shadowsocks v0.0.2
+replace github.com/sagernet/sing-shadowsocks => github.com/khayyamov/sing-shadowsocks v0.0.7
 
 //replace github.com/sagernet/sing => ../sing
 

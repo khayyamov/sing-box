@@ -29,7 +29,7 @@ CREATE TABLE tuic
 CREATE TABLE trojan
 (
     id           INT AUTO_INCREMENT     NOT NULL PRIMARY KEY,
-    user_json     VARCHAR(255)            NOT NULL UNIQUE PRIMARY KEY
+    user_json     VARCHAR(255)            NOT NULL UNIQUE
 );
 
 

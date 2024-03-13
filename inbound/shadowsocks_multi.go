@@ -33,7 +33,7 @@ var (
 type ShadowsocksMulti struct {
 	myInboundAdapter
 	Service shadowsocks.MultiService[int]
-	users   []option.ShadowsocksUser
+	Users   []option.ShadowsocksUser
 }
 
 func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksMulti, error) {
@@ -95,7 +95,7 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	}
 	inbound.Service = service
 	inbound.packetUpstream = service
-	inbound.users = options.Users
+	inbound.Users = options.Users
 	return inbound, err
 }
 
@@ -116,7 +116,7 @@ func (h *ShadowsocksMulti) newConnection(ctx context.Context, conn net.Conn, met
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {
@@ -131,7 +131,7 @@ func (h *ShadowsocksMulti) newPacketConnection(ctx context.Context, conn N.Packe
 	if !loaded {
 		return os.ErrInvalid
 	}
-	user := h.users[userIndex].Name
+	user := h.Users[userIndex].Name
 	if user == "" {
 		user = F.ToString(userIndex)
 	} else {

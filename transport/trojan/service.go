@@ -71,6 +71,21 @@ func (s *Service[K]) AddUser(userList []K, passwordList []string) error {
 	return nil
 }
 
+func (s *Service[K]) DeleteUser(userList []K, passwordList []string) error {
+	for i, user := range userList {
+		if _, loaded := s.users[user]; loaded {
+			return ErrUserExists
+		}
+		key := Key(passwordList[i])
+		if oldUser, loaded := s.keys[key]; loaded {
+			return E.Extend(ErrUserExists, "password used by ", oldUser)
+		}
+		delete(s.users, user)
+		delete(s.keys, key)
+	}
+	return nil
+}
+
 func (s *Service[K]) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {
 	var key [KeyLength]byte
 	n, err := conn.Read(key[:])
