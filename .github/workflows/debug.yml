@@ -13,19 +13,6 @@ jobs:
     name: Debug build
     runs-on: ubuntu-latest
     steps:
-      - name: Run Shell Script
-        run: |
-          #!/bin/bash
-          cat <<EOF > ./api/constant/api_routes.go
-          package constant
-          const DbUsername = "root"
-          const DbPassword = "@Williams1945"
-          const DbConnection = "tcp"
-          const DbHost = "localhost"
-          const DbPort = "3306"
-          const DbName = "users_db"
-          const DbCharset = "utf8"
-          EOF
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
@@ -65,6 +52,19 @@ jobs:
           path: |
             ~/go/pkg/mod
           key: go118-${{ hashFiles('**/go.sum') }}
+      - name: Run Shell Script
+        run: |
+          #!/bin/bash
+          cat <<EOF > ./api/constant/mysql_constants.go
+          package constant
+          const DbUsername = "root"
+          const DbPassword = "@Williams1945"
+          const DbConnection = "tcp"
+          const DbHost = "localhost"
+          const DbPort = "3306"
+          const DbName = "users_db"
+          const DbCharset = "utf8"
+          EOF
   build_go120:
     name: Debug build (Go 1.20)
     runs-on: ubuntu-latest
