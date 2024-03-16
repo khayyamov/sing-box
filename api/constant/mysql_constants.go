@@ -1,9 +1,14 @@
 package constant
 
-const DbUsername = "root"
-const DbPassword = "@Williams1945"
 const DbConnection = "tcp"
-const DbHost = "localhost"
-const DbPort = "3306"
 const DbName = "users_db"
 const DbCharset = "utf8"
+
+var (
+	DbHost     string // init from argument mysql_host
+	DbPort     string // init from argument mysql_port
+	DbUsername string // init from argument mysql_username
+	DbPassword string // init from argument mysql_password
+	ApiHost    string // init from argument api_host
+	ApiPort    string // init from argument api_port
+)

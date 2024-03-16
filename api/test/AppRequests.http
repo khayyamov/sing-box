@@ -1,21 +1,19 @@
-### /api/singbox/addUserToVmess
-POST {{host}}/api/singbox/addUserToVmess
+### /api/singbox/addUserToVless
+POST {{host}}/api/singbox/addUserToVless
 Content-Type: application/json
 
 {
-    "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
-    "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
-    "alterId": 2
+  "uuid": "test",
+  "name": "test"
 }
 
-### /api/singbox/deleteUserToVmess
-POST {{host}}/api/singbox/deleteUserToVmess
+### /api/singbox/deleteUserToVless
+POST {{host}}/api/singbox/deleteUserToVless
 Content-Type: application/json
 
 {
-  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
-  "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
-  "alterId": 2
+  "uuid": "21234sadg521",
+  "name": "vmesaasgss"
 }
 
 ### /api/singbox/addUserToVlessArray
@@ -45,22 +43,24 @@ Content-Type: application/json
   }
 ]
 
-### /api/singbox/addUserToVless
-POST {{host}}/api/singbox/addUserToVless
+### /api/singbox/addUserToVmess
+POST {{host}}/api/singbox/addUserToVmess
 Content-Type: application/json
 
 {
-  "uuid": "21234sadg521",
-  "name": "vmesaasgss"
+  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "alterId": 2
 }
 
-### /api/singbox/deleteUserToVless
-POST {{host}}/api/singbox/deleteUserToVless
+### /api/singbox/deleteUserToVmess
+POST {{host}}/api/singbox/deleteUserToVmess
 Content-Type: application/json
 
 {
-  "uuid": "21234sadg521",
-  "name": "vmesaasgss"
+  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "name": "0064e030-0209-4aa5-88de-a3659e5c587q",
+  "alterId": 2
 }
 
 ### /api/singbox/addUserToTrojan

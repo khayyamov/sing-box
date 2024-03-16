@@ -42,7 +42,7 @@ func HandleApiRoutes() {
 		r.POST(constant.RouteAddUserToShadowsocksMulti, AddUserToShadowsocksMulti)
 		r.POST(constant.RouteDeleteUserToShadowsocksMulti, DeleteUserToShadowsocksMulti)
 
-		err := r.Run(":3000")
+		err := r.Run(constant.ApiHost + ":" + constant.ApiPort)
 		if err != nil {
 			panic("Api exception:" + err.Error())
 		}

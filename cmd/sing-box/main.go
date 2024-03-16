@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/constant"
 	"os"
 	"os/user"
 	"strconv"
@@ -28,10 +29,19 @@ var mainCommand = &cobra.Command{
 }
 
 func init() {
+
+	mainCommand.PersistentFlags().StringVarP(&constant.ApiHost, "api-host", "", "", "set api host")
+	mainCommand.PersistentFlags().StringVarP(&constant.ApiPort, "api-port", "", "", "set api port")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbHost, "mysql-host", "", "", "set mysql host")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbPort, "mysql-port", "", "", "set mysql port")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbUsername, "mysql-user", "", "", "set mysql username")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbPassword, "mysql-pass", "", "", "set mysql password")
+
 	mainCommand.PersistentFlags().StringArrayVarP(&configPaths, "config", "c", nil, "set configuration file path")
 	mainCommand.PersistentFlags().StringArrayVarP(&configDirectories, "config-directory", "C", nil, "set configuration directory path")
 	mainCommand.PersistentFlags().StringVarP(&workingDir, "directory", "D", "", "set working directory")
 	mainCommand.PersistentFlags().BoolVarP(&disableColor, "disable-color", "", false, "disable color output")
+
 }
 
 func main() {
