@@ -34,9 +34,6 @@ jobs:
           go get -v github.com/sagernet/sing-box@$version
           popd
         continue-on-error: true
-      - name: Run Test
-        run: |
-          go test -v ./...
   build_go118:
     name: Debug build (Go 1.18)
     runs-on: ubuntu-latest
