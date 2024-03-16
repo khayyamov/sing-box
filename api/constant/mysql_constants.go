@@ -1,7 +1,7 @@
 package constant
 
 const DbUsername = "root"
-const DbPassword = "@Gold1380"
+const DbPassword = "@Williams1945"
 const DbConnection = "tcp"
 const DbHost = "localhost"
 const DbPort = "3306"
