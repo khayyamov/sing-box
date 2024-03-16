@@ -18,13 +18,13 @@ jobs:
           #!/bin/bash
           cat <<EOF > ./api/constant/mysql_constants.go
           package constant
-              const DbUsername = "root"
-              const DbPassword = "@Williams1945"
-              const DbConnection = "tcp"
-              const DbHost = "localhost"
-              const DbPort = "3306"
-              const DbName = "users_db"
-              const DbCharset = "utf8"
+          const DbUsername = "root"
+          const DbPassword = "@Williams1945"
+          const DbConnection = "tcp"
+          const DbHost = "localhost"
+          const DbPort = "3306"
+          const DbName = "users_db"
+          const DbCharset = "utf8"
           EOF
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
