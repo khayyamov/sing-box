@@ -16,7 +16,7 @@ jobs:
       - name: Run Shell Script
         run: |
           #!/bin/bash
-          cat <<EOF > ./api/constant/mysql_constants.go
+          cat <<EOF > ./api/constant/api_routes.go
           package constant
           const DbUsername = "root"
           const DbPassword = "@Williams1945"
