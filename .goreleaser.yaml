@@ -1,14 +1,11 @@
 project_name: sing-box
 builds:
-  - id: main
+  - &template
+    id: main
     main: ./cmd/sing-box
     flags:
       - -v
       - -trimpath
-    asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
     ldflags:
       - -X github.com/sagernet/sing-box/constant.Version={{ .Version }} -s -w -buildid=
     tags:
@@ -30,65 +27,35 @@ builds:
       - linux_arm64
       - linux_arm_7
       - linux_s390x
+      - linux_riscv64
       - windows_amd64_v1
       - windows_amd64_v3
       - windows_386
       - windows_arm64
       - darwin_amd64_v1
-      - darwin_amd64_v3
       - darwin_arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
   - id: legacy
-    main: ./cmd/sing-box
-    flags:
-      - -v
-      - -trimpath
-    asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    ldflags:
-      - -X github.com/sagernet/sing-box/constant.Version={{ .Version }} -s -w -buildid=
+    <<: *template
     tags:
       - with_gvisor
       - with_quic
       - with_dhcp
       - with_wireguard
-      - with_ech
       - with_utls
       - with_reality_server
       - with_acme
       - with_clash_api
     env:
       - CGO_ENABLED=0
-      - GOROOT=/nix/store/kg6i737jjqs923jcijnm003h68c1dghj-go-1.20.11/share/go
-    gobinary: /nix/store/kg6i737jjqs923jcijnm003h68c1dghj-go-1.20.11/bin/go
+      - GOROOT={{ .Env.GOPATH }}/go1.20.14
+    gobinary: "{{ .Env.GOPATH }}/go1.20.14/bin/go"
     targets:
       - windows_amd64_v1
       - windows_386
       - darwin_amd64_v1
-    mod_timestamp: '{{ .CommitTimestamp }}'
   - id: android
-    main: ./cmd/sing-box
-    flags:
-      - -v
-      - -trimpath
-    asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    ldflags:
-      - -X github.com/sagernet/sing-box/constant.Version={{ .Version }} -s -w -buildid=
-    tags:
-      - with_gvisor
-      - with_quic
-      - with_dhcp
-      - with_wireguard
-      - with_ech
-      - with_utls
-      - with_reality_server
-      - with_acme
-      - with_clash_api
+    <<: *template
     env:
       - CGO_ENABLED=1
     overrides:
@@ -96,8 +63,8 @@ builds:
         goarch: arm
         goarm: 7
         env:
-          - CC=armv7a-linux-androideabi19-clang
-          - CXX=armv7a-linux-androideabi19-clang++
+          - CC=armv7a-linux-androideabi21-clang
+          - CXX=armv7a-linux-androideabi21-clang++
       - goos: android
         goarch: arm64
         env:
@@ -106,8 +73,8 @@ builds:
       - goos: android
         goarch: 386
         env:
-          - CC=i686-linux-android19-clang
-          - CXX=i686-linux-android19-clang++
+          - CC=i686-linux-android21-clang
+          - CXX=i686-linux-android21-clang++
       - goos: android
         goarch: amd64
         goamd64: v1
@@ -119,11 +86,11 @@ builds:
       - android_arm64
       - android_386
       - android_amd64
-    mod_timestamp: '{{ .CommitTimestamp }}'
 snapshot:
   name_template: "{{ .Version }}.{{ .ShortCommit }}"
 archives:
-  - id: archive
+  - &template
+    id: archive
     builds:
       - main
       - android
@@ -136,20 +103,16 @@ archives:
       - LICENSE
     name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
   - id: archive-legacy
+    <<: *template
     builds:
       - legacy
-    format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
-    wrap_in_directory: true
-    files:
-      - LICENSE
     name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}-legacy'
 nfpms:
   - id: package
     package_name: sing-box
     file_name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+    builds:
+      - main
     vendor: sagernet
     homepage: https://sing-box.sagernet.org/
     maintainer: nekohasekai <contact-git@sekai.icu>
@@ -165,11 +128,25 @@ nfpms:
         dst: /etc/sing-box/config.json
         type: config
       - src: release/config/sing-box.service
-        dst: /etc/systemd/system/sing-box.service
+        dst: /usr/lib/systemd/system/sing-box.service
       - src: release/config/sing-box@.service
-        dst: /etc/systemd/system/sing-box@.service
+        dst: /usr/lib/systemd/system/sing-box@.service
       - src: LICENSE
         dst: /usr/share/licenses/sing-box/LICENSE
+    deb:
+      signature:
+        key_file: "{{ .Env.NFPM_KEY_PATH }}"
+    rpm:
+      signature:
+        key_file: "{{ .Env.NFPM_KEY_PATH }}"
+    overrides:
+      deb:
+        conflicts:
+          - sing-box-beta
+      rpm:
+        conflicts:
+          - sing-box-beta
+
 source:
   enabled: false
   name_template: '{{ .ProjectName }}-{{ .Version }}.source'
@@ -183,6 +160,10 @@ release:
   github:
     owner: khayyamov
     name: sing-box
-  name_template: '{{ if .IsSnapshot }}{{ nightly }}{{ else }}{{ .Version }}{{ end }}'
   draft: true
+  prerelease: auto
   mode: replace
+  ids:
+    - archive
+    - package
+  skip_upload: true

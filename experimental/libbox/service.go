@@ -3,14 +3,17 @@ package libbox
 import (
 	"context"
 	"net/netip"
+	"os"
 	"runtime"
 	runtimeDebug "runtime/debug"
 	"syscall"
+	"time"
 
 	"github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/process"
 	"github.com/sagernet/sing-box/common/urltest"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/internal/procfs"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
@@ -32,6 +35,8 @@ type BoxService struct {
 	instance              *box.Box
 	pauseManager          pause.Manager
 	urlTestHistoryStorage *urltest.HistoryStorage
+
+	servicePauseFields
 }
 
 func NewService(configContent string, platformInterface PlatformInterface) (*BoxService, error) {
@@ -70,19 +75,23 @@ func (s *BoxService) Start() error {
 }
 
 func (s *BoxService) Close() error {
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-done:
+			return
+		case <-time.After(C.DefaultStopFatalTimeout):
+			os.Exit(1)
+		}
+	}()
 	s.cancel()
 	s.urlTestHistoryStorage.Close()
 	return s.instance.Close()
 }
 
-func (s *BoxService) Sleep() {
-	s.pauseManager.DevicePause()
-	_ = s.instance.Router().ResetNetwork()
-}
-
-func (s *BoxService) Wake() {
-	s.pauseManager.DeviceWake()
-	_ = s.instance.Router().ResetNetwork()
+func (s *BoxService) NeedWIFIState() bool {
+	return s.instance.Router().NeedWIFIState()
 }
 
 var (
