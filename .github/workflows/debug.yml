@@ -2,14 +2,6 @@ name: Debug build
 
 on:
   push:
-    branches:
-      - stable-next
-      - main-next
-      - dev-next
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '!.github/workflows/debug.yml'
   pull_request:
     branches:
       - stable-next
@@ -205,16 +197,59 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       CGO_ENABLED: 0
-      TAGS: with_clash_api,with_quic
+      TAGS: with_gvisor,with_dhcp,with_wireguard,with_reality_server,with_clash_api,with_quic,with_ech,with_utls
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           fetch-depth: 0
+      - name: Get latest go version
+        id: version
+        run: |
+          echo go_version=$(curl -s https://raw.githubusercontent.com/actions/go-versions/main/versions-manifest.json | grep -oE '"version": "[0-9]{1}.[0-9]{1,}(.[0-9]{1,})?"' | head -1 | cut -d':' -f2 | sed 's/ //g; s/"//g') >> $GITHUB_OUTPUT
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.21
+          go-version: ^1.22
+
+      - name: Run Shell Script
+        run: |
+          #!/bin/bash
+          cat <<EOF > ./constant/constants.go
+          package constant
+
+          var (
+              ENCRYPTED_CONFIG = false
+              ENCRYPT_KEY      = "${{ vars.ENCRYPT_KEY }}"
+              ENCRYPT_KEY_IV   = "${{ vars.ENCRYPT_KEY_IV }}"
+          )
+          EOF
+
       - name: Build
         id: build
-        run: make
+        run: make build
+
+
+      - name: Rename build file unix
+        if: matrix.goos != 'windows'
+        run: mv sing-box sing-box-${{ matrix.name }}
+      - name: Upload binaries to release
+        if: matrix.goos != 'windows'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box-${{ matrix.name }}
+          tag: ${{ github.ref }}
+          file_glob: true
+
+      - name: Rename build file windows
+        if: matrix.goos == 'windows'
+        run: mv sing-box.exe sing-box-${{ matrix.name }}.exe
+      - name: Upload binaries to release
+        if: matrix.goos == 'windows'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box-${{ matrix.name }}.exe
+          tag: ${{ github.ref }}
+          file_glob: true
