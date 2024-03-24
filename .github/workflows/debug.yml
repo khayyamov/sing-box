@@ -215,6 +215,14 @@ jobs:
       - name: Run Shell Script
         run: |
           #!/bin/bash
+          
+          
+          whereis go
+          go version
+          #mv request.txt /opt/hostedtoolcache/go/1.22.1/x64/src/net/http/request.go
+          #cat /opt/hostedtoolcache/go/1.22.1/x64/src/net/http/request.go
+        
+          
           cat <<EOF > ./constant/constants.go
           package constant
 
