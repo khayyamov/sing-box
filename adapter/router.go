@@ -33,6 +33,8 @@ type Router interface {
 
 	RuleSet(tag string) (RuleSet, bool)
 
+	NeedWIFIState() bool
+
 	Exchange(ctx context.Context, message *mdns.Msg) (*mdns.Msg, error)
 	Lookup(ctx context.Context, domain string, strategy dns.DomainStrategy) ([]netip.Addr, error)
 	LookupDefault(ctx context.Context, domain string) ([]netip.Addr, error)
@@ -69,6 +71,7 @@ func RouterFromContext(ctx context.Context) Router {
 
 type HeadlessRule interface {
 	Match(metadata *InboundContext) bool
+	String() string
 }
 
 type Rule interface {
@@ -77,13 +80,15 @@ type Rule interface {
 	Type() string
 	UpdateGeosite() error
 	Outbound() string
-	String() string
 }
 
 type DNSRule interface {
 	Rule
 	DisableCache() bool
 	RewriteTTL() *uint32
+	ClientSubnet() *netip.Addr
+	WithAddressLimit() bool
+	MatchAddressLimit(metadata *InboundContext) bool
 }
 
 type RuleSet interface {
@@ -97,6 +102,7 @@ type RuleSet interface {
 type RuleSetMetadata struct {
 	ContainsProcessRule bool
 	ContainsWIFIRule    bool
+	ContainsIPCIDRRule  bool
 }
 
 type RuleSetStartContext interface {
