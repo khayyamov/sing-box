@@ -80,7 +80,7 @@ type Router struct {
 	transportDomainStrategy            map[dns.Transport]dns.DomainStrategy
 	dnsReverseMapping                  *DNSReverseMapping
 	fakeIPStore                        adapter.FakeIPStore
-	interfaceFinder                    myInterfaceFinder
+	interfaceFinder                    *control.DefaultInterfaceFinder
 	autoDetectInterface                bool
 	defaultInterface                   string
 	defaultMark                        int
@@ -126,6 +126,7 @@ func NewRouter(
 		dnsIndependentCache:   dnsOptions.IndependentCache,
 		defaultDetour:         options.Final,
 		defaultDomainStrategy: dns.DomainStrategy(dnsOptions.Strategy),
+		interfaceFinder:       control.NewDefaultInterfaceFinder(),
 		autoDetectInterface:   options.AutoDetectInterface,
 		defaultInterface:      options.DefaultInterface,
 		defaultMark:           options.DefaultMark,
@@ -335,7 +336,7 @@ func NewRouter(
 			}
 			router.networkMonitor = networkMonitor
 			networkMonitor.RegisterCallback(func() {
-				_ = router.interfaceFinder.update()
+				_ = router.interfaceFinder.Update()
 			})
 			interfaceMonitor, err := tun.NewDefaultInterfaceMonitor(router.networkMonitor, router.logger, tun.DefaultInterfaceMonitorOptions{
 				OverrideAndroidVPN:    options.OverrideAndroidVPN,
@@ -470,7 +471,7 @@ func (r *Router) Outbounds() []adapter.Outbound {
 }
 
 func (r *Router) PreStart() error {
-	monitor := taskmonitor.New(r.logger, C.DefaultStartTimeout)
+	monitor := taskmonitor.New(r.logger, C.StartTimeout)
 	if r.interfaceMonitor != nil {
 		monitor.Start("initialize interface monitor")
 		err := r.interfaceMonitor.Start()
@@ -499,7 +500,7 @@ func (r *Router) PreStart() error {
 }
 
 func (r *Router) Start() error {
-	monitor := taskmonitor.New(r.logger, C.DefaultStartTimeout)
+	monitor := taskmonitor.New(r.logger, C.StartTimeout)
 	if r.needGeoIPDatabase {
 		monitor.Start("initialize geoip database")
 		err := r.prepareGeoIPDatabase()
@@ -669,7 +670,7 @@ func (r *Router) Start() error {
 }
 
 func (r *Router) Close() error {
-	monitor := taskmonitor.New(r.logger, C.DefaultStopTimeout)
+	monitor := taskmonitor.New(r.logger, C.StopTimeout)
 	var err error
 	for i, rule := range r.rules {
 		monitor.Start("close rule[", i, "]")
@@ -1098,24 +1099,18 @@ func (r *Router) match0(ctx context.Context, metadata *adapter.InboundContext, d
 }
 
 func (r *Router) InterfaceFinder() control.InterfaceFinder {
-	return &r.interfaceFinder
+	return r.interfaceFinder
 }
 
 func (r *Router) UpdateInterfaces() error {
 	if r.platformInterface == nil || !r.platformInterface.UsePlatformInterfaceGetter() {
-		return r.interfaceFinder.update()
+		return r.interfaceFinder.Update()
 	} else {
 		interfaces, err := r.platformInterface.Interfaces()
 		if err != nil {
 			return err
 		}
-		r.interfaceFinder.updateInterfaces(common.Map(interfaces, func(it platform.NetworkInterface) net.Interface {
-			return net.Interface{
-				Name:  it.Name,
-				Index: it.Index,
-				MTU:   it.MTU,
-			}
-		}))
+		r.interfaceFinder.UpdateInterfaces(interfaces)
 		return nil
 	}
 }
