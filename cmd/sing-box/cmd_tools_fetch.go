@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing/common/bufio"
@@ -78,9 +80,16 @@ func fetchHTTP(parsedURL *url.URL) error {
 		return err
 	}
 	request.Header.Add("User-Agent", "curl/7.88.0")
+	start := time.Now()
 	response, err := httpClient.Do(request)
 	if err != nil {
+		log.Error("RealDelay:-1")
 		return err
+	} else {
+		if response.StatusCode != http.StatusNoContent {
+			log.Error("RealDelay:-1")
+		}
+		log.Info("RealDelay:" + strconv.FormatInt(time.Since(start).Milliseconds(), 10))
 	}
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
