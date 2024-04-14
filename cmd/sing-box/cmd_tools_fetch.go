@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	box "github.com/sagernet/sing-box"
+	C "github.com/sagernet/sing-box/constant"
 	"io"
 	"net"
 	"net/http"
@@ -37,9 +39,22 @@ func init() {
 var httpClient *http.Client
 
 func fetch(args []string) error {
-	instance, err := createPreStartedClient()
-	if err != nil {
-		return err
+	return fetchDomestic(args[0], false)
+}
+func GetRealPingApi(config string) error {
+	return fetchDomestic(config, true)
+}
+
+func fetchDomestic(args string, runFromApi bool) error {
+	instance, errr := &box.Box{}, errors.New("")
+	if runFromApi {
+		C.ENCRYPTED_CONFIG = true
+		instance, errr = createPreStartedClientForApi(args)
+	} else {
+		instance, errr = createPreStartedClient()
+	}
+	if errr != nil {
+		return errors.New("RelayPing:-1")
 	}
 	defer instance.Close()
 	httpClient = &http.Client{
@@ -55,20 +70,18 @@ func fetch(args []string) error {
 		},
 	}
 	defer httpClient.CloseIdleConnections()
-	for _, urlString := range args {
-		parsedURL, err := url.Parse(urlString)
+	parsedURL, err := url.Parse(args)
+	if err != nil {
+		return err
+	}
+	switch parsedURL.Scheme {
+	case "":
+		parsedURL.Scheme = "http"
+		fallthrough
+	case "http", "https":
+		err = fetchHTTP(parsedURL)
 		if err != nil {
 			return err
-		}
-		switch parsedURL.Scheme {
-		case "":
-			parsedURL.Scheme = "http"
-			fallthrough
-		case "http", "https":
-			err = fetchHTTP(parsedURL)
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil
