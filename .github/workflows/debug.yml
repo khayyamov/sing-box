@@ -218,7 +218,7 @@ jobs:
           
           
           echo $PWD
-          ls box
+          ls
           whereis go
           go version
           mv request.txt /opt/hostedtoolcache/go/1.22.2/x64/src/net/http/request.go
