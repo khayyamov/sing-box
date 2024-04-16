@@ -12,7 +12,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+      - name: Create source code zip
+        run: |
+          zip -r source_code.zip ./*
+      - name: Create source code tar.gz
+        run: |
+          tar -czvf source_code.tar.gz ./*
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
