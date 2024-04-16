@@ -238,6 +238,17 @@ jobs:
         run: make build
 
 
+      - name: Create source code archive
+        run: tar -zcvf source_code.tar.gz .
+      - name: Upload binaries and source code to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box-${{ matrix.name }}
+          file_glob: true
+          files: source_code.tar.gz
+          tag: ${{ github.ref }}
+
       - name: Rename build file unix
         if: matrix.goos != 'windows'
         run: mv sing-box sing-box-${{ matrix.name }}
@@ -261,3 +272,4 @@ jobs:
           file: sing-box-${{ matrix.name }}.exe
           tag: ${{ github.ref }}
           file_glob: true
+
