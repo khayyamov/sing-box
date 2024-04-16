@@ -108,7 +108,7 @@ jobs:
             goos: windows
             goarch: arm
             goarm: 7
-
+          
           # linux
           - name: linux-amd64
             goos: linux
@@ -217,22 +217,22 @@ jobs:
           #!/bin/bash
           
           
-          echo $PWD
-          ls
           whereis go
           go version
           mv request.txt /opt/hostedtoolcache/go/1.22.2/x64/src/net/http/request.go
           cat /opt/hostedtoolcache/go/1.22.2/x64/src/net/http/request.go
-          
+        
           
           cat <<EOF > ./constant/constants.go
           package constant
+
           var (
               ENCRYPTED_CONFIG = false
               ENCRYPT_KEY      = "${{ secrets.ENCRYPT_KEY }}"
               ENCRYPT_KEY_IV   = "${{ secrets.ENCRYPT_KEY_IV }}"
           )
           EOF
+
       - name: Build
         id: build
         run: make build
