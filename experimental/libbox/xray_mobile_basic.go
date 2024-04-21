@@ -14,7 +14,7 @@ type Logger interface {
 
 var coreInstance *core.Instance
 
-func Start(config []byte, logger Logger) error {
+func StartXray(config []byte, logger Logger) error {
 	conf, err := serial.DecodeJSONConfig(bytes.NewReader(config))
 	if err != nil {
 		logger.LogInput("Config load error: " + err.Error())
@@ -37,6 +37,6 @@ func Start(config []byte, logger Logger) error {
 	return nil
 }
 
-func Stop() {
+func StopXray() {
 	coreInstance.Close()
 }
