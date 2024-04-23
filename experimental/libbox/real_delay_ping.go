@@ -25,7 +25,7 @@ import (
 
 var httpClientt *http.Client
 
-func GetRealDelayPing(config string) (error, int64) {
+func GetRealDelayPing(config string) int64 {
 	return fetchDomestic(config)
 }
 
@@ -136,14 +136,14 @@ func createDialer(instance *box.Box, network string, outboundTag string) (N.Dial
 	}
 }
 
-func fetchDomestic(args string) (error, int64) {
+func fetchDomestic(args string) int64 {
 	instance, errr := &box.Box{}, errors.New("")
 
 	instance, errr = createPreStartedClientForApi(args)
 
 	if errr != nil {
 		log.Error("RealDelay:-1")
-		return errors.New("RelayPing:-1"), -1
+		return -1
 	}
 	defer instance.Close()
 	httpClientt = &http.Client{
@@ -162,7 +162,7 @@ func fetchDomestic(args string) (error, int64) {
 	parsedURL, err := url.Parse("https://www.google.com/generate_204")
 	if err != nil {
 		log.Error("RealDelay:-1")
-		return err, -1
+		return -1
 	}
 	switch parsedURL.Scheme {
 	case "":
@@ -171,32 +171,32 @@ func fetchDomestic(args string) (error, int64) {
 	case "http", "https":
 		return fetchHTTP(parsedURL)
 	}
-	return nil, -1
+	return -1
 }
 
-func fetchHTTP(parsedURL *url.URL) (error, int64) {
+func fetchHTTP(parsedURL *url.URL) int64 {
 	request, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
-		return err, -1
+		return -1
 	}
 	request.Header.Add("User-Agent", "curl/7.88.0")
 	start := time.Now()
 	response, err := httpClientt.Do(request)
 	if err != nil {
 		log.Error("RealDelay:-1")
-		return err, -1
+		return -1
 	} else {
 		if response.StatusCode != http.StatusNoContent {
 			log.Error("RealDelay:-1")
 		}
 		pingTime := time.Since(start).Milliseconds()
 		log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
-		return nil, pingTime
+		return pingTime
 	}
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
 	if errors.Is(err, io.EOF) {
-		return nil, -1
+		return -1
 	}
-	return err, -1
+	return -1
 }
