@@ -25,9 +25,9 @@ import (
 
 var httpClientt *http.Client
 
-func GetRealDelayPing(config string) int64 {
+func GetRealDelayPing(config string, platformInterface PlatformInterface) int64 {
 	C.ENCRYPTED_CONFIG = true
-	return fetchDomestic(config)
+	return fetchDomestic(config, platformInterface)
 }
 
 type OptionsEntry struct {
@@ -137,10 +137,9 @@ func createDialer(instance *box.Box, network string, outboundTag string) (N.Dial
 	}
 }
 
-func fetchDomestic(args string) int64 {
-	instance, errr := &box.Box{}, errors.New("")
+func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 
-	instance, errr = createPreStartedClientForApi(args)
+	instance, errr := NewService(args, platformInterface)
 
 	if errr != nil {
 		log.Error("RealDelay:-1")
@@ -150,7 +149,7 @@ func fetchDomestic(args string) int64 {
 	httpClientt = &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				dialer, err := createDialer(instance, network, "")
+				dialer, err := createDialer(instance.instance, network, "")
 				if err != nil {
 					return nil, err
 				}
@@ -183,6 +182,11 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	request.Header.Add("User-Agent", "curl/7.88.0")
 	start := time.Now()
 	response, err := httpClientt.Do(request)
+	defer response.Body.Close()
+	_, err = bufio.Copy(os.Stdout, response.Body)
+	if errors.Is(err, io.EOF) {
+		return -1
+	}
 	if err != nil {
 		log.Error("RealDelay:-1")
 		return -1
@@ -194,10 +198,4 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 		log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
 		return pingTime
 	}
-	defer response.Body.Close()
-	_, err = bufio.Copy(os.Stdout, response.Body)
-	if errors.Is(err, io.EOF) {
-		return -1
-	}
-	return -1
 }
