@@ -26,6 +26,7 @@ import (
 var httpClientt *http.Client
 
 func GetRealDelayPing(config string) int64 {
+	C.ENCRYPTED_CONFIG = true
 	return fetchDomestic(config)
 }
 
