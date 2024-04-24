@@ -143,6 +143,7 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 
 	if errr != nil {
 		log.Error("RealDelay:-1")
+		log.Error(errr.Error())
 		return -1
 	}
 	defer instance.Close()
@@ -151,6 +152,7 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				dialer, err := createDialer(instance.instance, network, "")
 				if err != nil {
+					log.Error(err.Error())
 					return nil, err
 				}
 				return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
@@ -161,6 +163,7 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 	defer httpClientt.CloseIdleConnections()
 	parsedURL, err := url.Parse("https://www.google.com/generate_204")
 	if err != nil {
+		log.Error(err.Error())
 		log.Error("RealDelay:-1")
 		return -1
 	}
@@ -177,6 +180,7 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 func fetchHTTP(parsedURL *url.URL) int64 {
 	request, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
+		log.Error(err.Error())
 		return -1
 	}
 	request.Header.Add("User-Agent", "curl/7.88.0")
@@ -185,9 +189,11 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
 	if errors.Is(err, io.EOF) {
+		log.Error(err.Error())
 		return -1
 	}
 	if err != nil {
+		log.Error(err.Error())
 		log.Error("RealDelay:-1")
 		return -1
 	} else {
