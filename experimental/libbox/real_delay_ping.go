@@ -148,7 +148,9 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 	}
 	defer instance.Close()
 	httpClientt = &http.Client{
+		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
+			TLSHandshakeTimeout: 5 * time.Second,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				dialer, err := createDialer(instance.instance, network, "")
 				if err != nil {
