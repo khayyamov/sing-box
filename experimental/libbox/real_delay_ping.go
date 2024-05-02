@@ -27,7 +27,7 @@ var httpClientt *http.Client
 
 func GetRealDelayPing(config string, platformInterface PlatformInterface) int64 {
 	C.ENCRYPTED_CONFIG = true
-	return fetchDomestic(config, platformInterface)
+	return fetchDomesticPlatformInterface(config, platformInterface)
 }
 
 type OptionsEntry struct {
@@ -137,7 +137,7 @@ func createDialer(instance *box.Box, network string, outboundTag string) (N.Dial
 	}
 }
 
-func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
+func fetchDomesticPlatformInterface(args string, platformInterface PlatformInterface) int64 {
 
 	instance, errr := NewService(args, platformInterface)
 
@@ -147,6 +147,10 @@ func fetchDomestic(args string, platformInterface PlatformInterface) int64 {
 		return -1
 	}
 	defer instance.Close()
+	return fetchDomestic(instance)
+}
+func fetchDomestic(instance *BoxService) int64 {
+
 	httpClientt = &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
