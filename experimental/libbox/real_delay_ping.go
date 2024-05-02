@@ -152,21 +152,25 @@ func fetchDomesticPlatformInterface(args string, platformInterface PlatformInter
 func fetchDomestic(instance *BoxService) int64 {
 	if instance != nil {
 		if instance.instance != nil {
+			log.Info("kilo 1")
 			httpClientt = &http.Client{
 				Timeout: 5 * time.Second,
 				Transport: &http.Transport{
 					TLSHandshakeTimeout: 5 * time.Second,
 					DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+						log.Info("kilo 2")
 						dialer, err := createDialer(instance.instance, network, "")
 						if err != nil {
 							log.Error(err.Error())
 							return nil, err
 						}
+						log.Info("kilo 3")
 						return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
 					},
 					ForceAttemptHTTP2: true,
 				},
 			}
+			log.Info("kilo 4")
 			defer httpClientt.CloseIdleConnections()
 			parsedURL, err := url.Parse("https://www.google.com/generate_204")
 			if err != nil {
@@ -191,16 +195,20 @@ func fetchDomestic(instance *BoxService) int64 {
 }
 
 func fetchHTTP(parsedURL *url.URL) int64 {
+	log.Info("kilo 5")
 	request, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		log.Error(err.Error())
 		return -1
 	}
+	log.Info("kilo 6")
 	request.Header.Add("User-Agent", "curl/7.88.0")
 	start := time.Now()
 	response, err := httpClientt.Do(request)
+	log.Info("kilo 7")
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
+	log.Info("kilo 8")
 	if errors.Is(err, io.EOF) {
 		log.Error(err.Error())
 		return -1
