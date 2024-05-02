@@ -2,7 +2,28 @@
 icon: material/alert-decagram
 ---
 
-#### 1.9.0-rc.9
+#### 1.9.0-rc.14
+
+* Fixes and improvements
+
+#### 1.9.0-rc.13
+
+* Update Hysteria protocol
+* Update quic-go to v0.43.0
+* Update gVisor to 20240422.0
+* Fixes and improvements
+
+#### 1.8.12
+
+* Now we have official APT and DNF repositories **1**
+* Fix packet MTU for QUIC protocols
+* Fixes and improvements
+
+**1**:
+
+Including stable and beta versions, see https://sing-box.sagernet.org/installation/package-manager/
+
+#### 1.9.0-rc.11
 
 * Fixes and improvements
 
