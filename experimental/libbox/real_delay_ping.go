@@ -150,37 +150,44 @@ func fetchDomesticPlatformInterface(args string, platformInterface PlatformInter
 	return fetchDomestic(instance)
 }
 func fetchDomestic(instance *BoxService) int64 {
-
-	httpClientt = &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			TLSHandshakeTimeout: 5 * time.Second,
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				dialer, err := createDialer(instance.instance, network, "")
-				if err != nil {
-					log.Error(err.Error())
-					return nil, err
-				}
-				return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
-			},
-			ForceAttemptHTTP2: true,
-		},
-	}
-	defer httpClientt.CloseIdleConnections()
-	parsedURL, err := url.Parse("https://www.google.com/generate_204")
-	if err != nil {
-		log.Error(err.Error())
-		log.Error("RealDelay:-1")
+	if instance != nil {
+		if instance.instance != nil {
+			httpClientt = &http.Client{
+				Timeout: 5 * time.Second,
+				Transport: &http.Transport{
+					TLSHandshakeTimeout: 5 * time.Second,
+					DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+						dialer, err := createDialer(instance.instance, network, "")
+						if err != nil {
+							log.Error(err.Error())
+							return nil, err
+						}
+						return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
+					},
+					ForceAttemptHTTP2: true,
+				},
+			}
+			defer httpClientt.CloseIdleConnections()
+			parsedURL, err := url.Parse("https://www.google.com/generate_204")
+			if err != nil {
+				log.Error(err.Error())
+				log.Error("RealDelay:-1")
+				return -1
+			}
+			switch parsedURL.Scheme {
+			case "":
+				parsedURL.Scheme = "http"
+				fallthrough
+			case "http", "https":
+				return fetchHTTP(parsedURL)
+			}
+			return -1
+		} else {
+			return -1
+		}
+	} else {
 		return -1
 	}
-	switch parsedURL.Scheme {
-	case "":
-		parsedURL.Scheme = "http"
-		fallthrough
-	case "http", "https":
-		return fetchHTTP(parsedURL)
-	}
-	return -1
 }
 
 func fetchHTTP(parsedURL *url.URL) int64 {
