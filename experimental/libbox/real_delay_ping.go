@@ -214,6 +214,10 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	response, err := httpClientt.Do(request)
 	log.Info("kilo 7")
 	fmt.Println("kilo 7")
+
+	byteArr, _ := json.Marshal(response)
+	fmt.Println("FullResponse: " + string(byteArr))
+
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
 	log.Info("kilo 8")
