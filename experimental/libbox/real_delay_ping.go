@@ -217,6 +217,7 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	defer response.Body.Close()
 	_, err = bufio.Copy(os.Stdout, response.Body)
 	log.Info("kilo 8")
+	fmt.Println("kilo 8")
 	if errors.Is(err, io.EOF) {
 		log.Error(err.Error())
 		return -1
@@ -226,6 +227,8 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 		log.Error("RealDelay:-1")
 		return -1
 	} else {
+		log.Info("kilo 9")
+		fmt.Println("kilo 9")
 		if response.StatusCode != http.StatusNoContent {
 			log.Error("RealDelay:-1")
 		}
