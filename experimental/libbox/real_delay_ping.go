@@ -216,28 +216,34 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	fmt.Println("kilo 7")
 
 	byteArr, _ := json.Marshal(response)
-	fmt.Println("FullResponse: " + string(byteArr))
 
-	defer response.Body.Close()
-	_, err = bufio.Copy(os.Stdout, response.Body)
-	log.Info("kilo 8")
-	fmt.Println("kilo 8")
-	if errors.Is(err, io.EOF) {
-		log.Error(err.Error())
-		return -1
-	}
-	if err != nil {
+	if byteArr != nil {
+		defer response.Body.Close()
+		_, err = bufio.Copy(os.Stdout, response.Body)
+		log.Info("kilo 8")
+		fmt.Println("kilo 8")
+		if errors.Is(err, io.EOF) {
+			log.Error(err.Error())
+			return -1
+		}
+		if err != nil {
+			log.Error(err.Error())
+			log.Error("RealDelay:-1")
+			return -1
+		} else {
+			log.Info("kilo 9")
+			fmt.Println("kilo 9")
+			if response.StatusCode != http.StatusNoContent {
+				log.Error("RealDelay:-1")
+			}
+			pingTime := time.Since(start).Milliseconds()
+			log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
+			return pingTime
+		}
+	} else {
 		log.Error(err.Error())
 		log.Error("RealDelay:-1")
 		return -1
-	} else {
-		log.Info("kilo 9")
-		fmt.Println("kilo 9")
-		if response.StatusCode != http.StatusNoContent {
-			log.Error("RealDelay:-1")
-		}
-		pingTime := time.Since(start).Milliseconds()
-		log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
-		return pingTime
 	}
+
 }
