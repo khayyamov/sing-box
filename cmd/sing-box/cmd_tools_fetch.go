@@ -54,7 +54,7 @@ func fetchDomestic(args string, runFromApi bool) error {
 		instance, errr = createPreStartedClient()
 	}
 	if errr != nil {
-		return errors.New("RelayPing:-1")
+		return errors.New("RealPing:-1")
 	}
 	defer instance.Close()
 	httpClient = &http.Client{
