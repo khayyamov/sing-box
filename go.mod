@@ -8,6 +8,8 @@ replace github.com/Psiphon-Labs/psiphon-tunnel-core => github.com/bepass-org/psi
 
 replace github.com/eycorsican/go-tun2socks => github.com/trojan-gfw/go-tun2socks v1.16.3-0.20210702214000-083d49176e05
 
+replace gvisor.dev/gvisor v0.0.0-20240313225113-67a078058255 => gvisor.dev/gvisor v0.0.0-20231202080848-1f7806d17489
+
 require (
 	berty.tech/go-libtor v1.0.385
 	filippo.io/bigmod v0.0.1 // indirect
@@ -134,7 +136,6 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
-	gvisor.dev/gvisor v0.0.0-20240313225113-67a078058255 // indirect
 	howett.net/plist v1.0.1
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
@@ -166,4 +167,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gvisor.dev/gvisor v0.0.0-20240313225113-67a078058255 // indirect
 )
