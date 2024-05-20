@@ -1,9 +1,10 @@
-package tun2socks
+package libbox
 
 import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/sagernet/sing-box/experimental/libbox/lwip"
 	"io"
 	"log/slog"
 	"net/netip"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"tun2socks/lwip"
 
 	"github.com/bepass-org/warp-plus/app"
 	"github.com/bepass-org/warp-plus/wiresocks"

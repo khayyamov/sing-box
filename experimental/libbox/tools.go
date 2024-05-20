@@ -1,7 +1,7 @@
 //go:build tools
 // +build tools
 
-package tun2socks
+package libbox
 
 import (
 	_ "golang.org/x/mobile/bind"
