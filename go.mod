@@ -24,7 +24,7 @@ require (
 	github.com/bifurcation/mint v0.0.0-20180306135233-198357931e61 // indirect
 	github.com/caddyserver/certmagic v0.20.0
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9 // indirect
-	github.com/cloudflare/circl v1.3.7
+	github.com/cloudflare/circl v1.3.8
 	github.com/cognusion/go-cache-lru v0.0.0-20170419142635-f73e2280ecea // indirect
 	github.com/cretz/bine v0.2.0
 	github.com/dchest/siphash v1.2.3 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/refraction-networking/ed25519 v0.1.2 // indirect
 	github.com/refraction-networking/gotapdance v1.7.10 // indirect
 	github.com/refraction-networking/obfs4 v0.1.2 // indirect
-	github.com/refraction-networking/utls v1.6.3 // indirect
+	github.com/refraction-networking/utls v1.6.4 // indirect
 	github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a
 	github.com/sagernet/cloudflare-tls v0.0.0-20231208171750-a4483c1b7cd1
 	github.com/sagernet/gomobile v0.1.3
@@ -105,7 +105,7 @@ require (
 	github.com/v2pro/plz v0.0.0-20221028024117-e5f9aec5b631 // indirect
 	github.com/wader/filtertransport v0.0.0-20200316221534-bdd9e61eee78 // indirect
 	github.com/xjasonlyu/tun2socks/v2 v2.5.2
-	github.com/xtls/xray-core v1.8.10
+	github.com/xtls/xray-core v1.8.11
 	gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib v1.5.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
@@ -132,6 +132,7 @@ require (
 //replace github.com/sagernet/sing => ../sing
 
 require (
+	github.com/OmarTariq612/goech v0.0.0-20240405204721-8e2e1dafd3a0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
@@ -164,5 +165,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240308144416-29370a3891b7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	lukechampine.com/blake3 v1.2.1 // indirect
+	lukechampine.com/blake3 v1.2.2 // indirect
 )
