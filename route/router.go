@@ -27,7 +27,7 @@ import (
 	"github.com/sagernet/sing-box/outbound"
 	"github.com/sagernet/sing-box/transport/fakeip"
 	"github.com/sagernet/sing-dns"
-	mux "github.com/sagernet/sing-mux"
+	"github.com/sagernet/sing-mux"
 	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common"
@@ -69,7 +69,6 @@ type Router struct {
 	geositeCache                       map[string]adapter.Rule
 	needFindProcess                    bool
 	dnsClient                          *dns.Client
-	dnsIndependentCache                bool
 	defaultDomainStrategy              dns.DomainStrategy
 	dnsRules                           []adapter.DNSRule
 	ruleSets                           []adapter.RuleSet
@@ -123,7 +122,6 @@ func NewRouter(
 		geositeOptions:        common.PtrValueOrDefault(options.Geosite),
 		geositeCache:          make(map[string]adapter.Rule),
 		needFindProcess:       hasRule(options.Rules, isProcessRule) || hasDNSRule(dnsOptions.Rules, isProcessDNSRule) || options.FindProcess,
-		dnsIndependentCache:   dnsOptions.IndependentCache,
 		defaultDetour:         options.Final,
 		defaultDomainStrategy: dns.DomainStrategy(dnsOptions.Strategy),
 		interfaceFinder:       control.NewDefaultInterfaceFinder(),
@@ -237,7 +235,7 @@ func NewRouter(
 					return nil, E.New("parse dns server[", tag, "]: missing address_resolver")
 				}
 			}
-			var clientSubnet netip.Addr
+			var clientSubnet netip.Prefix
 			if server.ClientSubnet != nil {
 				clientSubnet = server.ClientSubnet.Build()
 			} else if dnsOptions.ClientSubnet != nil {
