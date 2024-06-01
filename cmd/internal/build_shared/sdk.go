@@ -11,9 +11,7 @@ import (
 
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing/common"
-	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/rw"
-	"github.com/sagernet/sing/common/shell"
 )
 
 var (
@@ -42,13 +40,13 @@ func FindSDK() {
 		log.Fatal("android NDK not found")
 	}
 
-	javaVersion, err := shell.Exec("java", "--version").ReadOutput()
-	if err != nil {
-		log.Fatal(E.Cause(err, "check java version"))
-	}
-	if !strings.Contains(javaVersion, "openjdk 17") {
-		log.Fatal("java version should be openjdk 17")
-	}
+	//javaVersion, err := shell.Exec("java", "--version").ReadOutput()
+	//if err != nil {
+	//	log.Fatal(E.Cause(err, "check java version"))
+	//}
+	//if !strings.Contains(javaVersion, "openjdk 17") {
+	//	log.Fatal("java version should be openjdk 17")
+	//}
 
 	os.Setenv("ANDROID_HOME", androidSDKPath)
 	os.Setenv("ANDROID_SDK_HOME", androidSDKPath)
@@ -58,7 +56,7 @@ func FindSDK() {
 }
 
 func findNDK() bool {
-	const fixedVersion = "26.3.11579264"
+	const fixedVersion = "26.2.11394342"
 	const versionFile = "source.properties"
 	if fixedPath := filepath.Join(androidSDKPath, "ndk", fixedVersion); rw.FileExists(filepath.Join(fixedPath, versionFile)) {
 		androidNDKPath = fixedPath
