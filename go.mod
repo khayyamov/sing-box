@@ -3,6 +3,7 @@ module github.com/sagernet/sing-box
 go 1.20
 
 require (
+	github.com/xtls/xray-core v1.8.13
 	berty.tech/go-libtor v1.0.385
 	github.com/caddyserver/certmagic v0.20.0
 	github.com/cloudflare/circl v1.3.7
