@@ -212,7 +212,7 @@ func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error
 	config.Inbound = nil
 	// config.App: (fakedns), log, dispatcher, InboundConfig, OutboundConfig, (stats), router, dns, (policy)
 	// keep only basic features
-	config.App = config.App[:5]
+	//config.App = config.App[:5]
 
 	inst, err := v2core.New(config)
 	if err != nil {
