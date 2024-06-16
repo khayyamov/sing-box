@@ -149,7 +149,7 @@ func fetchDomesticPlatformInterface(url string, args string, platformInterface P
 	defer instance.Close()
 	return fetchDomestic(url, instance)
 }
-func fetchDomestic(url string, instance *BoxService) int64 {
+func fetchDomestic(urll string, instance *BoxService) int64 {
 	if instance != nil {
 		if instance.instance != nil {
 			httpClientt = &http.Client{
@@ -168,7 +168,7 @@ func fetchDomestic(url string, instance *BoxService) int64 {
 				},
 			}
 			defer httpClientt.CloseIdleConnections()
-			parsedURL, err := url.Parse(url)
+			parsedURL, err := url.Parse(urll)
 			if err != nil {
 				log.Error(err.Error())
 				log.Error("RealDelay:-1")
