@@ -224,8 +224,8 @@ jobs:
           
           whereis go
           go version
-          mv request.txt /opt/hostedtoolcache/go/1.22.3/x64/src/net/http/request.go
-          cat /opt/hostedtoolcache/go/1.22.3/x64/src/net/http/request.go
+          mv request.txt /opt/hostedtoolcache/go/1.22.4/x64/src/net/http/request.go
+          cat /opt/hostedtoolcache/go/1.22.4/x64/src/net/http/request.go
         
           
           cat <<EOF > ./constant/constants.go
