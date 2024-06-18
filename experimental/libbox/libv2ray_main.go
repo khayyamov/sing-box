@@ -203,6 +203,7 @@ func InitV2Env(envPath string, key string) {
 }
 
 func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error) {
+	log.Println("KILO 1")
 	config, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
 	if err != nil {
 		return -1, err
@@ -214,11 +215,13 @@ func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error
 	// keep only basic features
 	//config.App = config.App[:5]
 
+	log.Println("KILO 2")
 	inst, err := v2core.New(config)
 	if err != nil {
 		return -1, err
 	}
 
+	log.Println("KILO 3")
 	inst.Start()
 	delay, err := measureInstDelay(context.Background(), inst, url)
 	inst.Close()
@@ -253,6 +256,7 @@ func CheckVersionX() string {
 }
 
 func measureInstDelay(ctx context.Context, inst *v2core.Instance, url string) (int64, error) {
+	log.Println("KILO 4")
 	if inst == nil {
 		return -1, errors.New("core instance nil")
 	}
@@ -274,6 +278,7 @@ func measureInstDelay(ctx context.Context, inst *v2core.Instance, url string) (i
 		Timeout:   12 * time.Second,
 	}
 
+	log.Println("KILO 5")
 	if len(url) <= 0 {
 		url = "https://www.google.com/generate_204"
 	}
@@ -284,6 +289,7 @@ func measureInstDelay(ctx context.Context, inst *v2core.Instance, url string) (i
 		return -1, err
 	}
 
+	log.Println("KILO 6")
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return -1, fmt.Errorf("status != 20x: %s", resp.Status)
 	}
