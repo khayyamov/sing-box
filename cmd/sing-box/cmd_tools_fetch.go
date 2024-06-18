@@ -36,7 +36,10 @@ func init() {
 	commandTools.AddCommand(commandFetch)
 }
 
-var httpClient *http.Client
+var (
+	httpClient  *http.Client
+	http3Client *http.Client
+)
 
 func fetch(args []string) error {
 	return fetchDomestic(args[0], false)
@@ -72,6 +75,13 @@ func fetchDomestic(args string, runFromApi bool) error {
 		},
 	}
 	defer httpClient.CloseIdleConnections()
+	if C.WithQUIC {
+		errr = initializeHTTP3Client(instance)
+		if errr != nil {
+			return errors.New("RealPing:-1")
+		}
+		defer http3Client.CloseIdleConnections()
+	}
 	parsedURL, err := url.Parse(args)
 	if err != nil {
 		return err
@@ -81,7 +91,16 @@ func fetchDomestic(args string, runFromApi bool) error {
 		parsedURL.Scheme = "http"
 		fallthrough
 	case "http", "https":
-		err = fetchHTTP(parsedURL)
+		err = fetchHTTP(httpClient, parsedURL)
+		if err != nil {
+			return err
+		}
+	case "http3":
+		if !C.WithQUIC {
+			return C.ErrQUICNotIncluded
+		}
+		parsedURL.Scheme = "https"
+		err = fetchHTTP(http3Client, parsedURL)
 		if err != nil {
 			return err
 		}
@@ -89,7 +108,7 @@ func fetchDomestic(args string, runFromApi bool) error {
 	return nil
 }
 
-func fetchHTTP(parsedURL *url.URL) error {
+func fetchHTTP(httpClient *http.Client, parsedURL *url.URL) error {
 	request, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return err
