@@ -363,7 +363,7 @@ func (s *Box) postStart() error {
 	if err != nil {
 		return err
 	}
-	for _, in := range s.inbounds {
+	for _, in := range s.Inbounds {
 		if lateInbound, isLateInbound := in.(adapter.PostStarter); isLateInbound {
 			err = lateInbound.PostStart()
 			if err != nil {

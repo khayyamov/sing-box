@@ -98,7 +98,7 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 }
 
 func (h *VMess) Start() error {
-	err := h.service.Start()
+	err := h.Service.Start()
 	if err != nil {
 		return err
 	}

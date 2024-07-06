@@ -2,12 +2,8 @@ package inbound
 
 import (
 	"context"
-	"github.com/sagernet/sing-box/api/db"
-	vmess "github.com/sagernet/sing-vmess"
-	"net"
-	"os"
-
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/common/mux"
 	"github.com/sagernet/sing-box/common/tls"
 	"github.com/sagernet/sing-box/common/uot"
@@ -24,6 +20,8 @@ import (
 	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"net"
+	"os"
 )
 
 var (
