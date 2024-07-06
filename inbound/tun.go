@@ -2,7 +2,6 @@ package inbound
 
 import (
 	"context"
-	tun "github.com/sagernet/sing-tun"
 	"net"
 	"net/netip"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
@@ -356,7 +356,7 @@ func (t *Tun) PostStart() error {
 			}
 			t.routeExcludeAddressSet = append(t.routeExcludeAddressSet, ipSets...)
 		}
-		monitor.Start("initiating auto-redirect")
+		monitor.Start("initialize auto-redirect")
 		err := t.autoRedirect.Start()
 		monitor.Finish()
 		if err != nil {
