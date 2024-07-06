@@ -15,16 +15,14 @@ type RuleSetItem struct {
 	router            adapter.Router
 	tagList           []string
 	setList           []adapter.RuleSet
-	ipCidrMatchSource bool
-	ipCidrAcceptEmpty bool
+	ipcidrMatchSource bool
 }
 
-func NewRuleSetItem(router adapter.Router, tagList []string, ipCIDRMatchSource bool, ipCidrAcceptEmpty bool) *RuleSetItem {
+func NewRuleSetItem(router adapter.Router, tagList []string, ipCIDRMatchSource bool) *RuleSetItem {
 	return &RuleSetItem{
 		router:            router,
 		tagList:           tagList,
-		ipCidrMatchSource: ipCIDRMatchSource,
-		ipCidrAcceptEmpty: ipCidrAcceptEmpty,
+		ipcidrMatchSource: ipCIDRMatchSource,
 	}
 }
 
@@ -34,15 +32,13 @@ func (r *RuleSetItem) Start() error {
 		if !loaded {
 			return E.New("rule-set not found: ", tag)
 		}
-		ruleSet.IncRef()
 		r.setList = append(r.setList, ruleSet)
 	}
 	return nil
 }
 
 func (r *RuleSetItem) Match(metadata *adapter.InboundContext) bool {
-	metadata.IPCIDRMatchSource = r.ipCidrMatchSource
-	metadata.IPCIDRAcceptEmpty = r.ipCidrAcceptEmpty
+	metadata.IPCIDRMatchSource = r.ipcidrMatchSource
 	for _, ruleSet := range r.setList {
 		if ruleSet.Match(metadata) {
 			return true
@@ -52,7 +48,7 @@ func (r *RuleSetItem) Match(metadata *adapter.InboundContext) bool {
 }
 
 func (r *RuleSetItem) ContainsDestinationIPCIDRRule() bool {
-	if r.ipCidrMatchSource {
+	if r.ipcidrMatchSource {
 		return false
 	}
 	return common.Any(r.setList, func(ruleSet adapter.RuleSet) bool {

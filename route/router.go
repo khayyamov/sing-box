@@ -27,7 +27,7 @@ import (
 	"github.com/sagernet/sing-box/outbound"
 	"github.com/sagernet/sing-box/transport/fakeip"
 	"github.com/sagernet/sing-dns"
-	"github.com/sagernet/sing-mux"
+	mux "github.com/sagernet/sing-mux"
 	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common"
@@ -69,6 +69,7 @@ type Router struct {
 	geositeCache                       map[string]adapter.Rule
 	needFindProcess                    bool
 	dnsClient                          *dns.Client
+	dnsIndependentCache                bool
 	defaultDomainStrategy              dns.DomainStrategy
 	dnsRules                           []adapter.DNSRule
 	ruleSets                           []adapter.RuleSet
@@ -82,8 +83,7 @@ type Router struct {
 	interfaceFinder                    *control.DefaultInterfaceFinder
 	autoDetectInterface                bool
 	defaultInterface                   string
-	defaultMark                        uint32
-	autoRedirectOutputMark             uint32
+	defaultMark                        int
 	networkMonitor                     tun.NetworkUpdateMonitor
 	interfaceMonitor                   tun.DefaultInterfaceMonitor
 	packageManager                     tun.PackageManager
@@ -123,6 +123,7 @@ func NewRouter(
 		geositeOptions:        common.PtrValueOrDefault(options.Geosite),
 		geositeCache:          make(map[string]adapter.Rule),
 		needFindProcess:       hasRule(options.Rules, isProcessRule) || hasDNSRule(dnsOptions.Rules, isProcessDNSRule) || options.FindProcess,
+		dnsIndependentCache:   dnsOptions.IndependentCache,
 		defaultDetour:         options.Final,
 		defaultDomainStrategy: dns.DomainStrategy(dnsOptions.Strategy),
 		interfaceFinder:       control.NewDefaultInterfaceFinder(),
@@ -222,7 +223,7 @@ func NewRouter(
 				if serverAddress == "" {
 					serverAddress = server.Address
 				}
-				notIpAddress := !M.ParseSocksaddr(serverAddress).Addr.IsValid()
+				_, notIpAddress := netip.ParseAddr(serverAddress)
 				if server.AddressResolver != "" {
 					if !transportTagMap[server.AddressResolver] {
 						return nil, E.New("parse dns server[", tag, "]: address resolver not found: ", server.AddressResolver)
@@ -232,11 +233,11 @@ func NewRouter(
 					} else {
 						continue
 					}
-				} else if notIpAddress && strings.Contains(server.Address, ".") {
+				} else if notIpAddress != nil && strings.Contains(server.Address, ".") {
 					return nil, E.New("parse dns server[", tag, "]: missing address_resolver")
 				}
 			}
-			var clientSubnet netip.Prefix
+			var clientSubnet netip.Addr
 			if server.ClientSubnet != nil {
 				clientSubnet = server.ClientSubnet.Build()
 			} else if dnsOptions.ClientSubnet != nil {
@@ -353,6 +354,14 @@ func NewRouter(
 		router.interfaceMonitor = interfaceMonitor
 	}
 
+	if runtime.GOOS == "windows" {
+		powerListener, err := winpowrprof.NewEventListener(router.notifyWindowsPowerEvent)
+		if err != nil {
+			return nil, E.Cause(err, "initialize power listener")
+		}
+		router.powerListener = powerListener
+	}
+
 	if ntpOptions.Enabled {
 		ntpDialer, err := dialer.New(router, ntpOptions.DialerOptions)
 		if err != nil {
@@ -395,17 +404,20 @@ func (r *Router) Initialize(inbounds []adapter.Inbound, outbounds []adapter.Outb
 			defaultOutboundForPacketConnection = detour
 		}
 	}
+	var index, packetIndex int
 	if defaultOutboundForConnection == nil {
-		for _, detour := range outbounds {
+		for i, detour := range outbounds {
 			if common.Contains(detour.Network(), N.NetworkTCP) {
+				index = i
 				defaultOutboundForConnection = detour
 				break
 			}
 		}
 	}
 	if defaultOutboundForPacketConnection == nil {
-		for _, detour := range outbounds {
+		for i, detour := range outbounds {
 			if common.Contains(detour.Network(), N.NetworkUDP) {
+				packetIndex = i
 				defaultOutboundForPacketConnection = detour
 				break
 			}
@@ -421,6 +433,22 @@ func (r *Router) Initialize(inbounds []adapter.Inbound, outbounds []adapter.Outb
 		}
 		outbounds = append(outbounds, detour)
 		outboundByTag[detour.Tag()] = detour
+	}
+	if defaultOutboundForConnection != defaultOutboundForPacketConnection {
+		var description string
+		if defaultOutboundForConnection.Tag() != "" {
+			description = defaultOutboundForConnection.Tag()
+		} else {
+			description = F.ToString(index)
+		}
+		var packetDescription string
+		if defaultOutboundForPacketConnection.Tag() != "" {
+			packetDescription = defaultOutboundForPacketConnection.Tag()
+		} else {
+			packetDescription = F.ToString(packetIndex)
+		}
+		r.logger.Info("using ", defaultOutboundForConnection.Type(), "[", description, "] as default outbound for connection")
+		r.logger.Info("using ", defaultOutboundForPacketConnection.Type(), "[", packetDescription, "] as default outbound for packet connection")
 	}
 	r.inboundByTag = inboundByTag
 	r.outbounds = outbounds
@@ -510,12 +538,75 @@ func (r *Router) Start() error {
 		r.geositeReader = nil
 	}
 
-	if runtime.GOOS == "windows" {
-		powerListener, err := winpowrprof.NewEventListener(r.notifyWindowsPowerEvent)
-		if err == nil {
-			r.powerListener = powerListener
+	if len(r.ruleSets) > 0 {
+		monitor.Start("initialize rule-set")
+		ruleSetStartContext := NewRuleSetStartContext()
+		var ruleSetStartGroup task.Group
+		for i, ruleSet := range r.ruleSets {
+			ruleSetInPlace := ruleSet
+			ruleSetStartGroup.Append0(func(ctx context.Context) error {
+				err := ruleSetInPlace.StartContext(ctx, ruleSetStartContext)
+				if err != nil {
+					return E.Cause(err, "initialize rule-set[", i, "]")
+				}
+				return nil
+			})
+		}
+		ruleSetStartGroup.Concurrency(5)
+		ruleSetStartGroup.FastFail()
+		err := ruleSetStartGroup.Run(r.ctx)
+		monitor.Finish()
+		if err != nil {
+			return err
+		}
+		ruleSetStartContext.Close()
+	}
+	var (
+		needProcessFromRuleSet   bool
+		needWIFIStateFromRuleSet bool
+	)
+	for _, ruleSet := range r.ruleSets {
+		metadata := ruleSet.Metadata()
+		if metadata.ContainsProcessRule {
+			needProcessFromRuleSet = true
+		}
+		if metadata.ContainsWIFIRule {
+			needWIFIStateFromRuleSet = true
+		}
+	}
+	if needProcessFromRuleSet || r.needFindProcess || r.needPackageManager {
+		if C.IsAndroid && r.platformInterface == nil {
+			monitor.Start("initialize package manager")
+			packageManager, err := tun.NewPackageManager(r)
+			monitor.Finish()
+			if err != nil {
+				return E.Cause(err, "create package manager")
+			}
+			monitor.Start("start package manager")
+			err = packageManager.Start()
+			monitor.Finish()
+			if err != nil {
+				return E.Cause(err, "start package manager")
+			}
+			r.packageManager = packageManager
+		}
+
+		if r.platformInterface != nil {
+			r.processSearcher = r.platformInterface
 		} else {
-			r.logger.Warn("initialize power listener: ", err)
+			monitor.Start("initialize process searcher")
+			searcher, err := process.NewSearcher(process.Config{
+				Logger:         r.logger,
+				PackageManager: r.packageManager,
+			})
+			monitor.Finish()
+			if err != nil {
+				if err != os.ErrInvalid {
+					r.logger.Warn(E.Cause(err, "create process searcher"))
+				}
+			} else {
+				r.processSearcher = searcher
+			}
 		}
 	}
 
@@ -528,28 +619,28 @@ func (r *Router) Start() error {
 		}
 	}
 
+	if (needWIFIStateFromRuleSet || r.needWIFIState) && r.platformInterface != nil {
+		monitor.Start("initialize WIFI state")
+		r.needWIFIState = true
+		r.interfaceMonitor.RegisterCallback(func(_ int) {
+			r.updateWIFIState()
+		})
+		r.updateWIFIState()
+		monitor.Finish()
+	}
+
+	for i, rule := range r.rules {
+		monitor.Start("initialize rule[", i, "]")
+		err := rule.Start()
+		monitor.Finish()
+		if err != nil {
+			return E.Cause(err, "initialize rule[", i, "]")
+		}
+	}
+
 	monitor.Start("initialize DNS client")
 	r.dnsClient.Start()
 	monitor.Finish()
-
-	if r.needPackageManager && r.platformInterface == nil {
-		monitor.Start("initialize package manager")
-		packageManager, err := tun.NewPackageManager(tun.PackageManagerOptions{
-			Callback: r,
-			Logger:   r.logger,
-		})
-		monitor.Finish()
-		if err != nil {
-			return E.Cause(err, "create package manager")
-		}
-		monitor.Start("start package manager")
-		err = packageManager.Start()
-		monitor.Finish()
-		if err != nil {
-			return E.Cause(err, "start package manager")
-		}
-		r.packageManager = packageManager
-	}
 
 	for i, rule := range r.dnsRules {
 		monitor.Start("initialize DNS rule[", i, "]")
@@ -655,96 +746,15 @@ func (r *Router) Close() error {
 }
 
 func (r *Router) PostStart() error {
-	monitor := taskmonitor.New(r.logger, C.StopTimeout)
 	if len(r.ruleSets) > 0 {
-		monitor.Start("initialize rule-set")
-		ruleSetStartContext := NewRuleSetStartContext()
-		var ruleSetStartGroup task.Group
 		for i, ruleSet := range r.ruleSets {
-			ruleSetInPlace := ruleSet
-			ruleSetStartGroup.Append0(func(ctx context.Context) error {
-				err := ruleSetInPlace.StartContext(ctx, ruleSetStartContext)
-				if err != nil {
-					return E.Cause(err, "initialize rule-set[", i, "]")
-				}
-				return nil
-			})
-		}
-		ruleSetStartGroup.Concurrency(5)
-		ruleSetStartGroup.FastFail()
-		err := ruleSetStartGroup.Run(r.ctx)
-		monitor.Finish()
-		if err != nil {
-			return err
-		}
-		ruleSetStartContext.Close()
-	}
-	var (
-		needProcessFromRuleSet   bool
-		needWIFIStateFromRuleSet bool
-	)
-	for _, ruleSet := range r.ruleSets {
-		metadata := ruleSet.Metadata()
-		if metadata.ContainsProcessRule {
-			needProcessFromRuleSet = true
-		}
-		if metadata.ContainsWIFIRule {
-			needWIFIStateFromRuleSet = true
-		}
-	}
-	if needProcessFromRuleSet || r.needFindProcess {
-		if r.platformInterface != nil {
-			r.processSearcher = r.platformInterface
-		} else {
-			monitor.Start("initialize process searcher")
-			searcher, err := process.NewSearcher(process.Config{
-				Logger:         r.logger,
-				PackageManager: r.packageManager,
-			})
-			monitor.Finish()
+			err := ruleSet.PostStart()
 			if err != nil {
-				if err != os.ErrInvalid {
-					r.logger.Warn(E.Cause(err, "create process searcher"))
-				}
-			} else {
-				r.processSearcher = searcher
+				return E.Cause(err, "post start rule-set[", i, "]")
 			}
 		}
 	}
-	if (needWIFIStateFromRuleSet || r.needWIFIState) && r.platformInterface != nil {
-		monitor.Start("initialize WIFI state")
-		r.needWIFIState = true
-		r.interfaceMonitor.RegisterCallback(func(_ int) {
-			r.updateWIFIState()
-		})
-		r.updateWIFIState()
-		monitor.Finish()
-	}
-	for i, rule := range r.rules {
-		monitor.Start("initialize rule[", i, "]")
-		err := rule.Start()
-		monitor.Finish()
-		if err != nil {
-			return E.Cause(err, "initialize rule[", i, "]")
-		}
-	}
-	for _, ruleSet := range r.ruleSets {
-		monitor.Start("post start rule_set[", ruleSet.Name(), "]")
-		err := ruleSet.PostStart()
-		monitor.Finish()
-		if err != nil {
-			return E.Cause(err, "post start rule_set[", ruleSet.Name(), "]")
-		}
-	}
 	r.started = true
-	return nil
-}
-
-func (r *Router) Cleanup() error {
-	for _, ruleSet := range r.ruleSetMap {
-		ruleSet.Cleanup()
-	}
-	runtime.GC()
 	return nil
 }
 
@@ -842,16 +852,7 @@ func (r *Router) RouteConnection(ctx context.Context, conn net.Conn, metadata ad
 
 	if metadata.InboundOptions.SniffEnabled {
 		buffer := buf.NewPacket()
-		sniffMetadata, err := sniff.PeekStream(
-			ctx,
-			conn,
-			buffer,
-			time.Duration(metadata.InboundOptions.SniffTimeout),
-			sniff.StreamDomainNameQuery,
-			sniff.TLSClientHello,
-			sniff.HTTPHost,
-			sniff.BitTorrent,
-		)
+		sniffMetadata, err := sniff.PeekStream(ctx, conn, buffer, time.Duration(metadata.InboundOptions.SniffTimeout), sniff.StreamDomainNameQuery, sniff.TLSClientHello, sniff.HTTPHost)
 		if sniffMetadata != nil {
 			metadata.Protocol = sniffMetadata.Protocol
 			metadata.Domain = sniffMetadata.Domain
@@ -978,15 +979,7 @@ func (r *Router) RoutePacketConnection(ctx context.Context, conn N.PacketConn, m
 			metadata.Destination = destination
 		}
 		if metadata.InboundOptions.SniffEnabled {
-			sniffMetadata, _ := sniff.PeekPacket(
-				ctx,
-				buffer.Bytes(),
-				sniff.DomainNameQuery,
-				sniff.QUICClientHello,
-				sniff.STUNMessage,
-				sniff.UTP,
-				sniff.UDPTracker,
-			)
+			sniffMetadata, _ := sniff.PeekPacket(ctx, buffer.Bytes(), sniff.DomainNameQuery, sniff.QUICClientHello, sniff.STUNMessage)
 			if sniffMetadata != nil {
 				metadata.Protocol = sniffMetadata.Protocol
 				metadata.Domain = sniffMetadata.Domain
@@ -1130,9 +1123,6 @@ func (r *Router) AutoDetectInterfaceFunc() control.Func {
 	if r.platformInterface != nil && r.platformInterface.UsePlatformAutoDetectInterfaceControl() {
 		return r.platformInterface.AutoDetectInterfaceControl()
 	} else {
-		if r.interfaceMonitor == nil {
-			return nil
-		}
 		return control.BindToInterfaceFunc(r.InterfaceFinder(), func(network string, address string) (interfaceName string, interfaceIndex int, err error) {
 			remoteAddr := M.ParseSocksaddr(address).Addr
 			if C.IsLinux {
@@ -1151,23 +1141,11 @@ func (r *Router) AutoDetectInterfaceFunc() control.Func {
 	}
 }
 
-func (r *Router) RegisterAutoRedirectOutputMark(mark uint32) error {
-	if r.autoRedirectOutputMark > 0 {
-		return E.New("only one auto-redirect can be configured")
-	}
-	r.autoRedirectOutputMark = mark
-	return nil
-}
-
-func (r *Router) AutoRedirectOutputMark() uint32 {
-	return r.autoRedirectOutputMark
-}
-
 func (r *Router) DefaultInterface() string {
 	return r.defaultInterface
 }
 
-func (r *Router) DefaultMark() uint32 {
+func (r *Router) DefaultMark() int {
 	return r.defaultMark
 }
 

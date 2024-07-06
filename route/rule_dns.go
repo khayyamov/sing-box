@@ -40,7 +40,7 @@ type DefaultDNSRule struct {
 	abstractDefaultRule
 	disableCache bool
 	rewriteTTL   *uint32
-	clientSubnet *netip.Prefix
+	clientSubnet *netip.Addr
 }
 
 func NewDefaultDNSRule(router adapter.Router, logger log.ContextLogger, options option.DefaultDNSRule) (*DefaultDNSRule, error) {
@@ -51,7 +51,7 @@ func NewDefaultDNSRule(router adapter.Router, logger log.ContextLogger, options 
 		},
 		disableCache: options.DisableCache,
 		rewriteTTL:   options.RewriteTTL,
-		clientSubnet: (*netip.Prefix)(options.ClientSubnet),
+		clientSubnet: (*netip.Addr)(options.ClientSubnet),
 	}
 	if len(options.Inbound) > 0 {
 		item := NewInboundRule(options.Inbound)
@@ -219,7 +219,7 @@ func NewDefaultDNSRule(router adapter.Router, logger log.ContextLogger, options 
 		rule.allItems = append(rule.allItems, item)
 	}
 	if len(options.RuleSet) > 0 {
-		item := NewRuleSetItem(router, options.RuleSet, options.RuleSetIPCIDRMatchSource, options.RuleSetIPCIDRAcceptEmpty)
+		item := NewRuleSetItem(router, options.RuleSet, options.RuleSetIPCIDRMatchSource)
 		rule.items = append(rule.items, item)
 		rule.allItems = append(rule.allItems, item)
 	}
@@ -234,7 +234,7 @@ func (r *DefaultDNSRule) RewriteTTL() *uint32 {
 	return r.rewriteTTL
 }
 
-func (r *DefaultDNSRule) ClientSubnet() *netip.Prefix {
+func (r *DefaultDNSRule) ClientSubnet() *netip.Addr {
 	return r.clientSubnet
 }
 
@@ -272,7 +272,7 @@ type LogicalDNSRule struct {
 	abstractLogicalRule
 	disableCache bool
 	rewriteTTL   *uint32
-	clientSubnet *netip.Prefix
+	clientSubnet *netip.Addr
 }
 
 func NewLogicalDNSRule(router adapter.Router, logger log.ContextLogger, options option.LogicalDNSRule) (*LogicalDNSRule, error) {
@@ -284,7 +284,6 @@ func NewLogicalDNSRule(router adapter.Router, logger log.ContextLogger, options 
 		},
 		disableCache: options.DisableCache,
 		rewriteTTL:   options.RewriteTTL,
-		clientSubnet: (*netip.Prefix)(options.ClientSubnet),
 	}
 	switch options.Mode {
 	case C.LogicalTypeAnd:
@@ -312,7 +311,7 @@ func (r *LogicalDNSRule) RewriteTTL() *uint32 {
 	return r.rewriteTTL
 }
 
-func (r *LogicalDNSRule) ClientSubnet() *netip.Prefix {
+func (r *LogicalDNSRule) ClientSubnet() *netip.Addr {
 	return r.clientSubnet
 }
 

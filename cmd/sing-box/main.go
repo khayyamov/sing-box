@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	C "github.com/sagernet/sing-box/constant"
 	_ "github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing/service/filemanager"
@@ -42,6 +43,7 @@ func init() {
 	mainCommand.PersistentFlags().StringVarP(&workingDir, "directory", "D", "", "set working directory")
 	mainCommand.PersistentFlags().BoolVarP(&disableColor, "disable-color", "", false, "disable color output")
 
+	mainCommand.PersistentFlags().BoolVarP(&C.ENCRYPTED_CONFIG, "encrypted-config", "e", false, "read encrypted config")
 }
 
 func main() {

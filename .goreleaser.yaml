@@ -159,7 +159,7 @@ signs:
   - artifacts: checksum
 release:
   github:
-    owner: SagerNet
+    owner: khayyamov
     name: sing-box
   draft: true
   prerelease: auto

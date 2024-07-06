@@ -15,19 +15,19 @@ import (
 
 func (a *myInboundAdapter) ListenTCP() (net.Listener, error) {
 	var err error
-	bindAddr := M.SocksaddrFrom(a.ListenOptions.Listen.Build(), a.ListenOptions.ListenPort)
+	bindAddr := M.SocksaddrFrom(a.listenOptions.Listen.Build(), a.listenOptions.ListenPort)
 	var tcpListener net.Listener
 	var listenConfig net.ListenConfig
 	// TODO: Add an option to customize the keep alive period
 	listenConfig.KeepAlive = C.TCPKeepAliveInitial
 	listenConfig.Control = control.Append(listenConfig.Control, control.SetKeepAlivePeriod(C.TCPKeepAliveInitial, C.TCPKeepAliveInterval))
-	if a.ListenOptions.TCPMultiPath {
+	if a.listenOptions.TCPMultiPath {
 		if !go121Available {
 			return nil, E.New("MultiPath TCP requires go1.21, please recompile your binary.")
 		}
 		setMultiPathTCP(&listenConfig)
 	}
-	if a.ListenOptions.TCPFastOpen {
+	if a.listenOptions.TCPFastOpen {
 		if !go120Available {
 			return nil, E.New("TCP Fast Open requires go1.20, please recompile your binary.")
 		}
@@ -38,7 +38,7 @@ func (a *myInboundAdapter) ListenTCP() (net.Listener, error) {
 	if err == nil {
 		a.logger.Info("tcp server started at ", tcpListener.Addr())
 	}
-	if a.ListenOptions.ProxyProtocol || a.ListenOptions.ProxyProtocolAcceptNoHeader {
+	if a.listenOptions.ProxyProtocol || a.listenOptions.ProxyProtocolAcceptNoHeader {
 		return nil, E.New("Proxy Protocol is deprecated and removed in sing-box 1.6.0")
 	}
 	a.tcpListener = tcpListener

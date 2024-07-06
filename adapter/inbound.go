@@ -51,9 +51,7 @@ type InboundContext struct {
 
 	// rule cache
 
-	IPCIDRMatchSource bool
-	IPCIDRAcceptEmpty bool
-
+	IPCIDRMatchSource            bool
 	SourceAddressMatch           bool
 	SourcePortMatch              bool
 	DestinationAddressMatch      bool
@@ -64,7 +62,6 @@ type InboundContext struct {
 
 func (c *InboundContext) ResetRuleCache() {
 	c.IPCIDRMatchSource = false
-	c.IPCIDRAcceptEmpty = false
 	c.SourceAddressMatch = false
 	c.SourcePortMatch = false
 	c.DestinationAddressMatch = false
@@ -101,13 +98,4 @@ func ExtendContext(ctx context.Context) (context.Context, *InboundContext) {
 		newMetadata = *metadata
 	}
 	return WithContext(ctx, &newMetadata), &newMetadata
-}
-
-func OverrideContext(ctx context.Context) context.Context {
-	if metadata := ContextFrom(ctx); metadata != nil {
-		var newMetadata InboundContext
-		newMetadata = *metadata
-		return WithContext(ctx, &newMetadata)
-	}
-	return ctx
 }
