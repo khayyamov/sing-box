@@ -1,6 +1,20 @@
 ---
-icon: material/alert-decagram
+icon: material/new-box
 ---
+
+!!! quote "sing-box 1.10.0 中的更改"
+
+    :material-delete-clock: [rule_set_ipcidr_match_source](#rule_set_ipcidr_match_source)  
+    :material-plus: [rule_set_ip_cidr_match_source](#rule_set_ip_cidr_match_source)  
+    :material-plus: [rule_set_ip_cidr_accept_empty](#rule_set_ip_cidr_accept_empty)
+
+!!! quote "sing-box 1.9.0 中的更改"
+
+    :material-plus: [geoip](#geoip)  
+    :material-plus: [ip_cidr](#ip_cidr)  
+    :material-plus: [ip_is_private](#ip_is_private)  
+    :material-plus: [client_subnet](#client_subnet)
+    :material-plus: [rule_set_ipcidr_match_source](#rule_set_ipcidr_match_source)
 
 !!! quote "sing-box 1.8.0 中的更改"
 
@@ -53,10 +67,19 @@ icon: material/alert-decagram
         "source_geoip": [
           "private"
         ],
+        "geoip": [
+          "cn"
+        ],
         "source_ip_cidr": [
-          "10.0.0.0/24"
+          "10.0.0.0/24",
+          "192.168.0.1"
         ],
         "source_ip_is_private": false,
+        "ip_cidr": [
+          "10.0.0.0/24",
+          "192.168.0.1"
+        ],
+        "ip_is_private": false,
         "source_port": [
           12345
         ],
@@ -100,19 +123,25 @@ icon: material/alert-decagram
           "geoip-cn",
           "geosite-cn"
         ],
+        // 已弃用
+        "rule_set_ipcidr_match_source": false,
+        "rule_set_ip_cidr_match_source": false,
+        "rule_set_ip_cidr_accept_empty": false,
         "invert": false,
         "outbound": [
           "direct"
         ],
         "server": "local",
-        "disable_cache": false
+        "disable_cache": false,
+        "client_subnet": "127.0.0.1/24"
       },
       {
         "type": "logical",
         "mode": "and",
         "rules": [],
         "server": "local",
-        "disable_cache": false
+        "disable_cache": false,
+        "client_subnet": "127.0.0.1/24"
       }
     ]
   }
@@ -265,7 +294,7 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 
 !!! quote ""
 
-    仅在 Android 与 iOS 的图形客户端中支持。
+    仅在 Android 与 Apple 平台图形客户端中支持。
 
 匹配 WiFi SSID。
 
@@ -273,7 +302,7 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 
 !!! quote ""
 
-    仅在 Android 与 iOS 的图形客户端中支持。
+    仅在 Android 与 Apple 平台图形客户端中支持。
 
 匹配 WiFi BSSID。
 
@@ -282,6 +311,22 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 !!! question "自 sing-box 1.8.0 起"
 
 匹配[规则集](/zh/configuration/route/#rule_set)。
+
+#### rule_set_ipcidr_match_source
+
+!!! question "自 sing-box 1.9.0 起"
+
+!!! failure "已在 sing-box 1.10.0 废弃"
+
+    `rule_set_ipcidr_match_source` 已重命名为 `rule_set_ip_cidr_match_source` 且将在 sing-box 1.11.0 移除。
+
+使规则集中的 `ip_cidr` 规则匹配源 IP。
+
+#### rule_set_ip_cidr_match_source
+
+!!! question "自 sing-box 1.10.0 起"
+
+使规则集中的 `ip_cidr` 规则匹配源 IP。
 
 #### invert
 
@@ -306,6 +351,52 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 #### rewrite_ttl
 
 重写 DNS 回应中的 TTL。
+
+#### client_subnet
+
+!!! question "自 sing-box 1.9.0 起"
+
+默认情况下，将带有指定 IP 前缀的 `edns0-subnet` OPT 附加记录附加到每个查询。
+
+如果值是 IP 地址而不是前缀，则会自动附加 `/32` 或 `/128`。
+
+将覆盖 `dns.client_subnet` 与 `servers.[].client_subnet`。
+
+### 地址筛选字段
+
+仅对地址请求 (A/AAAA/HTTPS) 生效。 当查询结果与地址筛选规则项不匹配时，将跳过当前规则。
+
+!!! info ""
+
+    引用的规则集中的 `ip_cidr` 项也作为地址筛选字段生效。
+
+!!! note ""
+
+    启用 `experimental.cache_file.store_rdrc` 以缓存结果。
+
+#### geoip
+
+!!! question "自 sing-box 1.9.0 起"
+
+与查询响应匹配 GeoIP。
+
+#### ip_cidr
+
+!!! question "自 sing-box 1.9.0 起"
+
+与查询响应匹配 IP CIDR。
+
+#### ip_is_private
+
+!!! question "自 sing-box 1.9.0 起"
+
+与查询响应匹配非公开 IP。
+
+#### rule_set_ip_cidr_accept_empty
+
+!!! question "自 sing-box 1.10.0 起"
+
+使规则集中的 `ip_cidr` 规则接受空查询响应。
 
 ### 逻辑字段
 

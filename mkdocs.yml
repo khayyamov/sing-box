@@ -66,8 +66,9 @@ nav:
       - Proxy Protocol:
           - Shadowsocks: manual/proxy-protocol/shadowsocks.md
           - Trojan: manual/proxy-protocol/trojan.md
-          - TUIC: manual/proxy-protocol/tuic.md
           - Hysteria 2: manual/proxy-protocol/hysteria2.md
+      - Misc:
+          - TunnelVision: manual/misc/tunnelvision.md
   - Configuration:
       - configuration/index.md
       - Log:
@@ -133,7 +134,6 @@ nav:
           - WireGuard: configuration/outbound/wireguard.md
           - Hysteria: configuration/outbound/hysteria.md
           - ShadowTLS: configuration/outbound/shadowtls.md
-          - ShadowsocksR: configuration/outbound/shadowsocksr.md
           - VLESS: configuration/outbound/vless.md
           - TUIC: configuration/outbound/tuic.md
           - Hysteria2: configuration/outbound/hysteria2.md

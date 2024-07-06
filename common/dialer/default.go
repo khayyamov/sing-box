@@ -32,24 +32,44 @@ func NewDefault(router adapter.Router, options option.DialerOptions) (*DefaultDi
 	var dialer net.Dialer
 	var listener net.ListenConfig
 	if options.BindInterface != "" {
-		bindFunc := control.BindToInterface(router.InterfaceFinder(), options.BindInterface, -1)
+		var interfaceFinder control.InterfaceFinder
+		if router != nil {
+			interfaceFinder = router.InterfaceFinder()
+		} else {
+			interfaceFinder = control.NewDefaultInterfaceFinder()
+		}
+		bindFunc := control.BindToInterface(interfaceFinder, options.BindInterface, -1)
 		dialer.Control = control.Append(dialer.Control, bindFunc)
 		listener.Control = control.Append(listener.Control, bindFunc)
-	} else if router.AutoDetectInterface() {
+	} else if router != nil && router.AutoDetectInterface() {
 		bindFunc := router.AutoDetectInterfaceFunc()
 		dialer.Control = control.Append(dialer.Control, bindFunc)
 		listener.Control = control.Append(listener.Control, bindFunc)
-	} else if router.DefaultInterface() != "" {
+	} else if router != nil && router.DefaultInterface() != "" {
 		bindFunc := control.BindToInterface(router.InterfaceFinder(), router.DefaultInterface(), -1)
 		dialer.Control = control.Append(dialer.Control, bindFunc)
 		listener.Control = control.Append(listener.Control, bindFunc)
 	}
-	if options.RoutingMark != 0 {
+	var autoRedirectOutputMark uint32
+	if router != nil {
+		autoRedirectOutputMark = router.AutoRedirectOutputMark()
+	}
+	if autoRedirectOutputMark > 0 {
+		dialer.Control = control.Append(dialer.Control, control.RoutingMark(autoRedirectOutputMark))
+		listener.Control = control.Append(listener.Control, control.RoutingMark(autoRedirectOutputMark))
+	}
+	if options.RoutingMark > 0 {
 		dialer.Control = control.Append(dialer.Control, control.RoutingMark(options.RoutingMark))
 		listener.Control = control.Append(listener.Control, control.RoutingMark(options.RoutingMark))
-	} else if router.DefaultMark() != 0 {
+		if autoRedirectOutputMark > 0 {
+			return nil, E.New("`auto_redirect` with `route_[_exclude]_address_set is conflict with `routing_mark`")
+		}
+	} else if router != nil && router.DefaultMark() > 0 {
 		dialer.Control = control.Append(dialer.Control, control.RoutingMark(router.DefaultMark()))
 		listener.Control = control.Append(listener.Control, control.RoutingMark(router.DefaultMark()))
+		if autoRedirectOutputMark > 0 {
+			return nil, E.New("`auto_redirect` with `route_[_exclude]_address_set is conflict with `default_mark`")
+		}
 	}
 	if options.ReuseAddr {
 		listener.Control = control.Append(listener.Control, control.ReuseAddr())
@@ -63,6 +83,9 @@ func NewDefault(router adapter.Router, options option.DialerOptions) (*DefaultDi
 	} else {
 		dialer.Timeout = C.TCPTimeout
 	}
+	// TODO: Add an option to customize the keep alive period
+	dialer.KeepAlive = C.TCPKeepAliveInitial
+	dialer.Control = control.Append(dialer.Control, control.SetKeepAlivePeriod(C.TCPKeepAliveInitial, C.TCPKeepAliveInterval))
 	var udpFragment bool
 	if options.UDPFragment != nil {
 		udpFragment = *options.UDPFragment

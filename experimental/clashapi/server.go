@@ -7,7 +7,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -19,7 +21,6 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
-	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/json"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/service"
@@ -144,7 +145,18 @@ func (s *Server) PreStart() error {
 func (s *Server) Start() error {
 	if s.externalController {
 		s.checkAndDownloadExternalUI()
-		listener, err := net.Listen("tcp", s.httpServer.Addr)
+		var (
+			listener net.Listener
+			err      error
+		)
+		for i := 0; i < 3; i++ {
+			listener, err = net.Listen("tcp", s.httpServer.Addr)
+			if runtime.GOOS == "android" && errors.Is(err, syscall.EADDRINUSE) {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			break
+		}
 		if err != nil {
 			return E.Cause(err, "external controller listen error")
 		}
@@ -218,56 +230,13 @@ func (s *Server) TrafficManager() *trafficontrol.Manager {
 }
 
 func (s *Server) RoutedConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, matchedRule adapter.Rule) (net.Conn, adapter.Tracker) {
-	tracker := trafficontrol.NewTCPTracker(conn, s.trafficManager, castMetadata(metadata), s.router, matchedRule)
+	tracker := trafficontrol.NewTCPTracker(conn, s.trafficManager, metadata, s.router, matchedRule)
 	return tracker, tracker
 }
 
 func (s *Server) RoutedPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext, matchedRule adapter.Rule) (N.PacketConn, adapter.Tracker) {
-	tracker := trafficontrol.NewUDPTracker(conn, s.trafficManager, castMetadata(metadata), s.router, matchedRule)
+	tracker := trafficontrol.NewUDPTracker(conn, s.trafficManager, metadata, s.router, matchedRule)
 	return tracker, tracker
-}
-
-func castMetadata(metadata adapter.InboundContext) trafficontrol.Metadata {
-	var inbound string
-	if metadata.Inbound != "" {
-		inbound = metadata.InboundType + "/" + metadata.Inbound
-	} else {
-		inbound = metadata.InboundType
-	}
-	var domain string
-	if metadata.Domain != "" {
-		domain = metadata.Domain
-	} else {
-		domain = metadata.Destination.Fqdn
-	}
-	var processPath string
-	if metadata.ProcessInfo != nil {
-		if metadata.ProcessInfo.ProcessPath != "" {
-			processPath = metadata.ProcessInfo.ProcessPath
-		} else if metadata.ProcessInfo.PackageName != "" {
-			processPath = metadata.ProcessInfo.PackageName
-		}
-		if processPath == "" {
-			if metadata.ProcessInfo.UserId != -1 {
-				processPath = F.ToString(metadata.ProcessInfo.UserId)
-			}
-		} else if metadata.ProcessInfo.User != "" {
-			processPath = F.ToString(processPath, " (", metadata.ProcessInfo.User, ")")
-		} else if metadata.ProcessInfo.UserId != -1 {
-			processPath = F.ToString(processPath, " (", metadata.ProcessInfo.UserId, ")")
-		}
-	}
-	return trafficontrol.Metadata{
-		NetWork:     metadata.Network,
-		Type:        inbound,
-		SrcIP:       metadata.Source.Addr,
-		DstIP:       metadata.Destination.Addr,
-		SrcPort:     F.ToString(metadata.Source.Port),
-		DstPort:     F.ToString(metadata.Destination.Port),
-		Host:        domain,
-		DNSMode:     "normal",
-		ProcessPath: processPath,
-	}
 }
 
 func authentication(serverSecret string) func(next http.Handler) http.Handler {

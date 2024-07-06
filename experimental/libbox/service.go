@@ -3,14 +3,17 @@ package libbox
 import (
 	"context"
 	"net/netip"
+	"os"
 	"runtime"
 	runtimeDebug "runtime/debug"
 	"syscall"
+	"time"
 
 	"github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/process"
 	"github.com/sagernet/sing-box/common/urltest"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/internal/procfs"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
@@ -32,6 +35,8 @@ type BoxService struct {
 	instance              *box.Box
 	pauseManager          pause.Manager
 	urlTestHistoryStorage *urltest.HistoryStorage
+
+	servicePauseFields
 }
 
 func NewService(configContent string, platformInterface PlatformInterface) (*BoxService, error) {
@@ -70,19 +75,23 @@ func (s *BoxService) Start() error {
 }
 
 func (s *BoxService) Close() error {
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-done:
+			return
+		case <-time.After(C.FatalStopTimeout):
+			os.Exit(1)
+		}
+	}()
 	s.cancel()
 	s.urlTestHistoryStorage.Close()
 	return s.instance.Close()
 }
 
-func (s *BoxService) Sleep() {
-	s.pauseManager.DevicePause()
-	_ = s.instance.Router().ResetNetwork()
-}
-
-func (s *BoxService) Wake() {
-	s.pauseManager.DeviceWake()
-	_ = s.instance.Router().ResetNetwork()
+func (s *BoxService) NeedWIFIState() bool {
+	return s.instance.Router().NeedWIFIState()
 }
 
 var (
@@ -140,6 +149,59 @@ func (w *platformInterfaceWrapper) OpenTun(options *tun.Options, platformOptions
 	return tun.New(*options)
 }
 
+func (w *platformInterfaceWrapper) UsePlatformDefaultInterfaceMonitor() bool {
+	return w.iif.UsePlatformDefaultInterfaceMonitor()
+}
+
+func (w *platformInterfaceWrapper) CreateDefaultInterfaceMonitor(logger logger.Logger) tun.DefaultInterfaceMonitor {
+	return &platformDefaultInterfaceMonitor{
+		platformInterfaceWrapper: w,
+		defaultInterfaceIndex:    -1,
+		logger:                   logger,
+	}
+}
+
+func (w *platformInterfaceWrapper) UsePlatformInterfaceGetter() bool {
+	return w.iif.UsePlatformInterfaceGetter()
+}
+
+func (w *platformInterfaceWrapper) Interfaces() ([]control.Interface, error) {
+	interfaceIterator, err := w.iif.GetInterfaces()
+	if err != nil {
+		return nil, err
+	}
+	var interfaces []control.Interface
+	for _, netInterface := range iteratorToArray[*NetworkInterface](interfaceIterator) {
+		interfaces = append(interfaces, control.Interface{
+			Index:     int(netInterface.Index),
+			MTU:       int(netInterface.MTU),
+			Name:      netInterface.Name,
+			Addresses: common.Map(iteratorToArray[string](netInterface.Addresses), netip.MustParsePrefix),
+		})
+	}
+	return interfaces, nil
+}
+
+func (w *platformInterfaceWrapper) UnderNetworkExtension() bool {
+	return w.iif.UnderNetworkExtension()
+}
+
+func (w *platformInterfaceWrapper) IncludeAllNetworks() bool {
+	return w.iif.IncludeAllNetworks()
+}
+
+func (w *platformInterfaceWrapper) ClearDNSCache() {
+	w.iif.ClearDNSCache()
+}
+
+func (w *platformInterfaceWrapper) ReadWIFIState() adapter.WIFIState {
+	wifiState := w.iif.ReadWIFIState()
+	if wifiState == nil {
+		return adapter.WIFIState{}
+	}
+	return (adapter.WIFIState)(*wifiState)
+}
+
 func (w *platformInterfaceWrapper) FindProcessInfo(ctx context.Context, network string, source netip.AddrPort, destination netip.AddrPort) (*process.Info, error) {
 	var uid int32
 	if w.useProcFS {
@@ -165,55 +227,6 @@ func (w *platformInterfaceWrapper) FindProcessInfo(ctx context.Context, network 
 	}
 	packageName, _ := w.iif.PackageNameByUid(uid)
 	return &process.Info{UserId: uid, PackageName: packageName}, nil
-}
-
-func (w *platformInterfaceWrapper) UsePlatformDefaultInterfaceMonitor() bool {
-	return w.iif.UsePlatformDefaultInterfaceMonitor()
-}
-
-func (w *platformInterfaceWrapper) CreateDefaultInterfaceMonitor(logger logger.Logger) tun.DefaultInterfaceMonitor {
-	return &platformDefaultInterfaceMonitor{
-		platformInterfaceWrapper: w,
-		defaultInterfaceIndex:    -1,
-		logger:                   logger,
-	}
-}
-
-func (w *platformInterfaceWrapper) UsePlatformInterfaceGetter() bool {
-	return w.iif.UsePlatformInterfaceGetter()
-}
-
-func (w *platformInterfaceWrapper) Interfaces() ([]platform.NetworkInterface, error) {
-	interfaceIterator, err := w.iif.GetInterfaces()
-	if err != nil {
-		return nil, err
-	}
-	var interfaces []platform.NetworkInterface
-	for _, netInterface := range iteratorToArray[*NetworkInterface](interfaceIterator) {
-		interfaces = append(interfaces, platform.NetworkInterface{
-			Index:     int(netInterface.Index),
-			MTU:       int(netInterface.MTU),
-			Name:      netInterface.Name,
-			Addresses: common.Map(iteratorToArray[string](netInterface.Addresses), netip.MustParsePrefix),
-		})
-	}
-	return interfaces, nil
-}
-
-func (w *platformInterfaceWrapper) UnderNetworkExtension() bool {
-	return w.iif.UnderNetworkExtension()
-}
-
-func (w *platformInterfaceWrapper) ClearDNSCache() {
-	w.iif.ClearDNSCache()
-}
-
-func (w *platformInterfaceWrapper) ReadWIFIState() adapter.WIFIState {
-	wifiState := w.iif.ReadWIFIState()
-	if wifiState == nil {
-		return adapter.WIFIState{}
-	}
-	return (adapter.WIFIState)(*wifiState)
 }
 
 func (w *platformInterfaceWrapper) DisableColors() bool {

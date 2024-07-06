@@ -34,6 +34,12 @@ const (
 
 func ProxyDisplayName(proxyType string) string {
 	switch proxyType {
+	case TypeTun:
+		return "TUN"
+	case TypeRedirect:
+		return "Redirect"
+	case TypeTProxy:
+		return "TProxy"
 	case TypeDirect:
 		return "Direct"
 	case TypeBlock:
@@ -44,6 +50,8 @@ func ProxyDisplayName(proxyType string) string {
 		return "SOCKS"
 	case TypeHTTP:
 		return "HTTP"
+	case TypeMixed:
+		return "Mixed"
 	case TypeShadowsocks:
 		return "Shadowsocks"
 	case TypeVMess:

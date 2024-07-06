@@ -5,7 +5,9 @@ import (
 	"net"
 
 	"github.com/sagernet/sing-box/adapter"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
+	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
@@ -13,16 +15,19 @@ import (
 
 func (a *myInboundAdapter) ListenTCP() (net.Listener, error) {
 	var err error
-	bindAddr := M.SocksaddrFrom(a.ListenOptions.Listen.Build(), a.ListenOptions.ListenPort)
+	bindAddr := M.SocksaddrFrom(a.listenOptions.Listen.Build(), a.listenOptions.ListenPort)
 	var tcpListener net.Listener
 	var listenConfig net.ListenConfig
-	if a.ListenOptions.TCPMultiPath {
+	// TODO: Add an option to customize the keep alive period
+	listenConfig.KeepAlive = C.TCPKeepAliveInitial
+	listenConfig.Control = control.Append(listenConfig.Control, control.SetKeepAlivePeriod(C.TCPKeepAliveInitial, C.TCPKeepAliveInterval))
+	if a.listenOptions.TCPMultiPath {
 		if !go121Available {
 			return nil, E.New("MultiPath TCP requires go1.21, please recompile your binary.")
 		}
 		setMultiPathTCP(&listenConfig)
 	}
-	if a.ListenOptions.TCPFastOpen {
+	if a.listenOptions.TCPFastOpen {
 		if !go120Available {
 			return nil, E.New("TCP Fast Open requires go1.20, please recompile your binary.")
 		}
@@ -33,7 +38,7 @@ func (a *myInboundAdapter) ListenTCP() (net.Listener, error) {
 	if err == nil {
 		a.logger.Info("tcp server started at ", tcpListener.Addr())
 	}
-	if a.ListenOptions.ProxyProtocol || a.ListenOptions.ProxyProtocolAcceptNoHeader {
+	if a.listenOptions.ProxyProtocol || a.listenOptions.ProxyProtocolAcceptNoHeader {
 		return nil, E.New("Proxy Protocol is deprecated and removed in sing-box 1.6.0")
 	}
 	a.tcpListener = tcpListener

@@ -1,7 +1,3 @@
----
-icon: material/new-box
----
-
 # Source Format
 
 !!! question "Since sing-box 1.8.0"
@@ -25,7 +21,7 @@ Use `sing-box rule-set compile [--output <file-name>.srs] <file-name>.json` to c
 
 ==Required==
 
-Version of Rule Set, must be `1`.
+Version of rule-set, must be `1`.
 
 #### rules
 

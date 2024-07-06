@@ -14,4 +14,5 @@
 /*.xcframework/
 .DS_Store
 /config.d/
-POW
+/venv/
+
