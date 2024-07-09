@@ -51,6 +51,11 @@ func domesticLoginTrojan(c *gin.Context, delete bool) {
 }
 
 func EditTrojanUsers(c *gin.Context, newUsers []option.TrojanUser, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.TrojanPtr {
 		if !delete {
 			err := inbound.TrojanPtr[i].Service.AddUser(

@@ -51,6 +51,11 @@ func domesticLogicTuic(c *gin.Context, delete bool) {
 }
 
 func EditTuicUsers(c *gin.Context, newUsers []option.TUICUser, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	var userList []int
 	var userNameList []string
 	var userUUIDList [][16]byte

@@ -30,7 +30,7 @@ type StatsService struct {
 	createdAt time.Time
 	inbounds  map[string]bool
 	outbounds map[string]bool
-	users     map[string]bool
+	Users     map[string]bool
 	access    sync.Mutex
 	counters  map[string]*atomic.Int64
 }
@@ -55,9 +55,13 @@ func NewStatsService(options option.V2RayStatsServiceOptions) *StatsService {
 		createdAt: time.Now(),
 		inbounds:  inbounds,
 		outbounds: outbounds,
-		users:     users,
+		Users:     users,
 		counters:  make(map[string]*atomic.Int64),
 	}
+}
+
+func (s *StatsService) AddUser(user string) {
+	s.Users[user] = true
 }
 
 func (s *StatsService) RoutedConnection(inbound string, outbound string, user string, conn net.Conn) net.Conn {
@@ -65,7 +69,7 @@ func (s *StatsService) RoutedConnection(inbound string, outbound string, user st
 	var writeCounter []*atomic.Int64
 	countInbound := inbound != "" && s.inbounds[inbound]
 	countOutbound := outbound != "" && s.outbounds[outbound]
-	countUser := user != "" && s.users[user]
+	countUser := user != "" && s.Users[user]
 	if !countInbound && !countOutbound && !countUser {
 		return conn
 	}
@@ -91,7 +95,7 @@ func (s *StatsService) RoutedPacketConnection(inbound string, outbound string, u
 	var writeCounter []*atomic.Int64
 	countInbound := inbound != "" && s.inbounds[inbound]
 	countOutbound := outbound != "" && s.outbounds[outbound]
-	countUser := user != "" && s.users[user]
+	countUser := user != "" && s.Users[user]
 	if !countInbound && !countOutbound && !countUser {
 		return conn
 	}

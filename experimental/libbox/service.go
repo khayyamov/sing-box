@@ -2,6 +2,7 @@ package libbox
 
 import (
 	"context"
+	tun "github.com/sagernet/sing-tun"
 	"net/netip"
 	"os"
 	"runtime"
@@ -18,7 +19,6 @@ import (
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -184,6 +184,10 @@ func (w *platformInterfaceWrapper) Interfaces() ([]control.Interface, error) {
 
 func (w *platformInterfaceWrapper) UnderNetworkExtension() bool {
 	return w.iif.UnderNetworkExtension()
+}
+
+func (w *platformInterfaceWrapper) IncludeAllNetworks() bool {
+	return w.iif.IncludeAllNetworks()
 }
 
 func (w *platformInterfaceWrapper) ClearDNSCache() {

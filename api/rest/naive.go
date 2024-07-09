@@ -49,6 +49,11 @@ func domesticLogicNaive(c *gin.Context, delete bool) {
 }
 
 func EditNaiveUsers(c *gin.Context, newUsers []auth.User, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Username)
+		}
+	}
 	for i := range inbound.NaivePtr {
 		if !delete {
 			inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator(newUsers)

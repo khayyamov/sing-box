@@ -51,6 +51,11 @@ func domesticLogicVmess(c *gin.Context, delete bool) {
 }
 
 func EditVmessUsers(c *gin.Context, newUsers []option.VMessUser, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.VMessPtr {
 		if !delete {
 			err := inbound.VMessPtr[i].Service.AddUser(

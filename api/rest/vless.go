@@ -52,6 +52,11 @@ func domesticLogicVless(c *gin.Context, delete bool) {
 }
 
 func EditVlessUsers(c *gin.Context, newUsers []option.VLESSUser, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.VLESSPtr {
 		if !delete {
 			inbound.VLESSPtr[i].Service.AddUser(
@@ -68,6 +73,8 @@ func EditVlessUsers(c *gin.Context, newUsers []option.VLESSUser, delete bool) {
 					return index
 				}), common.Map(newUsers, func(it option.VLESSUser) string {
 					return it.UUID
+				}), common.Map(newUsers, func(it option.VLESSUser) string {
+					return it.Flow
 				}))
 		}
 	}

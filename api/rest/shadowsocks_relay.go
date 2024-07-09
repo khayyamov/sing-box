@@ -51,6 +51,11 @@ func domesticLogicShadowsocksRelay(c *gin.Context, delete bool) {
 }
 
 func EditShadowsocksRelayUsers(c *gin.Context, newUsers []option.ShadowsocksDestination, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.ShadowsocksRelayPtr {
 		if !delete {
 			ArrayLen := len(inbound.ShadowsocksRelayPtr[i].Destinations)

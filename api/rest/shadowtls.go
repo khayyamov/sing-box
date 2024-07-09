@@ -50,6 +50,11 @@ func domesticLogicShadowtls(c *gin.Context, delete bool) {
 }
 
 func EditShadowtlsUsers(c *gin.Context, newUsers []shadowtls.User, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.ShadowTlsPtr {
 		if !delete {
 			inbound.ShadowTlsPtr[i].Service.AddUser(newUsers)

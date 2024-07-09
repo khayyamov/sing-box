@@ -50,6 +50,11 @@ func domesticLogicHysteria2(c *gin.Context, delete bool) {
 }
 
 func EditHysteria2Users(c *gin.Context, newUsers []option.Hysteria2User, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	userList := make([]int, 0, len(newUsers))
 	userNameList := make([]string, 0, len(newUsers))
 	userPasswordList := make([]string, 0, len(newUsers))

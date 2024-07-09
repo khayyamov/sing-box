@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           fetch-depth: 0
       - name: Setup Go
@@ -22,9 +22,11 @@ jobs:
           mkdir -p $HOME/.gnupg
           cat > $HOME/.gnupg/sagernet.key <<EOF
           ${{ secrets.GPG_KEY }}
+          echo "HOME=$HOME" >> "$GITHUB_ENV"
           EOF
+          echo "HOME=$HOME" >> "$GITHUB_ENV"
       - name: Publish release
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
           version: latest
@@ -33,5 +35,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
-          NFPM_KEY_PATH: $HOME/.gnupg/sagernet.key
+          NFPM_KEY_PATH: ${{ env.HOME }}/.gnupg/sagernet.key
           NFPM_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

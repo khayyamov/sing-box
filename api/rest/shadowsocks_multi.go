@@ -51,6 +51,11 @@ func domesticLogicShadowsocksMulti(c *gin.Context, delete bool) {
 }
 
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []option.ShadowsocksUser, delete bool) {
+	for _, user := range newUsers {
+		if !delete {
+			AddUserToV2rayApi(user.Name)
+		}
+	}
 	for i := range inbound.ShadowsocksMultiPtr {
 		if !delete {
 			ArrayLen := len(inbound.ShadowsocksMultiPtr[i].Users)

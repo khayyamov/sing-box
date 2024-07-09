@@ -1,10 +1,10 @@
 package constant
 
 const DbConnection = "tcp"
-const DbName = "users_db"
 const DbCharset = "utf8"
 
 var (
+	DbName     = "users_db"
 	DbHost     string // init from argument mysql_host
 	DbPort     string // init from argument mysql_port
 	DbUsername string // init from argument mysql_username

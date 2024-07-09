@@ -2,12 +2,12 @@ package adapter
 
 import (
 	"context"
+	tun "github.com/sagernet/sing-tun"
 	"net/http"
 	"net/netip"
 
 	"github.com/sagernet/sing-box/common/geoip"
 	"github.com/sagernet/sing-dns"
-	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/x/list"
@@ -91,7 +91,7 @@ type DNSRule interface {
 	Rule
 	DisableCache() bool
 	RewriteTTL() *uint32
-	ClientSubnet() *netip.Addr
+	ClientSubnet() *netip.Prefix
 	WithAddressLimit() bool
 	MatchAddressLimit(metadata *InboundContext) bool
 }

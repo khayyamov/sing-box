@@ -68,6 +68,7 @@ func AddInbound(options Options) error {
 			BoxInstance.router,
 			BoxInstance.logFactory.NewLogger(F.ToString("inbound/", inboundOptions.Type, "[", tag, "]")),
 			inboundOptions,
+			tag,
 			options.PlatformInterface,
 		)
 		if err != nil {
@@ -144,8 +145,8 @@ func New(options Options) (*Box, error) {
 			ctx,
 			router,
 			logFactory.NewLogger(F.ToString("inbound/", inboundOptions.Type, "[", tag, "]")),
-			tag,
 			inboundOptions,
+			tag,
 			options.PlatformInterface,
 		)
 		if err != nil {
@@ -363,7 +364,7 @@ func (s *Box) postStart() error {
 	if err != nil {
 		return err
 	}
-	for _, in := range s.inbounds {
+	for _, in := range s.Inbounds {
 		if lateInbound, isLateInbound := in.(adapter.PostStarter); isLateInbound {
 			err = lateInbound.PostStart()
 			if err != nil {
