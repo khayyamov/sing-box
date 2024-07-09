@@ -2,6 +2,7 @@ package v2rayapi
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/log"
 	"net"
 	"regexp"
 	"runtime"
@@ -62,6 +63,7 @@ func NewStatsService(options option.V2RayStatsServiceOptions) *StatsService {
 
 func (s *StatsService) AddUser(user string) {
 	s.Users[user] = true
+	log.Info("V2ray API notify update: " + user)
 }
 
 func (s *StatsService) RoutedConnection(inbound string, outbound string, user string, conn net.Conn) net.Conn {

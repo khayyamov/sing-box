@@ -29,7 +29,7 @@ var (
 
 type Trojan struct {
 	myInboundAdapter
-	Service                  *trojan.Service[int]
+	Service                  *trojan.Service[string]
 	Users                    []option.TrojanUser
 	tlsConfig                tls.ServerConfig
 	fallbackAddr             M.Socksaddr
@@ -85,9 +85,9 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 		}
 		fallbackHandler = adapter.NewUpstreamContextHandler(inbound.fallbackConnection, nil, nil)
 	}
-	service := trojan.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
-	err := service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.TrojanUser) int {
-		return index
+	service := trojan.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
+	err := service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.TrojanUser) string {
+		return it.Name
 	}), common.Map(options.Users, func(it option.TrojanUser) string {
 		return it.Password
 	}))

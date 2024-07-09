@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -52,17 +53,14 @@ func domesticLogicShadowsocksMulti(c *gin.Context, delete bool) {
 
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []option.ShadowsocksUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.ShadowsocksMultiPtr {
 		if !delete {
-			ArrayLen := len(inbound.ShadowsocksMultiPtr[i].Users)
 			inbound.ShadowsocksMultiPtr[i].Users = append(inbound.ShadowsocksMultiPtr[i].Users, newUsers...)
 			err := inbound.ShadowsocksMultiPtr[i].Service.AddUsersWithPasswords(
-				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksUser) int {
-					return index + ArrayLen
+				common.MapIndexedString(newUsers, func(index any, user option.ShadowsocksUser) string {
+					return user.Name
 				}), common.Map(newUsers, func(user option.ShadowsocksUser) string {
 					return user.Password
 				}))
@@ -80,8 +78,8 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []option.ShadowsocksUser
 				}
 			}
 			err := inbound.ShadowsocksMultiPtr[i].Service.DeleteUsersWithPasswords(
-				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksUser) int {
-					return index
+				common.MapIndexedString(newUsers, func(index any, user option.ShadowsocksUser) string {
+					return user.Name
 				}), common.Map(newUsers, func(user option.ShadowsocksUser) string {
 					return user.Password
 				}))

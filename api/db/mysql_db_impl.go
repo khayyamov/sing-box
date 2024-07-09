@@ -1,9 +1,12 @@
 package db
 
 import (
+	"fmt"
+	constant2 "github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/db/mysql_config"
 	"github.com/sagernet/sing-box/constant"
+	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	shadowtls "github.com/sagernet/sing-shadowtls"
 	"github.com/sagernet/sing/common/auth"
@@ -14,7 +17,54 @@ type ImplementationDb struct {
 	Interface DbInterface
 }
 
+func (pr *ImplementationDb) IsUserExistInRamUsers(user entity.DbUser) bool {
+	if constant2.InRamUsers[user.UserJson] {
+		//user exist
+		return true
+	} else {
+		return false
+	}
+}
+
+func (pr *ImplementationDb) AddUserInRamUsersIfNotExist(user entity.DbUser) bool {
+	if constant2.InRamUsers[user.UserJson] {
+		//user exist
+		log.Error(user.UserJson + " This user is exist in ram.")
+		return false
+	} else {
+		//add user
+		constant2.InRamUsers[user.UserJson] = true
+		pr.EditInRamUsers([]entity.DbUser{user}, false)
+		return true
+	}
+}
+
+func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser bool) {
+	if !deleteUser {
+		for i := range users {
+			constant2.InRamUsers[users[i].UserJson] = true
+		}
+	} else {
+		for i := range users {
+			delete(constant2.InRamUsers, users[i].UserJson)
+		}
+	}
+	//if protocolType == constant.TypeVLESS {
+	//} else if protocolType == constant.TypeVMess {
+	//} else if protocolType == constant.TypeTrojan {
+	//} else if protocolType == constant.TypeNaive {
+	//} else if protocolType == constant.TypeHysteria {
+	//} else if protocolType == constant.TypeHysteria2 {
+	//} else if protocolType == constant.TypeShadowsocksMulti {
+	//} else if protocolType == constant.TypeShadowsocksRelay {
+	//} else if protocolType == constant.TypeShadowTLS {
+	//} else if protocolType == constant.TypeTUIC {
+	//}
+}
 func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType string, delete bool) error {
+	if !constant2.DbEnable {
+		return nil
+	}
 	if protocolType == constant.TypeVLESS {
 		if !delete {
 			query := mysql_config.GetTableVless().Create(&users)
@@ -24,11 +74,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.VLESSUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableVless().Where("user_json LIKE ?", "%\""+model.UUID+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -42,11 +92,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.VMessUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableVmess().Where("user_json LIKE ?", "%\""+model.UUID+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -60,11 +110,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.TrojanUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableTrojan().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -78,11 +128,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = auth.User{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableNaive().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -96,11 +146,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.HysteriaUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableHysteria().Where("user_json LIKE ?", "%\""+model.AuthString+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -114,11 +164,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.Hysteria2User{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableHysteria2().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -132,11 +182,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.ShadowsocksUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableShadowsocksMulti().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -150,11 +200,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.ShadowsocksDestination{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableShadowsocksRelay().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -168,11 +218,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.ShadowTLSUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableShadowtls().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -186,11 +236,11 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 				var model = option.TUICUser{}
 				err := json.Unmarshal([]byte(users[i].UserJson), &model)
 				if err != nil {
-					return err
+					fmt.Println(err.Error())
 				}
 				query := mysql_config.GetTableTuic().Where("user_json LIKE ?", "%\""+model.Password+"\"%").Delete(&users)
 				if query.Error != nil {
-					return query.Error
+					fmt.Println(err.Error())
 				}
 			}
 			return nil
@@ -200,8 +250,10 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 }
 
 func getUser[T any](protocolType string) ([]T, error) {
+	if !constant2.DbEnable {
+		return make([]T, 0), nil
+	}
 	var userJsons []entity.DbUser
-
 	if protocolType == constant.TypeVLESS {
 		query := mysql_config.GetTableVless().Find(&userJsons)
 		result, _ := ConvertDbUserToProtocolModel[T](userJsons)

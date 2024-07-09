@@ -85,8 +85,8 @@ github.com/josharian/native v1.1.0 h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtL
 github.com/josharian/native v1.1.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
-github.com/khayyamov/sing v0.1.0 h1:QBN7KzddDeoAbALthysY/b+aGNvenQ8PB37lSlL/x8g=
-github.com/khayyamov/sing v0.1.0/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
+github.com/khayyamov/sing v0.1.1 h1:s86FnezEYQw+RiAO1ady4PoC5DLP17l24tu1u2Va/b0=
+github.com/khayyamov/sing v0.1.1/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
 github.com/khayyamov/sing-quic v0.1.0 h1:hiMdkfRlFjM7Y9nTIGbOMkOUHM1wE3HSz9lNTRYPb7k=
 github.com/khayyamov/sing-quic v0.1.0/go.mod h1:YVpLfVi8BvYM7NMrjmnvcRm3E8iMETf1gFQmTQDN9jI=
 github.com/khayyamov/sing-shadowsocks v0.1.0 h1:IPmO9+HbHoH4pv9EIweJTtgg5mdwI/pFapXUFzSJcSg=

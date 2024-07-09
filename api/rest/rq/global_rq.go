@@ -1,10 +1,8 @@
 package rq
 
 type GlobalModel struct {
-	Username      string `json:"username"`       // naive
+	UUID          string `json:"uuid"`           // vless, vmess, tuic, trojan, shadowtls, hysteria, hysteria2, shadowsocks_multi, shadowsocks_relay
 	Password      string `json:"password"`       // shadowtls, naive, trojan, hysteria2, tuic, shadowsocks_multi, shadowsocks_relay
-	Name          string `json:"name"`           // vless, vmess, tuic, trojan, shadowtls, hysteria, hysteria2, shadowsocks_multi, shadowsocks_relay
-	Uuid          string `json:"uuid"`           // vless, vmess, tuic
 	Flow          string `json:"flow"`           // vless, vmess
 	Auth          string `json:"auth"`           // hysteria
 	AuthString    string `json:"auth_string"`    // hysteria

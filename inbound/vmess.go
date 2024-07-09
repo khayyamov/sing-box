@@ -33,7 +33,7 @@ var (
 type VMess struct {
 	myInboundAdapter
 	ctx       context.Context
-	Service   *vmess.Service[int]
+	Service   *vmess.Service[string]
 	Users     []option.VMessUser
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
@@ -69,10 +69,10 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 	if options.Transport != nil && options.Transport.Type != "" {
 		serviceOptions = append(serviceOptions, vmess.ServiceWithDisableHeaderProtection())
 	}
-	service := vmess.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
+	service := vmess.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
 	inbound.Service = service
-	err = service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.VMessUser) int {
-		return index
+	err = service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.VMessUser) string {
+		return it.UUID
 	}), common.Map(options.Users, func(it option.VMessUser) string {
 		return it.UUID
 	}), common.Map(options.Users, func(it option.VMessUser) int {

@@ -12,6 +12,9 @@ var dbLock = &sync.Mutex{}
 var DB *gorm.DB
 
 func MySqlInstance() *gorm.DB {
+	if !constant.DbEnable {
+		return nil
+	}
 	var err error
 	if DB == nil {
 

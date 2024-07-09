@@ -60,12 +60,12 @@ func EditGroupUsers(c *gin.Context, newUsers []global_import.GlobalModel, delete
 	for i := range newUsers {
 		if newUsers[i].AddToAll || newUsers[i].Hysteria {
 			//hysteria = append(hysteria, option.HysteriaUser{
-			//	Name:       newUsers[i].Name,
+			//	UUID:       newUsers[i].UUID,
 			//	Auth:       []byte(newUsers[i].Auth),
 			//	AuthString: newUsers[i].AuthString,
 			//})
 			EditHysteriaUsers(c, []option.HysteriaUser{{
-				Name:       newUsers[i].Name,
+				Name:       newUsers[i].UUID,
 				Auth:       []byte(newUsers[i].Auth),
 				AuthString: newUsers[i].AuthString,
 			}}, delete)
@@ -73,49 +73,49 @@ func EditGroupUsers(c *gin.Context, newUsers []global_import.GlobalModel, delete
 
 		if newUsers[i].AddToAll || newUsers[i].Hysteria2 {
 			//hysteria2 = append(hysteria2, option.Hysteria2User{
-			//	Name:     newUsers[i].Name,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//})
 			EditHysteria2Users(c, []option.Hysteria2User{{
-				Name:     newUsers[i].Name,
-				Password: newUsers[i].Name,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Naive {
 			//naive = append(naive, auth.User{
-			//	Username: newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID: newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//})
 			EditNaiveUsers(c, []auth.User{{
-				Username: newUsers[i].Username,
-				Password: newUsers[i].Name,
+				Username: newUsers[i].UUID,
+				Password: newUsers[i].Password,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Shadowsocks_multi {
 			//shadowsocks_multi = append(shadowsocks_multi, option.ShadowsocksUser{
-			//	Name:     newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//})
 			EditShadowsocksMultiUsers(c, []option.ShadowsocksUser{{
-				Name:     newUsers[i].Username,
-				Password: newUsers[i].Name,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Shadowsocks_relay {
 			//shadowsocks_relay = append(shadowsocks_relay, option.ShadowsocksDestination{
-			//	Name:     newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//	ServerOptions: option.ServerOptions{
 			//		Server:     newUsers[i].ServerAddress,
 			//		ServerPort: newUsers[i].ServerPort,
 			//	},
 			//})
 			EditShadowsocksRelayUsers(c, []option.ShadowsocksDestination{{
-				Name:     newUsers[i].Username,
-				Password: newUsers[i].Name,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
 				ServerOptions: option.ServerOptions{
 					Server:     newUsers[i].ServerAddress,
 					ServerPort: newUsers[i].ServerPort,
@@ -125,60 +125,60 @@ func EditGroupUsers(c *gin.Context, newUsers []global_import.GlobalModel, delete
 
 		if newUsers[i].AddToAll || newUsers[i].Shadowtls {
 			//shadowtlsArr = append(shadowtlsArr, shadowtls.User{
-			//	Name:     newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//})
 			EditShadowtlsUsers(c, []shadowtls.User{{
-				Name:     newUsers[i].Username,
-				Password: newUsers[i].Name,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Trojan {
 			//trojan = append(trojan, option.TrojanUser{
-			//	Name:     newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//})
 			EditTrojanUsers(c, []option.TrojanUser{{
-				Name:     newUsers[i].Username,
-				Password: newUsers[i].Name,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Tuic {
 			//tuic = append(tuic, option.TUICUser{
-			//	Name:     newUsers[i].Username,
-			//	Password: newUsers[i].Name,
+			//	UUID:     newUsers[i].UUID,
+			//	Password: newUsers[i].UUID,
 			//	UUID:     newUsers[i].Uuid,
 			//})
 			EditTuicUsers(c, []option.TUICUser{{
-				Name:     newUsers[i].Username,
-				Password: newUsers[i].Name,
-				UUID:     newUsers[i].Uuid,
+				Name:     newUsers[i].UUID,
+				Password: newUsers[i].Password,
+				UUID:     newUsers[i].UUID,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Vless {
 			//vless = append(vless, option.VLESSUser{
-			//	Name: newUsers[i].Username,
-			//	Flow: newUsers[i].Name,
+			//	UUID: newUsers[i].UUID,
+			//	Flow: newUsers[i].UUID,
 			//	UUID: newUsers[i].Uuid,
 			//})
 			EditVlessUsers(c, []option.VLESSUser{{
-				Name: newUsers[i].Username,
-				Flow: newUsers[i].Name,
-				UUID: newUsers[i].Uuid,
+				Name: newUsers[i].UUID,
+				Flow: newUsers[i].Flow,
+				UUID: newUsers[i].UUID,
 			}}, delete)
 		}
 
 		if newUsers[i].AddToAll || newUsers[i].Vmess {
 			//vmess = append(vmess, option.VMessUser{
-			//	Name: newUsers[i].Username,
+			//	UUID: newUsers[i].UUID,
 			//	UUID: newUsers[i].Uuid,
 			//})
 			EditVmessUsers(c, []option.VMessUser{{
-				Name: newUsers[i].Username,
-				UUID: newUsers[i].Uuid,
+				Name: newUsers[i].UUID,
+				UUID: newUsers[i].UUID,
 			}}, delete)
 		}
 	}

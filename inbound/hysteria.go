@@ -24,7 +24,7 @@ var _ adapter.Inbound = (*Hysteria)(nil)
 type Hysteria struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
-	Service      *hysteria.Service[int]
+	Service      *hysteria.Service[string]
 	userNameList []string
 }
 
@@ -76,7 +76,7 @@ func NewHysteria(ctx context.Context, router adapter.Router, logger log.ContextL
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := hysteria.NewService[int](hysteria.ServiceOptions{
+	service, err := hysteria.NewService[string](hysteria.ServiceOptions{
 		Context:       ctx,
 		Logger:        logger,
 		SendBPS:       sendBps,
@@ -96,11 +96,11 @@ func NewHysteria(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, err
 	}
-	userList := make([]int, 0, len(options.Users))
+	userList := make([]string, 0, len(options.Users))
 	userNameList := make([]string, 0, len(options.Users))
 	userPasswordList := make([]string, 0, len(options.Users))
-	for index, user := range options.Users {
-		userList = append(userList, index)
+	for _, user := range options.Users {
+		userList = append(userList, user.Name)
 		userNameList = append(userNameList, user.Name)
 		var password string
 		if user.AuthString != "" {

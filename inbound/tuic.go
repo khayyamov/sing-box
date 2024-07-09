@@ -25,7 +25,7 @@ var _ adapter.Inbound = (*TUIC)(nil)
 type TUIC struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
-	Service      *tuic.Service[int]
+	Service      *tuic.Service[string]
 	Users        []option.TUICUser
 	userNameList []string
 }
@@ -62,7 +62,7 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := tuic.NewService[int](tuic.ServiceOptions{
+	service, err := tuic.NewService[string](tuic.ServiceOptions{
 		Context:           ctx,
 		Logger:            logger,
 		TLSConfig:         tlsConfig,
@@ -76,19 +76,19 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	if err != nil {
 		return nil, err
 	}
-	var userList []int
+	var userList []string
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
-	for index, user := range options.Users {
+	for _, user := range options.Users {
 		if user.UUID == "" {
-			return nil, E.New("missing uuid for user ", index)
+			return nil, E.New("missing uuid for user ", user.UUID)
 		}
 		userUUID, err := uuid.FromString(user.UUID)
 		if err != nil {
-			return nil, E.Cause(err, "invalid uuid for user ", index)
+			return nil, E.Cause(err, "invalid uuid for user ", user.UUID)
 		}
-		userList = append(userList, index)
+		userList = append(userList, user.Name)
 		userNameList = append(userNameList, user.Name)
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)

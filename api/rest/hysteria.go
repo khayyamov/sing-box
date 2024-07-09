@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -50,15 +51,13 @@ func domesticLogicHysteria(c *gin.Context, delete bool) {
 }
 func EditHysteriaUsers(c *gin.Context, newUsers []option.HysteriaUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
-	userList := make([]int, 0, len(newUsers))
+	userList := make([]string, 0, len(newUsers))
 	userNameList := make([]string, 0, len(newUsers))
 	userPasswordList := make([]string, 0, len(newUsers))
-	for index, user := range newUsers {
-		userList = append(userList, index)
+	for _, user := range newUsers {
+		userList = append(userList, user.Name)
 		userNameList = append(userNameList, user.Name)
 		var password string
 		if user.AuthString != "" {

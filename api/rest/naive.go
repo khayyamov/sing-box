@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -50,9 +51,7 @@ func domesticLogicNaive(c *gin.Context, delete bool) {
 
 func EditNaiveUsers(c *gin.Context, newUsers []auth.User, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Username)
-		}
+		box.EditUserInV2rayApi(user.Username, delete)
 	}
 	for i := range inbound.NaivePtr {
 		if !delete {

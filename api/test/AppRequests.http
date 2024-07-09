@@ -1,10 +1,18 @@
+### /api/singbox/getUserFullUsage
+GET {{host}}/api/singbox/getUserFullUsage
+Content-Type: application/json
+
+{
+  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587c"
+}
+
 ### /api/singbox/addUserToVless
 POST {{host}}/api/singbox/addUserToVless
 Content-Type: application/json
 
 {
-  "uuid": "test",
-  "name": "test"
+  "uuid": "0064e030-0209-4aa5-48de-a3659e5c5871",
+  "name": "2064e030-0209-4aa5-48de-a3659e5c5871"
 }
 
 ### /api/singbox/deleteUserToVless

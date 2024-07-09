@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -52,15 +53,13 @@ func domesticLogicTuic(c *gin.Context, delete bool) {
 
 func EditTuicUsers(c *gin.Context, newUsers []option.TUICUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
-	var userList []int
+	var userList []string
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
-	for index, user := range newUsers {
+	for _, user := range newUsers {
 		if user.UUID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "missing uuid for user " + user.UUID})
 		}
@@ -68,7 +67,7 @@ func EditTuicUsers(c *gin.Context, newUsers []option.TUICUser, delete bool) {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid for user " + user.UUID})
 		}
-		userList = append(userList, index)
+		userList = append(userList, user.Name)
 		userNameList = append(userNameList, user.Name)
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)

@@ -3,6 +3,7 @@ package inbound
 import (
 	"context"
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/common/mux"
 	"github.com/sagernet/sing-box/common/tls"
@@ -33,15 +34,24 @@ type VLESS struct {
 	myInboundAdapter
 	ctx       context.Context
 	Users     []option.VLESSUser
-	Service   *vless.Service[int]
+	Service   *vless.Service[string]
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
 
 func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VLESSInboundOptions) (*VLESS, error) {
-	dbUsers, _ := db.GetDb().GetVlessUsers()
-	if len(dbUsers) > 0 {
-		options.Users = dbUsers
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetVlessUsers()
+		if len(dbUsers) > 0 {
+			options.Users = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	inbound := &VLESS{
 		myInboundAdapter: myInboundAdapter{
@@ -61,9 +71,9 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 	if err != nil {
 		return nil, err
 	}
-	service := vless.NewService[int](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
-	service.UpdateUsers(common.MapIndexed(inbound.Users, func(index int, _ option.VLESSUser) int {
-		return index
+	service := vless.NewService[string](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
+	service.UpdateUsers(common.MapIndexedString(inbound.Users, func(index any, it option.VLESSUser) string {
+		return it.UUID
 	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
 		return it.UUID
 	}), common.Map(inbound.Users, func(it option.VLESSUser) string {

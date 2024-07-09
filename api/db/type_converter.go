@@ -19,6 +19,16 @@ func ConvertProtocolModelToDbUser[T any](arr []T) ([]entity.DbUser, error) {
 	}
 	return retArr, nil
 }
+func ConvertSingleProtocolModelToDbUser[T any](arr T) (entity.DbUser, error) {
+	retArr := entity.DbUser{}
+	temp, err := json.Marshal(arr)
+	if err != nil {
+		return entity.DbUser{}, err
+	} else {
+		retArr = entity.DbUser{UserJson: string(temp)}
+	}
+	return retArr, nil
+}
 
 func ConvertDbUserToProtocolModel[T any](arr []entity.DbUser) ([]T, error) {
 	retArr := make([]T, 0, len(arr))
@@ -31,4 +41,12 @@ func ConvertDbUserToProtocolModel[T any](arr []entity.DbUser) ([]T, error) {
 		retArr = append(retArr, userT)
 	}
 	return retArr, nil
+}
+func ConvertSingleDbUserToProtocolModel[T any](user entity.DbUser) (T, error) {
+	var userT T
+	err := json.Unmarshal([]byte(user.UserJson), &userT)
+	if err != nil {
+		return userT, err
+	}
+	return userT, nil
 }

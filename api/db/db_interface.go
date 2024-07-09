@@ -29,4 +29,10 @@ type DbInterface interface {
 	GetShadowsocksRelayUsers() ([]option.ShadowsocksDestination, error)
 
 	EditDbUser(v []entity.DbUser, protocolType string, delete bool) error
+
+	EditInRamUsers(v []entity.DbUser, deleteUser bool)
+
+	IsUserExistInRamUsers(user entity.DbUser) bool
+
+	AddUserInRamUsersIfNotExist(user entity.DbUser) bool
 }

@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -52,15 +53,13 @@ func domesticLoginTrojan(c *gin.Context, delete bool) {
 
 func EditTrojanUsers(c *gin.Context, newUsers []option.TrojanUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.TrojanPtr {
 		if !delete {
 			err := inbound.TrojanPtr[i].Service.AddUser(
-				common.MapIndexed(newUsers, func(index int, it option.TrojanUser) int {
-					return index
+				common.MapIndexedString(newUsers, func(index any, it option.TrojanUser) string {
+					return it.Name
 				}), common.Map(newUsers, func(it option.TrojanUser) string {
 					return it.Password
 				}))
@@ -69,8 +68,8 @@ func EditTrojanUsers(c *gin.Context, newUsers []option.TrojanUser, delete bool) 
 			}
 		} else {
 			err := inbound.TrojanPtr[i].Service.DeleteUser(
-				common.MapIndexed(newUsers, func(index int, it option.TrojanUser) int {
-					return index
+				common.MapIndexedString(newUsers, func(index any, it option.TrojanUser) string {
+					return it.Name
 				}), common.Map(newUsers, func(it option.TrojanUser) string {
 					return it.Password
 				}))

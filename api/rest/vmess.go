@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -52,15 +53,13 @@ func domesticLogicVmess(c *gin.Context, delete bool) {
 
 func EditVmessUsers(c *gin.Context, newUsers []option.VMessUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.VMessPtr {
 		if !delete {
 			err := inbound.VMessPtr[i].Service.AddUser(
-				common.MapIndexed(newUsers, func(index int, it option.VMessUser) int {
-					return it.AlterId
+				common.MapIndexedString(newUsers, func(index any, it option.VMessUser) string {
+					return it.UUID
 				}), common.Map(newUsers, func(it option.VMessUser) string {
 					return it.UUID
 				}), common.Map(newUsers, func(it option.VMessUser) int {
@@ -71,8 +70,8 @@ func EditVmessUsers(c *gin.Context, newUsers []option.VMessUser, delete bool) {
 			}
 		} else {
 			err := inbound.VMessPtr[i].Service.DeleteUser(
-				common.MapIndexed(newUsers, func(index int, it option.VMessUser) int {
-					return index
+				common.MapIndexedString(newUsers, func(index any, it option.VMessUser) string {
+					return it.UUID
 				}), common.Map(newUsers, func(it option.VMessUser) string {
 					return it.UUID
 				}), common.Map(newUsers, func(it option.VMessUser) int {

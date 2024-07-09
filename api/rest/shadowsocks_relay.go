@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -52,18 +53,15 @@ func domesticLogicShadowsocksRelay(c *gin.Context, delete bool) {
 
 func EditShadowsocksRelayUsers(c *gin.Context, newUsers []option.ShadowsocksDestination, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.ShadowsocksRelayPtr {
 		if !delete {
-			ArrayLen := len(inbound.ShadowsocksRelayPtr[i].Destinations)
 			inbound.ShadowsocksRelayPtr[i].Destinations = append(
 				inbound.ShadowsocksRelayPtr[i].Destinations, newUsers...)
 			err := inbound.ShadowsocksRelayPtr[i].Service.AddUsersWithPasswords(
-				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksDestination) int {
-					return index + ArrayLen
+				common.MapIndexedString(newUsers, func(index any, user option.ShadowsocksDestination) string {
+					return user.Name
 				}), common.Map(newUsers, func(user option.ShadowsocksDestination) string {
 					return user.Password
 				}), common.Map(newUsers, option.ShadowsocksDestination.Build))
@@ -82,8 +80,8 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []option.ShadowsocksDest
 				}
 			}
 			err := inbound.ShadowsocksRelayPtr[i].Service.DeleteUsersWithPasswords(
-				common.MapIndexed(newUsers, func(index int, user option.ShadowsocksDestination) int {
-					return index
+				common.MapIndexedString(newUsers, func(index any, user option.ShadowsocksDestination) string {
+					return user.Name
 				}), common.Map(newUsers, func(user option.ShadowsocksDestination) string {
 					return user.Password
 				}))

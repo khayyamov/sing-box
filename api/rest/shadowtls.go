@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
@@ -51,9 +52,7 @@ func domesticLogicShadowtls(c *gin.Context, delete bool) {
 
 func EditShadowtlsUsers(c *gin.Context, newUsers []shadowtls.User, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.ShadowTlsPtr {
 		if !delete {

@@ -36,7 +36,8 @@ func init() {
 	mainCommand.PersistentFlags().StringVarP(&constant.DbPort, "mysql-port", "", "", "set mysql port")
 	mainCommand.PersistentFlags().StringVarP(&constant.DbUsername, "mysql-user", "", "", "set mysql username")
 	mainCommand.PersistentFlags().StringVarP(&constant.DbPassword, "mysql-pass", "", "", "set mysql password")
-	mainCommand.PersistentFlags().StringVarP(&constant.DbName, "mysql-name", "", "", "set mysql name")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbName, "mysql-name", "", "", "set mysql name default users_db")
+	mainCommand.PersistentFlags().StringVarP(&constant.DbName, "mysql-enable", "", "", "enable mysql db default false")
 
 	mainCommand.PersistentFlags().StringArrayVarP(&configPaths, "config", "c", nil, "set configuration file path")
 	mainCommand.PersistentFlags().StringArrayVarP(&configDirectories, "config-directory", "C", nil, "set configuration directory path")

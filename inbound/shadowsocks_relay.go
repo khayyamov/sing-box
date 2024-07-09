@@ -28,7 +28,7 @@ var (
 
 type ShadowsocksRelay struct {
 	myInboundAdapter
-	Service      *shadowaead_2022.RelayService[int]
+	Service      *shadowaead_2022.RelayService[string]
 	Destinations []option.ShadowsocksDestination
 }
 
@@ -62,7 +62,7 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := shadowaead_2022.NewRelayServiceWithPassword[int](
+	service, err := shadowaead_2022.NewRelayServiceWithPassword[string](
 		options.Method,
 		options.Password,
 		int64(udpTimeout.Seconds()),
@@ -71,8 +71,8 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	err = service.UpdateUsersWithPasswords(common.MapIndexed(options.Destinations, func(index int, user option.ShadowsocksDestination) int {
-		return index
+	err = service.UpdateUsersWithPasswords(common.MapIndexedString(options.Destinations, func(index any, user option.ShadowsocksDestination) string {
+		return user.Name
 	}), common.Map(options.Destinations, func(user option.ShadowsocksDestination) string {
 		return user.Password
 	}), common.Map(options.Destinations, option.ShadowsocksDestination.Build))

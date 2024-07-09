@@ -11,6 +11,8 @@ func HandleApiRoutes() {
 		r := gin.Default()
 		mysql_config.MySqlInstance()
 
+		r.GET(constant.GetUserFullUsage, getUserFullUsage)
+
 		r.POST(constant.AddToAll, AddToAll)
 		r.POST(constant.DeleteToAll, DeleteToAll)
 

@@ -179,6 +179,7 @@ func run() error {
 		if err != nil {
 			return err
 		}
+		box.AddDbUsersToV2rayApi()
 		runtimeDebug.FreeOSMemory()
 		for {
 			osSignal := <-osSignals

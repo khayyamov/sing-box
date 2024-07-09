@@ -32,7 +32,7 @@ var (
 
 type ShadowsocksMulti struct {
 	myInboundAdapter
-	Service shadowsocks.MultiService[int]
+	Service shadowsocks.MultiService[string]
 	Users   []option.ShadowsocksUser
 }
 
@@ -65,9 +65,9 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	var service shadowsocks.MultiService[int]
+	var service shadowsocks.MultiService[string]
 	if common.Contains(shadowaead_2022.List, options.Method) {
-		service, err = shadowaead_2022.NewMultiServiceWithPassword[int](
+		service, err = shadowaead_2022.NewMultiServiceWithPassword[string](
 			options.Method,
 			options.Password,
 			int64(udpTimeout.Seconds()),
@@ -75,7 +75,7 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 			ntp.TimeFuncFromContext(ctx),
 		)
 	} else if common.Contains(shadowaead.List, options.Method) {
-		service, err = shadowaead.NewMultiService[int](
+		service, err = shadowaead.NewMultiService[string](
 			options.Method,
 			int64(udpTimeout.Seconds()),
 			adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
@@ -85,8 +85,8 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	err = service.UpdateUsersWithPasswords(common.MapIndexed(options.Users, func(index int, user option.ShadowsocksUser) int {
-		return index
+	err = service.UpdateUsersWithPasswords(common.MapIndexedString(options.Users, func(index any, user option.ShadowsocksUser) string {
+		return user.Name
 	}), common.Map(options.Users, func(user option.ShadowsocksUser) string {
 		return user.Password
 	}))

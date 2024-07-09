@@ -2,6 +2,7 @@ package constant
 
 const baseUrl = "/api/singbox/"
 
+const GetUserFullUsage = baseUrl + "getUserFullUsage"
 const AddToAll = baseUrl + "addToAll"
 const DeleteToAll = baseUrl + "deleteToAll"
 

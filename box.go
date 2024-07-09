@@ -3,6 +3,7 @@ package box
 import (
 	"context"
 	"fmt"
+	"github.com/sagernet/sing-box/api/db"
 	"io"
 	"os"
 	"runtime/debug"
@@ -82,6 +83,80 @@ func AddInbound(options Options) error {
 	}
 	return nil
 }
+
+func EditUserInV2rayApi(user string, delete bool) {
+	if BoxInstance.Router().V2RayServer() != nil {
+		if !delete {
+			BoxInstance.Router().V2RayServer().StatsService().AddUser(user)
+		}
+	}
+}
+
+func AddDbUsersToV2rayApi() {
+	if BoxInstance.Router().V2RayServer() != nil {
+		dbUsersVless, _ := db.GetDb().GetVlessUsers()
+		if len(dbUsersVless) > 0 {
+			for i := range dbUsersVless {
+				EditUserInV2rayApi(dbUsersVless[i].Name, false)
+			}
+		}
+		dbUsersVmess, _ := db.GetDb().GetVlessUsers()
+		if len(dbUsersVmess) > 0 {
+			for i := range dbUsersVmess {
+				EditUserInV2rayApi(dbUsersVmess[i].Name, false)
+			}
+		}
+		dbUsersTrojan, _ := db.GetDb().GetTrojanUsers()
+		if len(dbUsersTrojan) > 0 {
+			for i := range dbUsersTrojan {
+				EditUserInV2rayApi(dbUsersTrojan[i].Name, false)
+			}
+		}
+		dbUsersShadowSocksRelay, _ := db.GetDb().GetShadowsocksRelayUsers()
+		if len(dbUsersShadowSocksRelay) > 0 {
+			for i := range dbUsersShadowSocksRelay {
+				EditUserInV2rayApi(dbUsersShadowSocksRelay[i].Name, false)
+			}
+		}
+		dbUsersShadowSocksMulti, _ := db.GetDb().GetShadowsocksMultiUsers()
+		if len(dbUsersShadowSocksMulti) > 0 {
+			for i := range dbUsersShadowSocksMulti {
+				EditUserInV2rayApi(dbUsersShadowSocksMulti[i].Name, false)
+			}
+		}
+		dbUsersHysteria, _ := db.GetDb().GetHysteriaUsers()
+		if len(dbUsersHysteria) > 0 {
+			for i := range dbUsersHysteria {
+				EditUserInV2rayApi(dbUsersHysteria[i].Name, false)
+			}
+		}
+		dbUsersHysteria2, _ := db.GetDb().GetHysteria2Users()
+		if len(dbUsersHysteria2) > 0 {
+			for i := range dbUsersHysteria2 {
+				EditUserInV2rayApi(dbUsersHysteria2[i].Name, false)
+			}
+		}
+		dbUsersNaive, _ := db.GetDb().GetNaiveUsers()
+		if len(dbUsersNaive) > 0 {
+			for i := range dbUsersNaive {
+				EditUserInV2rayApi(dbUsersNaive[i].Username, false)
+			}
+		}
+		dbUsersTuic, _ := db.GetDb().GetTuicUsers()
+		if len(dbUsersTuic) > 0 {
+			for i := range dbUsersTuic {
+				EditUserInV2rayApi(dbUsersTuic[i].Name, false)
+			}
+		}
+		dbUsersShadowTls, _ := db.GetDb().GetShadowtlsUsers()
+		if len(dbUsersShadowTls) > 0 {
+			for i := range dbUsersShadowTls {
+				EditUserInV2rayApi(dbUsersShadowTls[i].Name, false)
+			}
+		}
+	}
+}
+
 func New(options Options) (*Box, error) {
 	createdAt := time.Now()
 	ctx := options.Context

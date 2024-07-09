@@ -53,35 +53,33 @@ func domesticLogicVless(c *gin.Context, delete bool) {
 
 func EditVlessUsers(c *gin.Context, newUsers []option.VLESSUser, delete bool) {
 	for _, user := range newUsers {
-		if !delete {
-			AddUserToV2rayApi(user.Name)
-		}
+		box.EditUserInV2rayApi(user.Name, delete)
 	}
 	for i := range inbound.VLESSPtr {
+		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](newUsers[i])
 		if !delete {
-			inbound.VLESSPtr[i].Service.AddUser(
-				common.MapIndexed(newUsers, func(index int, _ option.VLESSUser) int {
-					return index
-				}), common.Map(newUsers, func(it option.VLESSUser) string {
-					return it.UUID
-				}), common.Map(newUsers, func(it option.VLESSUser) string {
-					return it.Flow
-				}))
+			if db.GetDb().AddUserInRamUsersIfNotExist(dbUser) {
+				inbound.VLESSPtr[i].Service.AddUser(
+					common.MapIndexedString(newUsers, func(index any, it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map(newUsers, func(it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map(newUsers, func(it option.VLESSUser) string {
+						return it.Flow
+					}))
+			}
 		} else {
-			inbound.VLESSPtr[i].Service.DeleteUser(
-				common.MapIndexed(newUsers, func(index int, _ option.VLESSUser) int {
-					return index
-				}), common.Map(newUsers, func(it option.VLESSUser) string {
-					return it.UUID
-				}), common.Map(newUsers, func(it option.VLESSUser) string {
-					return it.Flow
-				}))
+			if db.GetDb().IsUserExistInRamUsers(dbUser) {
+				inbound.VLESSPtr[i].Service.DeleteUser(
+					common.MapIndexedString(newUsers, func(index any, it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map(newUsers, func(it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map(newUsers, func(it option.VLESSUser) string {
+						return it.Flow
+					}))
+			}
 		}
-	}
-	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().EditDbUser(users, C.TypeVLESS, delete)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }
 
