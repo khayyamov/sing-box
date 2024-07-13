@@ -58,7 +58,7 @@ require (
 )
 
 //replace github.com/sagernet/sing => ../sing
-replace github.com/sagernet/sing => github.com/khayyamov/sing v0.1.1
+replace github.com/sagernet/sing => github.com/khayyamov/sing v0.1.2
 
 replace github.com/sagernet/sing-quic => github.com/khayyamov/sing-quic v0.1.0
 

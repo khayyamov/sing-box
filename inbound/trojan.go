@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"os"
@@ -29,7 +30,7 @@ var (
 
 type Trojan struct {
 	myInboundAdapter
-	Service                  *trojan.Service[string]
+	Service                  *trojan.Service[int]
 	Users                    []option.TrojanUser
 	tlsConfig                tls.ServerConfig
 	fallbackAddr             M.Socksaddr
@@ -38,9 +39,19 @@ type Trojan struct {
 }
 
 func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TrojanInboundOptions) (*Trojan, error) {
-	dbUsers, _ := db.GetDb().GetTrojanUsers()
-	if len(dbUsers) > 0 {
-		options.Users = dbUsers
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetTrojanUsers()
+		dbUsers = append(dbUsers, options.Users...)
+		if len(dbUsers) > 0 {
+			options.Users = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	inbound := &Trojan{
 		myInboundAdapter: myInboundAdapter{
@@ -85,9 +96,9 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 		}
 		fallbackHandler = adapter.NewUpstreamContextHandler(inbound.fallbackConnection, nil, nil)
 	}
-	service := trojan.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
-	err := service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.TrojanUser) string {
-		return it.Name
+	service := trojan.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
+	err := service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.TrojanUser) int {
+		return index
 	}), common.Map(options.Users, func(it option.TrojanUser) string {
 		return it.Password
 	}))

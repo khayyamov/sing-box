@@ -1,82 +1,81 @@
 package rest
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
+	"github.com/sagernet/sing-box/api/db/entity"
+	"github.com/sagernet/sing-box/api/rest/rq"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
+	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"io"
-	"net/http"
 )
 
-func AddUserToHysteria(c *gin.Context) {
-	domesticLogicHysteria(c, false)
-}
-
-func DeleteUserToHysteria(c *gin.Context) {
-	domesticLogicHysteria(c, true)
-}
-
-func domesticLogicHysteria(c *gin.Context, delete bool) {
-	var rq option.HysteriaUser
-	var rqArr []option.HysteriaUser
-
-	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
-	jsonBody := string(bodyAsByteArray)
-	haveErr := false
-
-	err := json.Unmarshal([]byte(jsonBody), &rq)
-	if err == nil {
-		haveErr = false
-		EditHysteriaUsers(c, []option.HysteriaUser{rq}, delete)
+func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	if len(inbound.HysteriaPtr) == 0 {
+		log.Info("No Active Hysteria outbound found to add users to it")
 		return
-	} else {
-		haveErr = true
 	}
-	err = json.Unmarshal([]byte(jsonBody), &rqArr)
-	if err == nil {
-		haveErr = false
-		EditHysteriaUsers(c, rqArr, delete)
-		return
-	} else {
-		haveErr = true
-	}
-
-	if haveErr {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-}
-func EditHysteriaUsers(c *gin.Context, newUsers []option.HysteriaUser, delete bool) {
-	for _, user := range newUsers {
-		box.EditUserInV2rayApi(user.Name, delete)
-	}
-	userList := make([]string, 0, len(newUsers))
+	userList := make([]int, 0, len(newUsers))
 	userNameList := make([]string, 0, len(newUsers))
 	userPasswordList := make([]string, 0, len(newUsers))
-	for _, user := range newUsers {
-		userList = append(userList, user.Name)
-		userNameList = append(userNameList, user.Name)
-		var password string
-		if user.AuthString != "" {
-			password = user.AuthString
-		} else {
-			password = string(user.Auth)
+	for index, user := range newUsers {
+		convertedUser := option.HysteriaUser{
+			Name:       user.UUID,
+			AuthString: user.AuthString,
+			Auth:       []byte(user.Auth),
 		}
-		userPasswordList = append(userPasswordList, password)
-	}
-	for i := range inbound.HysteriaPtr {
-		if !delete {
-			inbound.HysteriaPtr[i].Service.AddUser(userList, userPasswordList)
-		} else {
-			inbound.HysteriaPtr[i].Service.DeleteUser(userList, userPasswordList)
+		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.HysteriaUser](convertedUser)
+		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
+			log.Error("User already exist: " + dbUser.UserJson)
+			continue
 		}
-	}
-	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().EditDbUser(users, C.TypeHysteria, delete)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_, err := uuid.FromString(user.UUID)
+		if err != nil {
+			continue
+		}
+		userList = append(userList, index)
+		userNameList = append(userNameList, user.UUID)
+		userPasswordList = append(userPasswordList, user.Password)
+		box.EditUserInV2rayApi(user.UUID, delete)
+		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria, delete)
+		for i := range inbound.HysteriaPtr {
+			if !delete {
+				if len(user.ReplacementField) > 0 {
+					for _, model := range user.ReplacementField {
+						if inbound.HysteriaPtr[i].Tag() == model.Tag {
+							if len(model.Auth) > 0 {
+								convertedUser.Auth = []byte(model.Auth)
+							}
+							if len(model.AuthString) > 0 {
+								convertedUser.AuthString = model.AuthString
+							}
+							break
+						}
+					}
+				}
+
+				if len(convertedUser.Auth) == 0 && len(convertedUser.AuthString) == 0 {
+					continue
+				}
+				inbound.HysteriaPtr[i].Service.AddUser(userList, userPasswordList)
+				inbound.HysteriaPtr[i].UserNameList = append(inbound.HysteriaPtr[i].UserNameList, convertedUser.Name)
+			} else {
+
+				inbound.HysteriaPtr[i].Service.DeleteUser(userList, userPasswordList)
+				for j := range newUsers {
+					for k := range inbound.HysteriaPtr[i].UserNameList {
+						if newUsers[j].UUID == inbound.HysteriaPtr[i].UserNameList[k] {
+							inbound.HysteriaPtr[i].UserNameList = append(
+								inbound.HysteriaPtr[i].UserNameList[:k],
+								inbound.HysteriaPtr[i].UserNameList[k+1:]...)
+							break
+						}
+					}
+				}
+			}
+		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	constant2 "github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/db/mysql_config"
+	"github.com/sagernet/sing-box/api/utils"
 	"github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
@@ -18,7 +19,8 @@ type ImplementationDb struct {
 }
 
 func (pr *ImplementationDb) IsUserExistInRamUsers(user entity.DbUser) bool {
-	if constant2.InRamUsers[user.UserJson] {
+	uuid, _ := utils.UUIDFromDBUserJson(user.UserJson)
+	if constant2.InRamUsersUUID[uuid] {
 		//user exist
 		return true
 	} else {
@@ -27,14 +29,15 @@ func (pr *ImplementationDb) IsUserExistInRamUsers(user entity.DbUser) bool {
 }
 
 func (pr *ImplementationDb) AddUserInRamUsersIfNotExist(user entity.DbUser) bool {
-	if constant2.InRamUsers[user.UserJson] {
+	uuid, _ := utils.UUIDFromDBUserJson(user.UserJson)
+	if constant2.InRamUsersUUID[uuid] {
 		//user exist
-		log.Error(user.UserJson + " This user is exist in ram.")
 		return false
 	} else {
 		//add user
-		constant2.InRamUsers[user.UserJson] = true
+		constant2.InRamUsersUUID[uuid] = true
 		pr.EditInRamUsers([]entity.DbUser{user}, false)
+		log.Info(len(constant2.InRamUsersUUID))
 		return true
 	}
 }
@@ -42,11 +45,17 @@ func (pr *ImplementationDb) AddUserInRamUsersIfNotExist(user entity.DbUser) bool
 func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser bool) {
 	if !deleteUser {
 		for i := range users {
-			constant2.InRamUsers[users[i].UserJson] = true
+			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
+			log.Info("User Added: " + uuid)
+			if !constant2.InRamUsersUUID[uuid] {
+				constant2.InRamUsersUUID[uuid] = true
+			}
 		}
 	} else {
 		for i := range users {
-			delete(constant2.InRamUsers, users[i].UserJson)
+			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
+			log.Info("User deleted: " + uuid)
+			delete(constant2.InRamUsersUUID, uuid)
 		}
 	}
 	//if protocolType == constant.TypeVLESS {
@@ -62,6 +71,7 @@ func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser boo
 	//}
 }
 func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType string, delete bool) error {
+	pr.EditInRamUsers(users, delete)
 	if !constant2.DbEnable {
 		return nil
 	}

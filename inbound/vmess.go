@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	vmess "github.com/sagernet/sing-vmess"
 	"net"
@@ -33,16 +34,26 @@ var (
 type VMess struct {
 	myInboundAdapter
 	ctx       context.Context
-	Service   *vmess.Service[string]
+	Service   *vmess.Service[int]
 	Users     []option.VMessUser
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
 
 func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VMessInboundOptions) (*VMess, error) {
-	dbUsers, _ := db.GetDb().GetVmessUsers()
-	if len(dbUsers) > 0 {
-		options.Users = dbUsers
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetVmessUsers()
+		dbUsers = append(dbUsers, options.Users...)
+		if len(dbUsers) > 0 {
+			options.Users = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	inbound := &VMess{
 		myInboundAdapter: myInboundAdapter{
@@ -69,10 +80,10 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 	if options.Transport != nil && options.Transport.Type != "" {
 		serviceOptions = append(serviceOptions, vmess.ServiceWithDisableHeaderProtection())
 	}
-	service := vmess.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
+	service := vmess.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
 	inbound.Service = service
-	err = service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.VMessUser) string {
-		return it.UUID
+	err = service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.VMessUser) int {
+		return index
 	}), common.Map(options.Users, func(it option.VMessUser) string {
 		return it.UUID
 	}), common.Map(options.Users, func(it option.VMessUser) int {

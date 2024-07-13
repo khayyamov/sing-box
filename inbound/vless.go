@@ -34,7 +34,7 @@ type VLESS struct {
 	myInboundAdapter
 	ctx       context.Context
 	Users     []option.VLESSUser
-	Service   *vless.Service[string]
+	Service   *vless.Service[int]
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
@@ -47,6 +47,7 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 		}
 	} else {
 		dbUsers, _ := db.GetDb().GetVlessUsers()
+		dbUsers = append(dbUsers, options.Users...)
 		if len(dbUsers) > 0 {
 			options.Users = dbUsers
 			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
@@ -71,9 +72,9 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 	if err != nil {
 		return nil, err
 	}
-	service := vless.NewService[string](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
-	service.UpdateUsers(common.MapIndexedString(inbound.Users, func(index any, it option.VLESSUser) string {
-		return it.UUID
+	service := vless.NewService[int](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
+	service.UpdateUsers(common.MapIndexed(inbound.Users, func(index int, it option.VLESSUser) int {
+		return index
 	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
 		return it.UUID
 	}), common.Map(inbound.Users, func(it option.VLESSUser) string {

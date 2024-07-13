@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	shadowsocks "github.com/sagernet/sing-shadowsocks"
 	"net"
@@ -32,14 +33,24 @@ var (
 
 type ShadowsocksMulti struct {
 	myInboundAdapter
-	Service shadowsocks.MultiService[string]
+	Service shadowsocks.MultiService[int]
 	Users   []option.ShadowsocksUser
 }
 
 func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksMulti, error) {
-	dbUsers, _ := db.GetDb().GetShadowsocksMultiUsers()
-	if len(dbUsers) > 0 {
-		options.Users = append(options.Users, dbUsers...)
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetShadowsocksMultiUsers()
+		dbUsers = append(dbUsers, options.Users...)
+		if len(dbUsers) > 0 {
+			options.Users = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	inbound := &ShadowsocksMulti{
 		myInboundAdapter: myInboundAdapter{
@@ -65,9 +76,9 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	var service shadowsocks.MultiService[string]
+	var service shadowsocks.MultiService[int]
 	if common.Contains(shadowaead_2022.List, options.Method) {
-		service, err = shadowaead_2022.NewMultiServiceWithPassword[string](
+		service, err = shadowaead_2022.NewMultiServiceWithPassword[int](
 			options.Method,
 			options.Password,
 			int64(udpTimeout.Seconds()),
@@ -75,7 +86,7 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 			ntp.TimeFuncFromContext(ctx),
 		)
 	} else if common.Contains(shadowaead.List, options.Method) {
-		service, err = shadowaead.NewMultiService[string](
+		service, err = shadowaead.NewMultiService[int](
 			options.Method,
 			int64(udpTimeout.Seconds()),
 			adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
@@ -85,8 +96,8 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	err = service.UpdateUsersWithPasswords(common.MapIndexedString(options.Users, func(index any, user option.ShadowsocksUser) string {
-		return user.Name
+	err = service.UpdateUsersWithPasswords(common.MapIndexed(options.Users, func(index int, user option.ShadowsocksUser) int {
+		return index
 	}), common.Map(options.Users, func(user option.ShadowsocksUser) string {
 		return user.Password
 	}))

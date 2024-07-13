@@ -122,7 +122,7 @@ type V2RayServer interface {
 }
 
 type V2RayStatsService interface {
-	AddUser(user string)
+	EditUser(user string, deletee bool)
 	RoutedConnection(inbound string, outbound string, user string, conn net.Conn) net.Conn
 	RoutedPacketConnection(inbound string, outbound string, user string, conn N.PacketConn) N.PacketConn
 }

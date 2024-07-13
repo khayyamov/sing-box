@@ -86,9 +86,7 @@ func AddInbound(options Options) error {
 
 func EditUserInV2rayApi(user string, delete bool) {
 	if BoxInstance.Router().V2RayServer() != nil {
-		if !delete {
-			BoxInstance.Router().V2RayServer().StatsService().AddUser(user)
-		}
+		BoxInstance.Router().V2RayServer().StatsService().EditUser(user, delete)
 	}
 }
 

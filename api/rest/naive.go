@@ -1,68 +1,58 @@
 package rest
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
+	"github.com/sagernet/sing-box/api/db/entity"
+	"github.com/sagernet/sing-box/api/rest/rq"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
+	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing/common/auth"
-	"io"
-	"net/http"
 )
 
-func AddUserTonNaive(c *gin.Context) {
-	domesticLogicNaive(c, false)
-}
-func DeleteUserTonNaive(c *gin.Context) {
-	domesticLogicNaive(c, true)
-}
-
-func domesticLogicNaive(c *gin.Context, delete bool) {
-	var rq auth.User
-	var rqArr []auth.User
-
-	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
-	jsonBody := string(bodyAsByteArray)
-	haveErr := false
-
-	err := json.Unmarshal([]byte(jsonBody), &rq)
-	if err == nil {
-		haveErr = false
-		EditNaiveUsers(c, []auth.User{rq}, delete)
+func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	if len(inbound.NaivePtr) == 0 {
+		log.Info("No Active Vless outbound found to add users to it")
 		return
-	} else {
-		haveErr = true
 	}
-	err = json.Unmarshal([]byte(jsonBody), &rqArr)
-	if err == nil {
-		haveErr = false
-		EditNaiveUsers(c, rqArr, delete)
-		return
-	} else {
-		haveErr = true
-	}
-
-	if haveErr {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-}
-
-func EditNaiveUsers(c *gin.Context, newUsers []auth.User, delete bool) {
 	for _, user := range newUsers {
-		box.EditUserInV2rayApi(user.Username, delete)
-	}
-	for i := range inbound.NaivePtr {
-		if !delete {
-			inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator(newUsers)
-		} else {
-			inbound.NaivePtr[i].Authenticator.DeleteUserToAuthenticator(newUsers)
+		convertedUser := auth.User{
+			Username: user.UUID,
+			Password: user.Password,
 		}
-	}
-	users, err := db.ConvertProtocolModelToDbUser(newUsers)
-	err = db.GetDb().EditDbUser(users, C.TypeNaive, delete)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
+		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
+			log.Error("User already exist: " + dbUser.UserJson)
+			continue
+		}
+		_, err := uuid.FromString(user.UUID)
+		if err != nil {
+			continue
+		}
+		box.EditUserInV2rayApi(user.UUID, delete)
+		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeNaive, delete)
+		for i := range inbound.NaivePtr {
+			if !delete {
+				if len(user.ReplacementField) > 0 {
+					for _, model := range user.ReplacementField {
+						if inbound.NaivePtr[i].Tag() == model.Tag {
+							if len(model.Password) > 0 {
+								convertedUser.Password = model.Password
+							}
+							break
+						}
+					}
+				}
+				if len(convertedUser.Password) == 0 {
+					continue
+				}
+				inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator([]auth.User{convertedUser})
+			} else {
+				inbound.NaivePtr[i].Authenticator.DeleteUserToAuthenticator([]auth.User{convertedUser})
+			}
+		}
 	}
 }

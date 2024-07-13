@@ -61,9 +61,20 @@ func NewStatsService(options option.V2RayStatsServiceOptions) *StatsService {
 	}
 }
 
-func (s *StatsService) AddUser(user string) {
-	s.Users[user] = true
+func (s *StatsService) EditUser(user string, deletee bool) {
+	s.access.Lock()
 	log.Info("V2ray API notify update: " + user)
+	if !deletee {
+		s.Users[user] = true
+	} else {
+		countUser := user != "" && s.Users[user]
+		if countUser {
+			delete(s.counters, "user>>>"+user+">>>traffic>>>uplink")
+			delete(s.counters, "user>>>"+user+">>>traffic>>>downlink")
+		}
+		delete(s.Users, user)
+	}
+	s.access.Unlock()
 }
 
 func (s *StatsService) RoutedConnection(inbound string, outbound string, user string, conn net.Conn) net.Conn {

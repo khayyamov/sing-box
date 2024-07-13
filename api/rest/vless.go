@@ -1,83 +1,82 @@
 package rest
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
+	"github.com/sagernet/sing-box/api/db/entity"
+	"github.com/sagernet/sing-box/api/rest/rq"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
+	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
-	"io"
 	"net/http"
 )
 
-func AddUserToVless(c *gin.Context) {
-	domesticLogicVless(c, false)
-}
-
-func DeleteUserToVless(c *gin.Context) {
-	domesticLogicVless(c, true)
-}
-
-func domesticLogicVless(c *gin.Context, delete bool) {
-	var rq option.VLESSUser
-	var rqArr []option.VLESSUser
-
-	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
-	jsonBody := string(bodyAsByteArray)
-	haveErr := false
-
-	err := json.Unmarshal([]byte(jsonBody), &rq)
-	if err == nil {
-		haveErr = false
-		EditVlessUsers(c, []option.VLESSUser{rq}, delete)
+func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	if len(inbound.VLESSPtr) == 0 {
+		log.Info("No Active Vless outbound found to add users to it")
 		return
-	} else {
-		haveErr = true
 	}
-	err = json.Unmarshal([]byte(jsonBody), &rqArr)
-	if err == nil {
-		haveErr = false
-		EditVlessUsers(c, rqArr, delete)
-		return
-	} else {
-		haveErr = true
-	}
-
-	if haveErr {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-}
-
-func EditVlessUsers(c *gin.Context, newUsers []option.VLESSUser, delete bool) {
 	for _, user := range newUsers {
-		box.EditUserInV2rayApi(user.Name, delete)
-	}
-	for i := range inbound.VLESSPtr {
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](newUsers[i])
-		if !delete {
-			if db.GetDb().AddUserInRamUsersIfNotExist(dbUser) {
+		convertedUser := option.VLESSUser{
+			Name: user.UUID,
+			UUID: user.UUID,
+			Flow: user.Flow,
+		}
+		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
+		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
+			log.Error("User already exist: " + dbUser.UserJson)
+			continue
+		}
+		_, err := uuid.FromString(user.UUID)
+		if err != nil {
+			continue
+		}
+		box.EditUserInV2rayApi(user.UUID, delete)
+		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeVLESS, delete)
+		for i := range inbound.VLESSPtr {
+			if !delete {
+				if len(user.ReplacementField) > 0 {
+					for _, model := range user.ReplacementField {
+						if inbound.VLESSPtr[i].Tag() == model.Tag {
+							if len(model.Flow) > 0 {
+								convertedUser.Flow = model.Flow
+							}
+							break
+						}
+					}
+				}
 				inbound.VLESSPtr[i].Service.AddUser(
-					common.MapIndexedString(newUsers, func(index any, it option.VLESSUser) string {
+					common.MapIndexed([]option.VLESSUser{convertedUser}, func(index int, it option.VLESSUser) int {
+						return len(inbound.VLESSPtr[i].Users) + index
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
 						return it.UUID
-					}), common.Map(newUsers, func(it option.VLESSUser) string {
-						return it.UUID
-					}), common.Map(newUsers, func(it option.VLESSUser) string {
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
 						return it.Flow
 					}))
-			}
-		} else {
-			if db.GetDb().IsUserExistInRamUsers(dbUser) {
+				inbound.VLESSPtr[i].Users = append(inbound.VLESSPtr[i].Users, convertedUser)
+			} else {
 				inbound.VLESSPtr[i].Service.DeleteUser(
-					common.MapIndexedString(newUsers, func(index any, it option.VLESSUser) string {
+					common.MapIndexed([]option.VLESSUser{convertedUser}, func(index int, it option.VLESSUser) int {
+						return index
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
 						return it.UUID
-					}), common.Map(newUsers, func(it option.VLESSUser) string {
-						return it.UUID
-					}), common.Map(newUsers, func(it option.VLESSUser) string {
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
 						return it.Flow
 					}))
+				for j := range newUsers {
+					for k := range inbound.VLESSPtr[i].Users {
+						if newUsers[j].UUID == inbound.VLESSPtr[i].Users[k].UUID {
+							inbound.VLESSPtr[i].Users = append(
+								inbound.VLESSPtr[i].Users[:k],
+								inbound.VLESSPtr[i].Users[k+1:]...)
+							break
+						}
+					}
+				}
 			}
 		}
 	}

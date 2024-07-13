@@ -3,6 +3,7 @@ package inbound
 import (
 	"context"
 	"github.com/gofrs/uuid/v5"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"time"
@@ -25,15 +26,25 @@ var _ adapter.Inbound = (*TUIC)(nil)
 type TUIC struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
-	Service      *tuic.Service[string]
+	Service      *tuic.Service[int]
 	Users        []option.TUICUser
 	userNameList []string
 }
 
 func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (*TUIC, error) {
-	dbUsers, _ := db.GetDb().GetTuicUsers()
-	if len(dbUsers) > 0 {
-		options.Users = dbUsers
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetTuicUsers()
+		dbUsers = append(dbUsers, options.Users...)
+		if len(dbUsers) > 0 {
+			options.Users = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	options.UDPFragmentDefault = true
 	if options.TLS == nil || !options.TLS.Enabled {
@@ -62,7 +73,7 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := tuic.NewService[string](tuic.ServiceOptions{
+	service, err := tuic.NewService[int](tuic.ServiceOptions{
 		Context:           ctx,
 		Logger:            logger,
 		TLSConfig:         tlsConfig,
@@ -76,11 +87,11 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	if err != nil {
 		return nil, err
 	}
-	var userList []string
+	var userList []int
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
-	for _, user := range options.Users {
+	for index, user := range options.Users {
 		if user.UUID == "" {
 			return nil, E.New("missing uuid for user ", user.UUID)
 		}
@@ -88,7 +99,7 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 		if err != nil {
 			return nil, E.Cause(err, "invalid uuid for user ", user.UUID)
 		}
-		userList = append(userList, user.Name)
+		userList = append(userList, index)
 		userNameList = append(userNameList, user.Name)
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)

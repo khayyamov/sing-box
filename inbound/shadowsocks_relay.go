@@ -2,6 +2,7 @@ package inbound
 
 import (
 	"context"
+	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"net"
 	"os"
@@ -28,14 +29,24 @@ var (
 
 type ShadowsocksRelay struct {
 	myInboundAdapter
-	Service      *shadowaead_2022.RelayService[string]
+	Service      *shadowaead_2022.RelayService[int]
 	Destinations []option.ShadowsocksDestination
 }
 
 func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksRelay, error) {
-	dbUsers, _ := db.GetDb().GetShadowsocksRelayUsers()
-	if len(dbUsers) > 0 {
-		options.Destinations = append(options.Destinations, dbUsers...)
+	if !constant.DbEnable {
+		if len(options.Users) > 0 {
+			users, _ := db.ConvertProtocolModelToDbUser(options.Users)
+			db.GetDb().EditInRamUsers(users, false)
+		}
+	} else {
+		dbUsers, _ := db.GetDb().GetShadowsocksRelayUsers()
+		dbUsers = append(dbUsers, options.Destinations...)
+		if len(dbUsers) > 0 {
+			options.Destinations = dbUsers
+			users, _ := db.ConvertProtocolModelToDbUser(dbUsers)
+			db.GetDb().EditInRamUsers(users, false)
+		}
 	}
 	inbound := &ShadowsocksRelay{
 		myInboundAdapter: myInboundAdapter{
@@ -62,7 +73,7 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := shadowaead_2022.NewRelayServiceWithPassword[string](
+	service, err := shadowaead_2022.NewRelayServiceWithPassword[int](
 		options.Method,
 		options.Password,
 		int64(udpTimeout.Seconds()),
@@ -71,8 +82,8 @@ func newShadowsocksRelay(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	err = service.UpdateUsersWithPasswords(common.MapIndexedString(options.Destinations, func(index any, user option.ShadowsocksDestination) string {
-		return user.Name
+	err = service.UpdateUsersWithPasswords(common.MapIndexed(options.Destinations, func(index int, user option.ShadowsocksDestination) int {
+		return index
 	}), common.Map(options.Destinations, func(user option.ShadowsocksDestination) string {
 		return user.Password
 	}), common.Map(options.Destinations, option.ShadowsocksDestination.Build))
