@@ -15,7 +15,7 @@ import (
 
 func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.ShadowTlsPtr) == 0 {
-		log.Info("No Active ShadowTls outbound found to add users to it")
+		log.Info("No Active ShadowTlsPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

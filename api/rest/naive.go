@@ -15,7 +15,7 @@ import (
 
 func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.NaivePtr) == 0 {
-		log.Info("No Active Vless outbound found to add users to it")
+		log.Info("No Active NaivePtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

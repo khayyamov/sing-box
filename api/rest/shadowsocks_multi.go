@@ -15,7 +15,7 @@ import (
 
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.ShadowsocksMultiPtr) == 0 {
-		log.Info("No Active Vless outbound found to add users to it")
+		log.Info("No Active ShadowsocksMultiPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

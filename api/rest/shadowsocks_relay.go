@@ -16,7 +16,7 @@ import (
 
 func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.ShadowsocksRelayPtr) == 0 {
-		log.Info("No Active ShadowSocksRelay outbound found to add users to it")
+		log.Info("No Active ShadowsocksRelayPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

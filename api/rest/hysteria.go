@@ -15,7 +15,7 @@ import (
 
 func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.HysteriaPtr) == 0 {
-		log.Info("No Active Hysteria outbound found to add users to it")
+		log.Info("No Active HysteriaPtr outbound found to add users to it")
 		return
 	}
 	userList := make([]int, 0, len(newUsers))

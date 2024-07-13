@@ -15,7 +15,7 @@ import (
 
 func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.TUICPtr) == 0 {
-		log.Info("No Active Tuic outbound found to add users to it")
+		log.Info("No Active TUICPtr outbound found to add users to it")
 		return
 	}
 	var userList []int

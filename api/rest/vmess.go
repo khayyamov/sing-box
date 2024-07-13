@@ -16,7 +16,7 @@ import (
 
 func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.VMessPtr) == 0 {
-		log.Info("No Active Vmess outbound found to add users to it")
+		log.Info("No Active VMessPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
