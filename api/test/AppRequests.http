@@ -5,6 +5,13 @@ Content-Type: application/json
 [
   {
     "uuid":"1064e030-0209-4aa5-88de-a3659e5c587c",
+    "password":"",
+    "flow":"",
+    "auth":"",
+    "auth_string":"",
+    "server_address":"",
+    "server_port":0,
+    "alterId": 0,
     "replacement_field":[
       {
         "tag":"vless-in2",
