@@ -53,6 +53,10 @@ func GetAllUsersStats(c *gin.Context) {
 		listUserStats := make([]rp.StatRp, 0)
 		for uuid, _ := range constant.InRamUsersUUID {
 			if req.Reset {
+				stat, err := getAUserStat(uuid)
+				if err == nil {
+					listUserStats = append(listUserStats, stat)
+				}
 				box.BoxInstance.Router().V2RayServer().StatsService().EditUser(uuid, true)
 				box.BoxInstance.Router().V2RayServer().StatsService().EditUser(uuid, false)
 			} else {
@@ -66,8 +70,6 @@ func GetAllUsersStats(c *gin.Context) {
 			c.JSON(http.StatusOK, rp.StatRpList{ListUserStats: listUserStats})
 		} else if len(listUserStats) == 0 && !req.Reset {
 			c.JSON(http.StatusOK, gin.H{"error": "No active user found."})
-		} else if req.Reset {
-			c.JSON(http.StatusOK, gin.H{"message": "Successfully reset all users."})
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "V2ray api stats not initialized."})
