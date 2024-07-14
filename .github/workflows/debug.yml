@@ -98,6 +98,15 @@ jobs:
             goos: linux
             goarch: amd64
             goamd64: v1
+
+          - name: linux-arm64
+            goos: linux
+            goarch: arm64
+
+          - name: darwin-amd64
+            goos: darwin
+            goarch: amd64
+            goamd64: v1
       fail-fast: true
     runs-on: ubuntu-latest
     env:
