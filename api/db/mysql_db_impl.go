@@ -11,6 +11,7 @@ import (
 	shadowtls "github.com/sagernet/sing-shadowtls"
 	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/json"
+	"strconv"
 )
 
 type ImplementationDb struct {
@@ -18,8 +19,7 @@ type ImplementationDb struct {
 }
 
 func (pr *ImplementationDb) IsUserExistInRamUsers(user entity.DbUser) bool {
-	uuid, _ := utils.UUIDFromDBUserJson(user.UserJson)
-	if constant2.InRamUsersUUID[uuid] {
+	if constant2.InRamUsers[user.UserJson] {
 		//user exist
 		return true
 	} else {
@@ -29,14 +29,17 @@ func (pr *ImplementationDb) IsUserExistInRamUsers(user entity.DbUser) bool {
 
 func (pr *ImplementationDb) AddUserInRamUsersIfNotExist(user entity.DbUser) bool {
 	uuid, _ := utils.UUIDFromDBUserJson(user.UserJson)
-	if constant2.InRamUsersUUID[uuid] {
+	if !constant2.InRamUsersUUID[uuid] {
+		constant2.InRamUsersUUID[uuid] = true
+	}
+	if constant2.InRamUsers[user.UserJson] {
 		//user exist
 		return false
 	} else {
 		//add user
-		constant2.InRamUsersUUID[uuid] = true
+		constant2.InRamUsers[user.UserJson] = true
 		pr.EditInRamUsers([]entity.DbUser{user}, false)
-		utils.ApiLogInfo(len(constant2.InRamUsersUUID))
+		utils.ApiLogInfo("Total inbounds users: " + strconv.Itoa(len(constant2.InRamUsers)))
 		return true
 	}
 }
@@ -45,15 +48,18 @@ func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser boo
 	if !deleteUser {
 		for i := range users {
 			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
-			utils.ApiLogInfo("User Added: " + uuid)
 			if !constant2.InRamUsersUUID[uuid] {
 				constant2.InRamUsersUUID[uuid] = true
+			}
+			if !constant2.InRamUsers[users[i].UserJson] {
+				constant2.InRamUsers[users[i].UserJson] = true
 			}
 		}
 	} else {
 		for i := range users {
+			utils.ApiLogInfo("User deleted: " + users[i].UserJson)
+			delete(constant2.InRamUsers, users[i].UserJson)
 			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
-			utils.ApiLogInfo("User deleted: " + uuid)
 			delete(constant2.InRamUsersUUID, uuid)
 		}
 	}
@@ -80,14 +86,16 @@ func (pr *ImplementationDb) EditDbUser(users []entity.DbUser, protocolType strin
 			return query.Error
 		} else {
 			for i := range users {
-				var model = option.VLESSUser{}
-				err := json.Unmarshal([]byte(users[i].UserJson), &model)
-				if err != nil {
-					fmt.Println(err.Error())
-				}
-				query := mysql_config.GetTableVless().Where("user_json LIKE ?", "%\""+model.UUID+"\"%").Delete(&users)
-				if query.Error != nil {
-					fmt.Println(err.Error())
+				if !pr.IsUserExistInRamUsers(users[i]) {
+					var model = option.VLESSUser{}
+					err := json.Unmarshal([]byte(users[i].UserJson), &model)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+					query := mysql_config.GetTableVless().Where("user_json LIKE ?", "%\""+model.UUID+"\"%").Delete(&users)
+					if query.Error != nil {
+						fmt.Println(err.Error())
+					}
 				}
 			}
 			return nil

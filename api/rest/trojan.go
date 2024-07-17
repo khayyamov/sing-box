@@ -14,8 +14,9 @@ import (
 )
 
 func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	utils.CurrentInboundName = "Trojan"
 	if len(inbound.TrojanPtr) == 0 {
-		utils.ApiLogInfo("No Active TrojanPtr outbound found to add users to it")
+		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
@@ -24,17 +25,14 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TrojanUser](convertedUser)
-		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			utils.ApiLogError("User already exist: " + dbUser.UserJson)
-			continue
-		}
-		box.EditUserInV2rayApi(user.Name, delete)
-		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTrojan, delete)
 		for i := range inbound.TrojanPtr {
 			if !delete {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.TrojanPtr[i].Tag() == model.Tag {
+							if len(model.Name) > 0 {
+								convertedUser.Name = model.Name
+							}
 							if len(model.Password) > 0 {
 								convertedUser.Password = model.Password
 							}
@@ -42,18 +40,37 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 						}
 					}
 				}
-
-				if len(convertedUser.Password) == 0 {
+				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "] User failed to add name or password invalid: " + dbUser.UserJson)
 					continue
 				}
-				_ = inbound.TrojanPtr[i].Service.AddUser(
-					common.MapIndexed([]option.TrojanUser{convertedUser}, func(index int, it option.TrojanUser) int {
-						return len(inbound.TrojanPtr[i].Users) + index
-					}), common.Map([]option.TrojanUser{convertedUser}, func(it option.TrojanUser) string {
-						return it.Password
-					}))
-				inbound.TrojanPtr[i].Users = append(inbound.TrojanPtr[i].Users, convertedUser)
+				founded := false
+				for _, inboundUsers := range inbound.TrojanPtr[i].Users {
+					if inboundUsers.Name == convertedUser.Name {
+						founded = true
+						break
+					}
+				}
+				if !founded {
+					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TrojanUser](convertedUser)
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
+					_ = inbound.TrojanPtr[i].Service.AddUser(
+						common.MapIndexed([]option.TrojanUser{convertedUser}, func(index int, it option.TrojanUser) int {
+							return len(inbound.TrojanPtr[i].Users) + index
+						}), common.Map([]option.TrojanUser{convertedUser}, func(it option.TrojanUser) string {
+							return it.Password
+						}))
+					inbound.TrojanPtr[i].Users = append(inbound.TrojanPtr[i].Users, convertedUser)
+					box.EditUserInV2rayApi(user.Name, delete)
+					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTrojan, delete)
+				} else {
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
+				}
 			} else {
+				if len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "]   User failed to delete name invalid")
+					continue
+				}
 				_ = inbound.TrojanPtr[i].Service.DeleteUser(
 					common.MapIndexed([]option.TrojanUser{convertedUser}, func(index int, it option.TrojanUser) int {
 						return index

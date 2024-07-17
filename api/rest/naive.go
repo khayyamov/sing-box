@@ -13,8 +13,9 @@ import (
 )
 
 func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	utils.CurrentInboundName = "Naive"
 	if len(inbound.NaivePtr) == 0 {
-		utils.ApiLogInfo("No Active NaivePtr outbound found to add users to it")
+		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
@@ -23,17 +24,14 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
-		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			utils.ApiLogError("User already exist: " + dbUser.UserJson)
-			continue
-		}
-		box.EditUserInV2rayApi(user.Name, delete)
-		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeNaive, delete)
 		for i := range inbound.NaivePtr {
 			if !delete {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.NaivePtr[i].Tag() == model.Tag {
+							if len(model.Name) > 0 {
+								convertedUser.Username = model.Name
+							}
 							if len(model.Password) > 0 {
 								convertedUser.Password = model.Password
 							}
@@ -41,11 +39,23 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 						}
 					}
 				}
-				if len(convertedUser.Password) == 0 {
+				if len(convertedUser.Password) == 0 || len(convertedUser.Username) == 0 {
 					continue
 				}
-				inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator([]auth.User{convertedUser})
+				if !inbound.NaivePtr[i].Authenticator.Verify(convertedUser.Username, convertedUser.Password) {
+					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.NaivePtr[i].Tag() + "] User Added: " + dbUser.UserJson)
+					inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator([]auth.User{convertedUser})
+					box.EditUserInV2rayApi(user.Name, delete)
+					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeNaive, delete)
+				} else {
+					utils.ApiLogInfo("NaivePtr: User already exist: " + dbUser.UserJson)
+				}
 			} else {
+				if len(convertedUser.Username) == 0 {
+					utils.ApiLogError("NaivePtr: User failed to delete Username invalid")
+					continue
+				}
 				inbound.NaivePtr[i].Authenticator.DeleteUserToAuthenticator([]auth.User{convertedUser})
 			}
 		}

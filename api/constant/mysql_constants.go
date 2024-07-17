@@ -14,4 +14,5 @@ var (
 	DbEnable       = false // init from argument db_enable
 	ApiLog         = false // init from argument api_log
 	InRamUsersUUID = make(map[string]bool, 0)
+	InRamUsers     = make(map[string]bool, 0)
 )

@@ -14,14 +14,11 @@ import (
 )
 
 func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	utils.CurrentInboundName = "Tuic"
 	if len(inbound.TUICPtr) == 0 {
-		utils.ApiLogInfo("No Active TUICPtr outbound found to add users to it")
+		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
-	var userList []int
-	var userNameList []string
-	var userUUIDList [][16]byte
-	var userPasswordList []string
 	for index, user := range newUsers {
 		convertedUser := option.TUICUser{
 			Name:     user.Name,
@@ -29,25 +26,21 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
-		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			utils.ApiLogError("User already exist: " + dbUser.UserJson)
-			continue
-		}
-		userUUID, err := uuid.FromString(user.UUID)
-		if err != nil {
-			continue
-		}
-		userList = append(userList, index)
-		userNameList = append(userNameList, convertedUser.Name)
-		userUUIDList = append(userUUIDList, userUUID)
-		userPasswordList = append(userPasswordList, user.Password)
-		box.EditUserInV2rayApi(user.UUID, delete)
-		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, delete)
 		for i := range inbound.TUICPtr {
+			var userList []int
+			var userNameList []string
+			var userUUIDList [][16]byte
+			var userPasswordList []string
 			if !delete {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.TUICPtr[i].Tag() == model.Tag {
+							if len(model.Name) > 0 {
+								convertedUser.Name = model.Name
+							}
+							if len(model.UUID) > 0 {
+								convertedUser.UUID = model.UUID
+							}
 							if len(model.Password) > 0 {
 								convertedUser.Password = model.Password
 							}
@@ -55,14 +48,46 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 						}
 					}
 				}
-
-				if len(convertedUser.Password) == 0 {
+				userUUID, err := uuid.FromString(user.UUID)
+				if len(convertedUser.UUID) == 0 ||
+					len(convertedUser.Password) == 0 ||
+					len(convertedUser.Name) == 0 ||
+					err != nil {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User failed to add name or password invalid: " + dbUser.UserJson)
 					continue
 				}
-				inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
-				inbound.TUICPtr[i].Users = append(inbound.TUICPtr[i].Users, convertedUser)
-			} else {
 
+				founded := false
+				for _, inboundUsers := range inbound.TUICPtr[i].Users {
+					if inboundUsers.UUID == convertedUser.UUID {
+						founded = true
+						break
+					}
+				}
+				if !founded {
+					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
+					userList = append(userList, index)
+					userNameList = append(userNameList, convertedUser.Name)
+					userUUIDList = append(userUUIDList, userUUID)
+					userPasswordList = append(userPasswordList, user.Password)
+					inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
+					inbound.TUICPtr[i].Users = append(inbound.TUICPtr[i].Users, convertedUser)
+					box.EditUserInV2rayApi(user.UUID, delete)
+					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, delete)
+				} else {
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
+				}
+			} else {
+				userUUID, err := uuid.FromString(user.UUID)
+				if err != nil {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User failed to delete uuid invalid: " + dbUser.UserJson)
+					continue
+				}
+				userList = append(userList, index)
+				userNameList = append(userNameList, convertedUser.Name)
+				userUUIDList = append(userUUIDList, userUUID)
+				userPasswordList = append(userPasswordList, user.Password)
 				inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
 				for j := range newUsers {
 					for k := range inbound.TUICPtr[i].Users {

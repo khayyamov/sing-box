@@ -13,8 +13,9 @@ import (
 )
 
 func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	utils.CurrentInboundName = "ShadowTls"
 	if len(inbound.ShadowTlsPtr) == 0 {
-		utils.ApiLogInfo("No Active ShadowTlsPtr outbound found to add users to it")
+		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
@@ -23,17 +24,14 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[shadowtls.User](convertedUser)
-		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			utils.ApiLogError("User already exist: " + dbUser.UserJson)
-			continue
-		}
-		box.EditUserInV2rayApi(user.Name, delete)
-		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowTLS, delete)
 		for i := range inbound.ShadowTlsPtr {
 			if !delete {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.ShadowTlsPtr[i].Tag() == model.Tag {
+							if len(model.Name) > 0 {
+								convertedUser.Name = model.Name
+							}
 							if len(model.Password) > 0 {
 								convertedUser.Password = model.Password
 							}
@@ -42,13 +40,34 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					}
 				}
 
-				if len(convertedUser.Password) == 0 {
+				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User failed to add name or password invalid: " + dbUser.UserJson)
 					continue
 				}
-				inbound.ShadowTlsPtr[i].Service.AddUser([]shadowtls.User{convertedUser})
-				inbound.ShadowTlsPtr[i].Service.Users = append(inbound.ShadowTlsPtr[i].Service.Users, convertedUser)
+
+				founded := false
+				for _, inboundUsers := range inbound.ShadowTlsPtr[i].Service.Users {
+					if inboundUsers.Name == convertedUser.Name {
+						founded = true
+						break
+					}
+				}
+				if !founded {
+					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[shadowtls.User](convertedUser)
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User Added: " + dbUser.UserJson)
+					inbound.ShadowTlsPtr[i].Service.AddUser([]shadowtls.User{convertedUser})
+					inbound.ShadowTlsPtr[i].Service.Users = append(inbound.ShadowTlsPtr[i].Service.Users, convertedUser)
+					box.EditUserInV2rayApi(user.Name, delete)
+					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowTLS, delete)
+				} else {
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
+				}
 			} else {
 
+				if len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User failed to delete name invalid")
+					continue
+				}
 				_ = inbound.ShadowTlsPtr[i].Service.DeleteUser([]shadowtls.User{convertedUser})
 				for j := range newUsers {
 					for k := range inbound.ShadowTlsPtr[i].Service.Users {

@@ -13,33 +13,28 @@ import (
 )
 
 func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+	utils.CurrentInboundName = "Hysteria2"
 	if len(inbound.Hysteria2Ptr) == 0 {
-		utils.ApiLogInfo("No Active Hysteria2Ptr outbound found to add users to it")
+		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
-	userList := make([]int, 0, len(newUsers))
-	userNameList := make([]string, 0, len(newUsers))
-	userPasswordList := make([]string, 0, len(newUsers))
 	for index, user := range newUsers {
 		convertedUser := option.Hysteria2User{
 			Name:     user.Name,
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
-		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			utils.ApiLogError("User already exist: " + dbUser.UserJson)
-			continue
-		}
-		userList = append(userList, index)
-		userNameList = append(userNameList, user.Name)
-		userPasswordList = append(userPasswordList, user.Password)
-		box.EditUserInV2rayApi(user.Name, delete)
-		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria2, delete)
 		for i := range inbound.Hysteria2Ptr {
+			userList := make([]int, 0, len(newUsers))
+			userNameList := make([]string, 0, len(newUsers))
+			userPasswordList := make([]string, 0, len(newUsers))
 			if !delete {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.Hysteria2Ptr[i].Tag() == model.Tag {
+							if len(model.Name) > 0 {
+								convertedUser.Name = model.Name
+							}
 							if len(model.Password) > 0 {
 								convertedUser.Password = model.Password
 							}
@@ -47,13 +42,36 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 						}
 					}
 				}
-				if len(convertedUser.Password) == 0 {
+				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User failed to add password invalid")
 					continue
 				}
-				inbound.Hysteria2Ptr[i].Service.AddUser(userList, userPasswordList)
-				inbound.Hysteria2Ptr[i].Users = append(inbound.Hysteria2Ptr[i].Users, convertedUser)
+				founded := false
+				for _, inboundUsers := range inbound.Hysteria2Ptr[i].Users {
+					if inboundUsers.Name == convertedUser.Name {
+						founded = true
+						break
+					}
+				}
+				if !founded {
+					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User Added: " + dbUser.UserJson)
+					userList = append(userList, index)
+					userNameList = append(userNameList, user.Name)
+					userPasswordList = append(userPasswordList, user.Password)
+					inbound.Hysteria2Ptr[i].Service.AddUser(userList, userPasswordList)
+					inbound.Hysteria2Ptr[i].Users = append(inbound.Hysteria2Ptr[i].Users, convertedUser)
+					box.EditUserInV2rayApi(user.Name, delete)
+					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria2, delete)
+				} else {
+					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User already exist: " + dbUser.UserJson)
+				}
 			} else {
 
+				if len(convertedUser.Name) == 0 {
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User failed to delete Name invalid")
+					continue
+				}
 				inbound.Hysteria2Ptr[i].Service.DeleteUser(userList, userPasswordList)
 				for j := range newUsers {
 					for k := range inbound.Hysteria2Ptr[i].Users {
