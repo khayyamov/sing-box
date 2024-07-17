@@ -12,5 +12,6 @@ var (
 	ApiHost        string  // init from argument api_host
 	ApiPort        string  // init from argument api_port
 	DbEnable       = false // init from argument db_enable
+	ApiLog         = false // init from argument api_log
 	InRamUsersUUID = make(map[string]bool, 0)
 )

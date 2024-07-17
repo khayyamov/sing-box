@@ -2,26 +2,25 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/api/utils"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
-	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 )
 
 func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.ShadowsocksRelayPtr) == 0 {
-		log.Info("No Active ShadowsocksRelayPtr outbound found to add users to it")
+		utils.ApiLogInfo("No Active ShadowsocksRelayPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
 		convertedUser := option.ShadowsocksDestination{
-			Name:     user.UUID,
+			Name:     user.Name,
 			Password: user.Password,
 			ServerOptions: option.ServerOptions{
 				Server:     user.ServerAddress,
@@ -30,14 +29,10 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			log.Error("User already exist: " + dbUser.UserJson)
+			utils.ApiLogError("User already exist: " + dbUser.UserJson)
 			continue
 		}
-		_, err := uuid.FromString(user.UUID)
-		if err != nil {
-			continue
-		}
-		box.EditUserInV2rayApi(user.UUID, delete)
+		box.EditUserInV2rayApi(user.Name, delete)
 		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksRelay, delete)
 		for i := range inbound.ShadowsocksRelayPtr {
 			if !delete {
@@ -78,7 +73,7 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 
 				for j := range newUsers {
 					for k := range inbound.ShadowsocksRelayPtr[i].Destinations {
-						if newUsers[j].UUID == inbound.ShadowsocksRelayPtr[i].Destinations[k].Name {
+						if newUsers[j].Name == inbound.ShadowsocksRelayPtr[i].Destinations[k].Name {
 							inbound.ShadowsocksRelayPtr[i].Destinations = append(
 								inbound.ShadowsocksRelayPtr[i].Destinations[:k],
 								inbound.ShadowsocksRelayPtr[i].Destinations[k+1:]...)

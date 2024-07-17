@@ -3,6 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"github.com/sagernet/sing-box/api/constant"
+	log2 "github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common/auth"
 )
@@ -36,4 +38,16 @@ func UUIDFromDBUserJson(user string) (string, error) {
 		}
 	}
 	return "", errors.New("")
+}
+
+func ApiLogInfo(log any) {
+	if constant.ApiLog {
+		log2.Info(log)
+	}
+}
+
+func ApiLogError(log any) {
+	if constant.ApiLog {
+		log2.Error(log)
+	}
 }

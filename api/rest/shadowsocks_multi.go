@@ -6,29 +6,29 @@ import (
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/api/utils"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
-	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 )
 
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.ShadowsocksMultiPtr) == 0 {
-		log.Info("No Active ShadowsocksMultiPtr outbound found to add users to it")
+		utils.ApiLogInfo("No Active ShadowsocksMultiPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
 		convertedUser := option.ShadowsocksUser{
-			Name:     user.UUID,
+			Name:     user.Name,
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			log.Error("User already exist: " + dbUser.UserJson)
+			utils.ApiLogError("User already exist: " + dbUser.UserJson)
 			continue
 		}
-		box.EditUserInV2rayApi(user.UUID, delete)
+		box.EditUserInV2rayApi(user.Name, delete)
 		db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksMulti, delete)
 		for i := range inbound.ShadowsocksMultiPtr {
 			if !delete {
@@ -62,7 +62,7 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					}))
 				for j := range newUsers {
 					for k := range inbound.ShadowsocksMultiPtr[i].Users {
-						if newUsers[j].UUID == inbound.ShadowsocksMultiPtr[i].Users[k].Name {
+						if newUsers[j].Name == inbound.ShadowsocksMultiPtr[i].Users[k].Name {
 							inbound.ShadowsocksMultiPtr[i].Users = append(inbound.ShadowsocksMultiPtr[i].Users[:k],
 								inbound.ShadowsocksMultiPtr[i].Users[k+1:]...)
 							break

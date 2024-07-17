@@ -7,15 +7,15 @@ import (
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/api/utils"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
-	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 )
 
 func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.TUICPtr) == 0 {
-		log.Info("No Active TUICPtr outbound found to add users to it")
+		utils.ApiLogInfo("No Active TUICPtr outbound found to add users to it")
 		return
 	}
 	var userList []int
@@ -24,13 +24,13 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	var userPasswordList []string
 	for index, user := range newUsers {
 		convertedUser := option.TUICUser{
-			Name:     user.UUID,
+			Name:     user.Name,
 			UUID:     user.UUID,
 			Password: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			log.Error("User already exist: " + dbUser.UserJson)
+			utils.ApiLogError("User already exist: " + dbUser.UserJson)
 			continue
 		}
 		userUUID, err := uuid.FromString(user.UUID)

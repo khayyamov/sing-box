@@ -2,7 +2,7 @@ package v2rayapi
 
 import (
 	"context"
-	"github.com/sagernet/sing-box/log"
+	"github.com/sagernet/sing-box/api/utils"
 	"net"
 	"regexp"
 	"runtime"
@@ -63,7 +63,7 @@ func NewStatsService(options option.V2RayStatsServiceOptions) *StatsService {
 
 func (s *StatsService) EditUser(user string, deletee bool) {
 	s.access.Lock()
-	log.Info("V2ray API notify update: " + user)
+	utils.ApiLogInfo("V2ray API notify update: " + user)
 	if !deletee {
 		s.Users[user] = true
 	} else {

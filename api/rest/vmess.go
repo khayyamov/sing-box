@@ -7,27 +7,27 @@ import (
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing-box/api/db/entity"
 	"github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/api/utils"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/inbound"
-	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 )
 
 func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	if len(inbound.VMessPtr) == 0 {
-		log.Info("No Active VMessPtr outbound found to add users to it")
+		utils.ApiLogInfo("No Active VMessPtr outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
 		convertedUser := option.VMessUser{
-			Name:    user.UUID,
+			Name:    user.Name,
 			UUID:    user.UUID,
 			AlterId: user.AlterId,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VMessUser](convertedUser)
 		if db.GetDb().IsUserExistInRamUsers(dbUser) && !delete {
-			log.Error("User already exist: " + dbUser.UserJson)
+			utils.ApiLogError("User already exist: " + dbUser.UserJson)
 			continue
 		}
 		_, err := uuid.FromString(user.UUID)

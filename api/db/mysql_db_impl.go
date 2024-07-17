@@ -7,7 +7,6 @@ import (
 	"github.com/sagernet/sing-box/api/db/mysql_config"
 	"github.com/sagernet/sing-box/api/utils"
 	"github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	shadowtls "github.com/sagernet/sing-shadowtls"
 	"github.com/sagernet/sing/common/auth"
@@ -37,7 +36,7 @@ func (pr *ImplementationDb) AddUserInRamUsersIfNotExist(user entity.DbUser) bool
 		//add user
 		constant2.InRamUsersUUID[uuid] = true
 		pr.EditInRamUsers([]entity.DbUser{user}, false)
-		log.Info(len(constant2.InRamUsersUUID))
+		utils.ApiLogInfo(len(constant2.InRamUsersUUID))
 		return true
 	}
 }
@@ -46,7 +45,7 @@ func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser boo
 	if !deleteUser {
 		for i := range users {
 			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
-			log.Info("User Added: " + uuid)
+			utils.ApiLogInfo("User Added: " + uuid)
 			if !constant2.InRamUsersUUID[uuid] {
 				constant2.InRamUsersUUID[uuid] = true
 			}
@@ -54,7 +53,7 @@ func (pr *ImplementationDb) EditInRamUsers(users []entity.DbUser, deleteUser boo
 	} else {
 		for i := range users {
 			uuid, _ := utils.UUIDFromDBUserJson(users[i].UserJson)
-			log.Info("User deleted: " + uuid)
+			utils.ApiLogInfo("User deleted: " + uuid)
 			delete(constant2.InRamUsersUUID, uuid)
 		}
 	}
