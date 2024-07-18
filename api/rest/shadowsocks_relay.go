@@ -89,7 +89,7 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					}), common.Map([]option.ShadowsocksDestination{convertedUser}, func(user option.ShadowsocksDestination) string {
 						return user.Password
 					}))
-
+				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.ShadowsocksRelayPtr[i].Destinations {
 						if newUsers[j].Name == inbound.ShadowsocksRelayPtr[i].Destinations[k].Name {

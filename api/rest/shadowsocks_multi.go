@@ -74,6 +74,7 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					}), common.Map([]option.ShadowsocksUser{convertedUser}, func(user option.ShadowsocksUser) string {
 						return user.Password
 					}))
+				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.ShadowsocksMultiPtr[i].Users {
 						if newUsers[j].Name == inbound.ShadowsocksMultiPtr[i].Users[k].Name {

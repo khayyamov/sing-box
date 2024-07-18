@@ -69,6 +69,7 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					continue
 				}
 				_ = inbound.ShadowTlsPtr[i].Service.DeleteUser([]shadowtls.User{convertedUser})
+				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.ShadowTlsPtr[i].Service.Users {
 						if newUsers[j].Name == inbound.ShadowTlsPtr[i].Service.Users[k].Name {

@@ -73,6 +73,7 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					continue
 				}
 				inbound.Hysteria2Ptr[i].Service.DeleteUser(userList, userPasswordList)
+				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.Hysteria2Ptr[i].Users {
 						if newUsers[j].Name == inbound.Hysteria2Ptr[i].Users[k].Name {

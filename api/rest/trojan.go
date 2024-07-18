@@ -77,6 +77,7 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}), common.Map([]option.TrojanUser{convertedUser}, func(it option.TrojanUser) string {
 						return it.Password
 					}))
+				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.TrojanPtr[i].Users {
 						if newUsers[j].Name == inbound.TrojanPtr[i].Users[k].Name {

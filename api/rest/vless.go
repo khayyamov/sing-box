@@ -89,6 +89,7 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
 						return it.Flow
 					}))
+				box.EditUserInV2rayApi(user.UUID, delete)
 				for j := range newUsers {
 					for k := range inbound.VLESSPtr[i].Users {
 						if newUsers[j].UUID == inbound.VLESSPtr[i].Users[k].UUID {

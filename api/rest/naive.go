@@ -57,6 +57,7 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					continue
 				}
 				inbound.NaivePtr[i].Authenticator.DeleteUserToAuthenticator([]auth.User{convertedUser})
+				box.EditUserInV2rayApi(user.Name, delete)
 			}
 		}
 	}

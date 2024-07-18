@@ -89,6 +89,7 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				userUUIDList = append(userUUIDList, userUUID)
 				userPasswordList = append(userPasswordList, user.Password)
 				inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
+				box.EditUserInV2rayApi(user.UUID, delete)
 				for j := range newUsers {
 					for k := range inbound.TUICPtr[i].Users {
 						if newUsers[j].UUID == inbound.TUICPtr[i].Users[k].UUID {
