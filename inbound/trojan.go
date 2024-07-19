@@ -16,9 +16,7 @@ import (
 	"github.com/sagernet/sing-box/transport/trojan"
 	"github.com/sagernet/sing-box/transport/v2ray"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
-	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -186,17 +184,7 @@ func (h *Trojan) NewPacketConnection(ctx context.Context, conn N.PacketConn, met
 }
 
 func (h *Trojan) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
@@ -224,17 +212,7 @@ func (h *Trojan) fallbackConnection(ctx context.Context, conn net.Conn, metadata
 }
 
 func (h *Trojan) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
 

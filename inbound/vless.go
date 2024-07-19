@@ -16,9 +16,7 @@ import (
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing-vmess/vless"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
-	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"net"
@@ -164,37 +162,17 @@ func (h *VLESS) NewPacketConnection(ctx context.Context, conn N.PacketConn, meta
 }
 
 func (h *VLESS) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *VLESS) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
 	if metadata.Destination.Fqdn == packetaddr.SeqPacketMagicAddress {
 		metadata.Destination = M.Socksaddr{}
 		conn = packetaddr.NewConn(conn.(vmess.PacketConn), metadata.Destination)
-		h.logger.InfoContext(ctx, "[", user, "] inbound packet addr connection")
+		h.logger.InfoContext(ctx, "inbound packet addr connection")
 	} else {
-		h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
+		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

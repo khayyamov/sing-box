@@ -21,13 +21,11 @@ func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	for index, user := range newUsers {
 		convertedUser := option.HysteriaUser{
 			Name:       user.Name,
-			AuthString: user.AuthString,
-			Auth:       []byte(user.Auth),
+			AuthString: user.Password,
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.HysteriaUser](convertedUser)
 		for i := range inbound.HysteriaPtr {
 			userList := make([]int, 0, len(newUsers))
-			userNameList := make([]string, 0, len(newUsers))
 			userPasswordList := make([]string, 0, len(newUsers))
 			if !delete {
 				if len(user.ReplacementField) > 0 {
@@ -36,11 +34,8 @@ func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 							if len(model.Name) > 0 {
 								convertedUser.Name = model.Name
 							}
-							if len(model.Auth) > 0 {
-								convertedUser.Auth = []byte(model.Auth)
-							}
-							if len(model.AuthString) > 0 {
-								convertedUser.AuthString = model.AuthString
+							if len(model.Password) > 0 {
+								convertedUser.AuthString = model.Password
 							}
 							break
 						}
@@ -61,22 +56,17 @@ func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.HysteriaUser](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.HysteriaPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
-					userList = append(userList, index)
-					userNameList = append(userNameList, user.Name)
+					userList = append(userList, len(inbound.HysteriaPtr[i].UserNameList)+index)
 					userPasswordList = append(userPasswordList, user.Password)
 					inbound.HysteriaPtr[i].Service.AddUser(userList, userPasswordList)
 					inbound.HysteriaPtr[i].UserNameList = append(inbound.HysteriaPtr[i].UserNameList, convertedUser.Name)
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.HysteriaPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
 			} else {
-				userList = append(userList, index)
-				userNameList = append(userNameList, user.Name)
+				userList = append(userList, len(inbound.HysteriaPtr[i].UserNameList)+index)
 				userPasswordList = append(userPasswordList, user.Password)
 				inbound.HysteriaPtr[i].Service.DeleteUser(userList, userPasswordList)
-				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.HysteriaPtr[i].UserNameList {
 						if newUsers[j].Name == inbound.HysteriaPtr[i].UserNameList[k] {
@@ -88,6 +78,8 @@ func EditHysteriaUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}
 				}
 			}
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria, delete)
 		}
 	}
 }

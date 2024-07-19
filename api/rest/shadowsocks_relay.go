@@ -73,8 +73,6 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 							return user.Password
 						}), common.Map([]option.ShadowsocksDestination{convertedUser}, option.ShadowsocksDestination.Build))
 					inbound.ShadowsocksRelayPtr[i].Destinations = append(inbound.ShadowsocksRelayPtr[i].Destinations, []option.ShadowsocksDestination{convertedUser}...)
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksRelay, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
 				}
@@ -89,7 +87,6 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					}), common.Map([]option.ShadowsocksDestination{convertedUser}, func(user option.ShadowsocksDestination) string {
 						return user.Password
 					}))
-				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.ShadowsocksRelayPtr[i].Destinations {
 						if newUsers[j].Name == inbound.ShadowsocksRelayPtr[i].Destinations[k].Name {
@@ -101,6 +98,9 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					}
 				}
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksRelay, delete)
 		}
 	}
 }

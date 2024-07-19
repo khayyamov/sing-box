@@ -29,8 +29,8 @@ func getAUserStat(uuid string) (rp.StatRp, error) {
 			if len(response.Stat) == 2 {
 				return rp.StatRp{
 					Id:       uuid,
-					Uplink:   response.Stat[1].Value,
-					Downlink: response.Stat[0].Value,
+					Uplink:   response.Stat[0].Value,
+					Downlink: response.Stat[1].Value,
 				}, nil
 			} else if len(response.Stat) > 2 {
 				return rp.StatRp{}, errors.New("Found more than one in v2ay api with uuid " + uuid)

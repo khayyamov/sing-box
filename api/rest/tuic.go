@@ -67,14 +67,13 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
-					userList = append(userList, index)
+					userList = append(userList, len(inbound.TUICPtr[i].UserNameList)+index)
 					userNameList = append(userNameList, convertedUser.Name)
 					userUUIDList = append(userUUIDList, userUUID)
 					userPasswordList = append(userPasswordList, user.Password)
 					inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
+					inbound.TUICPtr[i].UserNameList = append(inbound.TUICPtr[i].UserNameList, convertedUser.Name)
 					inbound.TUICPtr[i].Users = append(inbound.TUICPtr[i].Users, convertedUser)
-					box.EditUserInV2rayApi(user.UUID, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
@@ -89,18 +88,23 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				userUUIDList = append(userUUIDList, userUUID)
 				userPasswordList = append(userPasswordList, user.Password)
 				inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
-				box.EditUserInV2rayApi(user.UUID, delete)
 				for j := range newUsers {
 					for k := range inbound.TUICPtr[i].Users {
 						if newUsers[j].UUID == inbound.TUICPtr[i].Users[k].UUID {
 							inbound.TUICPtr[i].Users = append(
 								inbound.TUICPtr[i].Users[:k],
 								inbound.TUICPtr[i].Users[k+1:]...)
+							inbound.TUICPtr[i].UserNameList = append(
+								inbound.TUICPtr[i].UserNameList[:k],
+								inbound.TUICPtr[i].UserNameList[k+1:]...)
 							break
 						}
 					}
 				}
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, delete)
 		}
 	}
 }

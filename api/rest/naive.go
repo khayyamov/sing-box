@@ -46,8 +46,6 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.NaivePtr[i].Tag() + "] User Added: " + dbUser.UserJson)
 					inbound.NaivePtr[i].Authenticator.AddUserToAuthenticator([]auth.User{convertedUser})
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeNaive, delete)
 				} else {
 					utils.ApiLogInfo("NaivePtr: User already exist: " + dbUser.UserJson)
 				}
@@ -57,8 +55,10 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					continue
 				}
 				inbound.NaivePtr[i].Authenticator.DeleteUserToAuthenticator([]auth.User{convertedUser})
-				box.EditUserInV2rayApi(user.Name, delete)
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Username, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeNaive, delete)
 		}
 	}
 }

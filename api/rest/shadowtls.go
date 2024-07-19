@@ -57,8 +57,6 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User Added: " + dbUser.UserJson)
 					inbound.ShadowTlsPtr[i].Service.AddUser([]shadowtls.User{convertedUser})
 					inbound.ShadowTlsPtr[i].Service.Users = append(inbound.ShadowTlsPtr[i].Service.Users, convertedUser)
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowTLS, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
 				}
@@ -69,7 +67,6 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					continue
 				}
 				_ = inbound.ShadowTlsPtr[i].Service.DeleteUser([]shadowtls.User{convertedUser})
-				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.ShadowTlsPtr[i].Service.Users {
 						if newUsers[j].Name == inbound.ShadowTlsPtr[i].Service.Users[k].Name {
@@ -81,6 +78,9 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					}
 				}
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowTLS, delete)
 		}
 	}
 }

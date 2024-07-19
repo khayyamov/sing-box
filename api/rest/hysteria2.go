@@ -26,7 +26,6 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
 		for i := range inbound.Hysteria2Ptr {
 			userList := make([]int, 0, len(newUsers))
-			userNameList := make([]string, 0, len(newUsers))
 			userPasswordList := make([]string, 0, len(newUsers))
 			if !delete {
 				if len(user.ReplacementField) > 0 {
@@ -56,13 +55,11 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User Added: " + dbUser.UserJson)
-					userList = append(userList, index)
-					userNameList = append(userNameList, user.Name)
+					userList = append(userList, len(inbound.Hysteria2Ptr[i].UserNameList)+index)
 					userPasswordList = append(userPasswordList, user.Password)
 					inbound.Hysteria2Ptr[i].Service.AddUser(userList, userPasswordList)
 					inbound.Hysteria2Ptr[i].Users = append(inbound.Hysteria2Ptr[i].Users, convertedUser)
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria2, delete)
+					inbound.Hysteria2Ptr[i].UserNameList = append(inbound.Hysteria2Ptr[i].UserNameList, convertedUser.Name)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
@@ -72,19 +69,25 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User failed to delete Name invalid")
 					continue
 				}
+				userList = append(userList, len(inbound.Hysteria2Ptr[i].UserNameList)+index)
+				userPasswordList = append(userPasswordList, user.Password)
 				inbound.Hysteria2Ptr[i].Service.DeleteUser(userList, userPasswordList)
-				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.Hysteria2Ptr[i].Users {
 						if newUsers[j].Name == inbound.Hysteria2Ptr[i].Users[k].Name {
 							inbound.Hysteria2Ptr[i].Users = append(
 								inbound.Hysteria2Ptr[i].Users[:k],
 								inbound.Hysteria2Ptr[i].Users[k+1:]...)
+							inbound.Hysteria2Ptr[i].UserNameList = append(
+								inbound.Hysteria2Ptr[i].UserNameList[:k],
+								inbound.Hysteria2Ptr[i].UserNameList[k+1:]...)
 							break
 						}
 					}
 				}
 			}
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeHysteria2, delete)
 		}
 	}
 }

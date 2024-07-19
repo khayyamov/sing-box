@@ -18,10 +18,8 @@ import (
 	"github.com/sagernet/sing-shadowsocks/shadowaead"
 	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
-	F "github.com/sagernet/sing/common/format"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
 )
@@ -123,33 +121,13 @@ func (h *ShadowsocksMulti) NewPacketConnection(ctx context.Context, conn N.Packe
 }
 
 func (h *ShadowsocksMulti) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *ShadowsocksMulti) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
-	userIndex, loaded := auth.UserFromContext[int](ctx)
-	if !loaded {
-		return os.ErrInvalid
-	}
-	user := h.Users[userIndex].Name
-	if user == "" {
-		user = F.ToString(userIndex)
-	} else {
-		metadata.User = user
-	}
 	ctx = log.ContextWithNewID(ctx)
-	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
+	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

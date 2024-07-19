@@ -61,8 +61,6 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 							return it.Password
 						}))
 					inbound.TrojanPtr[i].Users = append(inbound.TrojanPtr[i].Users, convertedUser)
-					box.EditUserInV2rayApi(user.Name, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTrojan, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
 				}
@@ -77,7 +75,6 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}), common.Map([]option.TrojanUser{convertedUser}, func(it option.TrojanUser) string {
 						return it.Password
 					}))
-				box.EditUserInV2rayApi(user.Name, delete)
 				for j := range newUsers {
 					for k := range inbound.TrojanPtr[i].Users {
 						if newUsers[j].Name == inbound.TrojanPtr[i].Users[k].Name {
@@ -89,6 +86,9 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}
 				}
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTrojan, delete)
 		}
 	}
 }

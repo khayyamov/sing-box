@@ -18,7 +18,6 @@ import (
 	"github.com/sagernet/sing-quic/hysteria"
 	"github.com/sagernet/sing-quic/hysteria2"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -29,7 +28,7 @@ type Hysteria2 struct {
 	myInboundAdapter
 	tlsConfig    tls.ServerConfig
 	Service      *hysteria2.Service[int]
-	userNameList []string
+	UserNameList []string
 	Users        []option.Hysteria2User
 }
 
@@ -136,7 +135,7 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 	}
 	service.UpdateUsers(userList, userPasswordList)
 	inbound.Service = service
-	inbound.userNameList = userNameList
+	inbound.UserNameList = userNameList
 	return inbound, nil
 }
 
@@ -144,13 +143,7 @@ func (h *Hysteria2) newConnection(ctx context.Context, conn net.Conn, metadata a
 	ctx = log.ContextWithNewID(ctx)
 	metadata = h.createMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
-	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
-	} else {
-		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
-	}
+	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
@@ -158,13 +151,7 @@ func (h *Hysteria2) newPacketConnection(ctx context.Context, conn N.PacketConn, 
 	ctx = log.ContextWithNewID(ctx)
 	metadata = h.createPacketMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
-	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
-	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
-	}
+	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
 

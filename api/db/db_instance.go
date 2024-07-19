@@ -20,6 +20,7 @@ func Getter() *StringGetter {
 	if singleInstance == nil {
 		lockLng.Lock()
 		defer lockLng.Unlock()
+
 		if singleInstance == nil {
 			singleInstance = &StringGetter{
 				Impl: &ImplementationDb{},

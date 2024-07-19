@@ -69,8 +69,6 @@ func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 							return it.AlterId
 						}))
 					inbound.VMessPtr[i].Users = append(inbound.VMessPtr[i].Users, convertedUser)
-					box.EditUserInV2rayApi(user.UUID, delete)
-					db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeVMess, delete)
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.VMessPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
@@ -88,7 +86,6 @@ func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}), common.Map([]option.VMessUser{convertedUser}, func(it option.VMessUser) int {
 						return it.AlterId
 					}))
-				box.EditUserInV2rayApi(user.UUID, delete)
 				for j := range newUsers {
 					for k := range inbound.VMessPtr[i].Users {
 						if newUsers[j].UUID == inbound.VMessPtr[i].Users[k].UUID {
@@ -100,6 +97,9 @@ func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					}
 				}
 			}
+
+			box.EditUserInV2rayApi(convertedUser.Name, delete)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeVMess, delete)
 		}
 	}
 }
