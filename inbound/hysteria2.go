@@ -18,6 +18,7 @@ import (
 	"github.com/sagernet/sing-quic/hysteria"
 	"github.com/sagernet/sing-quic/hysteria2"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -26,10 +27,9 @@ var _ adapter.Inbound = (*Hysteria2)(nil)
 
 type Hysteria2 struct {
 	myInboundAdapter
-	tlsConfig    tls.ServerConfig
-	Service      *hysteria2.Service[int]
-	UserNameList []string
-	Users        []option.Hysteria2User
+	tlsConfig tls.ServerConfig
+	Service   *hysteria2.Service[string]
+	Users     map[string]option.Hysteria2User
 }
 
 func NewHysteria2(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.Hysteria2InboundOptions) (*Hysteria2, error) {
@@ -101,7 +101,10 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 			ListenOptions: options.ListenOptions,
 		},
 		tlsConfig: tlsConfig,
-		Users:     options.Users,
+		Users:     map[string]option.Hysteria2User{},
+	}
+	for _, user := range options.Users {
+		inbound.Users[user.Name] = user
 	}
 	var udpTimeout time.Duration
 	if options.UDPTimeout != 0 {
@@ -109,7 +112,7 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := hysteria2.NewService[int](hysteria2.ServiceOptions{
+	service, err := hysteria2.NewService[string](hysteria2.ServiceOptions{
 		Context:               ctx,
 		Logger:                logger,
 		BrutalDebug:           options.BrutalDebug,
@@ -125,17 +128,16 @@ func NewHysteria2(ctx context.Context, router adapter.Router, logger log.Context
 	if err != nil {
 		return nil, err
 	}
-	userList := make([]int, 0, len(options.Users))
+	userList := make([]string, 0, len(options.Users))
 	userNameList := make([]string, 0, len(options.Users))
 	userPasswordList := make([]string, 0, len(options.Users))
-	for index, user := range options.Users {
-		userList = append(userList, index)
+	for _, user := range options.Users {
+		userList = append(userList, user.Name)
 		userNameList = append(userNameList, user.Name)
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	service.UpdateUsers(userList, userPasswordList)
 	inbound.Service = service
-	inbound.UserNameList = userNameList
 	return inbound, nil
 }
 
@@ -143,7 +145,13 @@ func (h *Hysteria2) newConnection(ctx context.Context, conn net.Conn, metadata a
 	ctx = log.ContextWithNewID(ctx)
 	metadata = h.createMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userID, _ := auth.UserFromContext[string](ctx)
+	if userName := h.Users[userID].Name; userName != "" {
+		metadata.User = userName
+		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
@@ -151,7 +159,13 @@ func (h *Hysteria2) newPacketConnection(ctx context.Context, conn N.PacketConn, 
 	ctx = log.ContextWithNewID(ctx)
 	metadata = h.createPacketMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	userID, _ := auth.UserFromContext[string](ctx)
+	if userName := h.Users[userID].Name; userName != "" {
+		metadata.User = userName
+		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
 

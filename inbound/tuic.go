@@ -16,6 +16,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-quic/tuic"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -24,10 +25,9 @@ var _ adapter.Inbound = (*TUIC)(nil)
 
 type TUIC struct {
 	myInboundAdapter
-	tlsConfig    tls.ServerConfig
-	Service      *tuic.Service[int]
-	Users        []option.TUICUser
-	UserNameList []string
+	tlsConfig tls.ServerConfig
+	Service   *tuic.Service[string]
+	Users     map[string]option.TUICUser
 }
 
 func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (*TUIC, error) {
@@ -64,7 +64,10 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 			ListenOptions: options.ListenOptions,
 		},
 		tlsConfig: tlsConfig,
-		Users:     options.Users,
+		Users:     map[string]option.TUICUser{},
+	}
+	for _, user := range options.Users {
+		inbound.Users[user.UUID] = user
 	}
 	var udpTimeout time.Duration
 	if options.UDPTimeout != 0 {
@@ -72,7 +75,7 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	service, err := tuic.NewService[int](tuic.ServiceOptions{
+	service, err := tuic.NewService[string](tuic.ServiceOptions{
 		Context:           ctx,
 		Logger:            logger,
 		TLSConfig:         tlsConfig,
@@ -86,11 +89,11 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 	if err != nil {
 		return nil, err
 	}
-	var userList []int
+	var userList []string
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
-	for index, user := range options.Users {
+	for _, user := range options.Users {
 		if user.UUID == "" {
 			return nil, E.New("missing uuid for user ", user.UUID)
 		}
@@ -98,26 +101,41 @@ func NewTUIC(ctx context.Context, router adapter.Router, logger log.ContextLogge
 		if err != nil {
 			return nil, E.Cause(err, "invalid uuid for user ", user.UUID)
 		}
-		userList = append(userList, index)
+		userList = append(userList, user.UUID)
 		userNameList = append(userNameList, user.Name)
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	service.UpdateUsers(userList, userUUIDList, userPasswordList)
 	inbound.Service = service
-	inbound.UserNameList = userNameList
 	return inbound, nil
 }
 
 func (h *TUIC) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
+	ctx = log.ContextWithNewID(ctx)
+	metadata = h.createMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userID, _ := auth.UserFromContext[string](ctx)
+	if userName := h.Users[userID].Name; userName != "" {
+		metadata.User = userName
+		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *TUIC) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
+	ctx = log.ContextWithNewID(ctx)
+	metadata = h.createPacketMetadata(conn, metadata)
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	userID, _ := auth.UserFromContext[string](ctx)
+	if userName := h.Users[userID].Name; userName != "" {
+		metadata.User = userName
+		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
 

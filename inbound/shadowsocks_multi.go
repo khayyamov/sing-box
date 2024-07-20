@@ -18,8 +18,10 @@ import (
 	"github.com/sagernet/sing-shadowsocks/shadowaead"
 	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
+	F "github.com/sagernet/sing/common/format"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
 )
@@ -31,8 +33,8 @@ var (
 
 type ShadowsocksMulti struct {
 	myInboundAdapter
-	Service shadowsocks.MultiService[int]
-	Users   []option.ShadowsocksUser
+	Service shadowsocks.MultiService[string]
+	Users   map[string]option.ShadowsocksUser
 }
 
 func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.ShadowsocksInboundOptions) (*ShadowsocksMulti, error) {
@@ -60,6 +62,7 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 			tag:           tag,
 			ListenOptions: options.ListenOptions,
 		},
+		Users: map[string]option.ShadowsocksUser{},
 	}
 	inbound.connHandler = inbound
 	inbound.packetHandler = inbound
@@ -74,9 +77,9 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	var service shadowsocks.MultiService[int]
+	var service shadowsocks.MultiService[string]
 	if common.Contains(shadowaead_2022.List, options.Method) {
-		service, err = shadowaead_2022.NewMultiServiceWithPassword[int](
+		service, err = shadowaead_2022.NewMultiServiceWithPassword[string](
 			options.Method,
 			options.Password,
 			int64(udpTimeout.Seconds()),
@@ -84,7 +87,7 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 			ntp.TimeFuncFromContext(ctx),
 		)
 	} else if common.Contains(shadowaead.List, options.Method) {
-		service, err = shadowaead.NewMultiService[int](
+		service, err = shadowaead.NewMultiService[string](
 			options.Method,
 			int64(udpTimeout.Seconds()),
 			adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
@@ -94,8 +97,8 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	if err != nil {
 		return nil, err
 	}
-	err = service.UpdateUsersWithPasswords(common.MapIndexed(options.Users, func(index int, user option.ShadowsocksUser) int {
-		return index
+	err = service.UpdateUsersWithPasswords(common.MapIndexedString(options.Users, func(index any, user option.ShadowsocksUser) string {
+		return user.Name
 	}), common.Map(options.Users, func(user option.ShadowsocksUser) string {
 		return user.Password
 	}))
@@ -104,7 +107,9 @@ func newShadowsocksMulti(ctx context.Context, router adapter.Router, logger log.
 	}
 	inbound.Service = service
 	inbound.packetUpstream = service
-	inbound.Users = options.Users
+	for _, user := range options.Users {
+		inbound.Users[user.Name] = user
+	}
 	return inbound, err
 }
 
@@ -121,13 +126,33 @@ func (h *ShadowsocksMulti) NewPacketConnection(ctx context.Context, conn N.Packe
 }
 
 func (h *ShadowsocksMulti) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
+	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *ShadowsocksMulti) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
 	ctx = log.ContextWithNewID(ctx)
-	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
-	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection from ", metadata.Source)
+	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

@@ -16,7 +16,9 @@ import (
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing-vmess/vless"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
+	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"net"
@@ -31,8 +33,8 @@ var (
 type VLESS struct {
 	myInboundAdapter
 	ctx       context.Context
-	Users     []option.VLESSUser
-	Service   *vless.Service[int]
+	Users     map[string]option.VLESSUser
+	Service   *vless.Service[string]
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
@@ -63,19 +65,22 @@ func NewVLESS(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			ListenOptions: options.ListenOptions,
 		},
 		ctx:   ctx,
-		Users: options.Users,
+		Users: map[string]option.VLESSUser{},
+	}
+	for _, user := range options.Users {
+		inbound.Users[user.UUID] = user
 	}
 	var err error
 	inbound.router, err = mux.NewRouterWithOptions(inbound.router, logger, common.PtrValueOrDefault(options.Multiplex))
 	if err != nil {
 		return nil, err
 	}
-	service := vless.NewService[int](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
-	service.UpdateUsers(common.MapIndexed(inbound.Users, func(index int, it option.VLESSUser) int {
-		return index
-	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
+	service := vless.NewService[string](logger, adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound))
+	service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.VLESSUser) string {
 		return it.UUID
-	}), common.Map(inbound.Users, func(it option.VLESSUser) string {
+	}), common.Map(options.Users, func(it option.VLESSUser) string {
+		return it.UUID
+	}), common.Map(options.Users, func(it option.VLESSUser) string {
 		return it.Flow
 	}))
 	inbound.Service = service
@@ -162,17 +167,37 @@ func (h *VLESS) NewPacketConnection(ctx context.Context, conn N.PacketConn, meta
 }
 
 func (h *VLESS) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
+	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *VLESS) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
 	if metadata.Destination.Fqdn == packetaddr.SeqPacketMagicAddress {
 		metadata.Destination = M.Socksaddr{}
 		conn = packetaddr.NewConn(conn.(vmess.PacketConn), metadata.Destination)
-		h.logger.InfoContext(ctx, "inbound packet addr connection")
+		h.logger.InfoContext(ctx, "[", user, "] inbound packet addr connection")
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

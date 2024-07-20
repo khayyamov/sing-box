@@ -50,3 +50,11 @@ func ConvertSingleDbUserToProtocolModel[T any](user entity.DbUser) (T, error) {
 	}
 	return userT, nil
 }
+
+func ConvertMapToSlice[T any](usersMap map[string]T) []T {
+	usersSlice := make([]T, 0, len(usersMap))
+	for _, user := range usersMap {
+		usersSlice = append(usersSlice, user)
+	}
+	return usersSlice
+}

@@ -13,7 +13,7 @@ import (
 	"github.com/sagernet/sing/common"
 )
 
-func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "ShadowsocksRelay"
 	if len(inbound.ShadowsocksRelayPtr) == 0 {
 		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
@@ -30,7 +30,7 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 		for i := range inbound.ShadowsocksRelayPtr {
-			if !delete {
+			if !deletee {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.ShadowsocksRelayPtr[i].Tag() == model.Tag {
@@ -67,40 +67,32 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User Added: " + dbUser.UserJson)
 					_ = inbound.ShadowsocksRelayPtr[i].Service.AddUsersWithPasswords(
-						common.MapIndexed([]option.ShadowsocksDestination{convertedUser}, func(index int, user option.ShadowsocksDestination) int {
-							return len(inbound.ShadowsocksRelayPtr[i].Destinations) + index
+						common.MapIndexedString([]option.ShadowsocksDestination{convertedUser}, func(index any, user option.ShadowsocksDestination) string {
+							return user.Name
 						}), common.Map([]option.ShadowsocksDestination{convertedUser}, func(user option.ShadowsocksDestination) string {
 							return user.Password
 						}), common.Map([]option.ShadowsocksDestination{convertedUser}, option.ShadowsocksDestination.Build))
-					inbound.ShadowsocksRelayPtr[i].Destinations = append(inbound.ShadowsocksRelayPtr[i].Destinations, []option.ShadowsocksDestination{convertedUser}...)
+					inbound.ShadowsocksRelayPtr[i].Destinations[convertedUser.Name] = convertedUser
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User already exist: " + dbUser.UserJson)
 				}
 			} else {
 				if len(convertedUser.Name) == 0 {
-					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User failed to delete name invalid")
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User failed to deletee name invalid")
 					continue
 				}
 				_ = inbound.ShadowsocksRelayPtr[i].Service.DeleteUsersWithPasswords(
-					common.MapIndexed([]option.ShadowsocksDestination{convertedUser}, func(index int, user option.ShadowsocksDestination) int {
-						return len(inbound.ShadowsocksRelayPtr[i].Destinations) + index
+					common.MapIndexedString([]option.ShadowsocksDestination{convertedUser}, func(index any, user option.ShadowsocksDestination) string {
+						return user.Name
 					}), common.Map([]option.ShadowsocksDestination{convertedUser}, func(user option.ShadowsocksDestination) string {
 						return user.Password
 					}))
-				for j := range newUsers {
-					for k := range inbound.ShadowsocksRelayPtr[i].Destinations {
-						if newUsers[j].Name == inbound.ShadowsocksRelayPtr[i].Destinations[k].Name {
-							inbound.ShadowsocksRelayPtr[i].Destinations = append(
-								inbound.ShadowsocksRelayPtr[i].Destinations[:k],
-								inbound.ShadowsocksRelayPtr[i].Destinations[k+1:]...)
-							break
-						}
-					}
-				}
+
+				delete(inbound.ShadowsocksRelayPtr[i].Destinations, convertedUser.Name)
 			}
 
-			box.EditUserInV2rayApi(convertedUser.Name, delete)
-			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksRelay, delete)
+			box.EditUserInV2rayApi(convertedUser.Name, deletee)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksRelay, deletee)
 		}
 	}
 }

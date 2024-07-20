@@ -15,7 +15,7 @@ import (
 	"net/http"
 )
 
-func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Vless"
 	if len(inbound.VLESSPtr) == 0 {
 		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
@@ -29,7 +29,7 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
 		for i := range inbound.VLESSPtr {
-			if !delete {
+			if !deletee {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.VLESSPtr[i].Tag() == model.Tag {
@@ -61,15 +61,14 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
-					inbound.VLESSPtr[i].Service.AddUser(
-						common.MapIndexed([]option.VLESSUser{convertedUser}, func(index int, it option.VLESSUser) int {
-							return len(inbound.VLESSPtr[i].Users) + index
-						}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
-							return it.UUID
-						}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
-							return it.Flow
-						}))
-					inbound.VLESSPtr[i].Users = append(inbound.VLESSPtr[i].Users, convertedUser)
+					inbound.VLESSPtr[i].Service.AddUser(common.MapIndexedString([]option.VLESSUser{convertedUser}, func(index any, it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
+						return it.UUID
+					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
+						return it.Flow
+					}))
+					inbound.VLESSPtr[i].Users[convertedUser.UUID] = convertedUser
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
@@ -79,28 +78,18 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User failed to delete uuid invalid")
 					continue
 				}
-				inbound.VLESSPtr[i].Service.DeleteUser(
-					common.MapIndexed([]option.VLESSUser{convertedUser}, func(index int, it option.VLESSUser) int {
-						return index
-					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
-						return it.UUID
-					}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
-						return it.Flow
-					}))
-				for j := range newUsers {
-					for k := range inbound.VLESSPtr[i].Users {
-						if newUsers[j].UUID == inbound.VLESSPtr[i].Users[k].UUID {
-							inbound.VLESSPtr[i].Users = append(
-								inbound.VLESSPtr[i].Users[:k],
-								inbound.VLESSPtr[i].Users[k+1:]...)
-							break
-						}
-					}
-				}
+				inbound.VLESSPtr[i].Service.DeleteUser(common.MapIndexedString([]option.VLESSUser{convertedUser}, func(index any, it option.VLESSUser) string {
+					return it.UUID
+				}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
+					return it.UUID
+				}), common.Map([]option.VLESSUser{convertedUser}, func(it option.VLESSUser) string {
+					return it.Flow
+				}))
+				delete(inbound.VLESSPtr[i].Users, convertedUser.UUID)
 			}
 
-			box.EditUserInV2rayApi(convertedUser.Name, delete)
-			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeVLESS, delete)
+			box.EditUserInV2rayApi(convertedUser.Name, deletee)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeVLESS, deletee)
 		}
 	}
 }

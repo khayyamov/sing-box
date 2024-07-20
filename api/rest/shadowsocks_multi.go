@@ -13,7 +13,7 @@ import (
 	"github.com/sagernet/sing/common"
 )
 
-func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "ShadowsocksMulti"
 	if len(inbound.ShadowsocksMultiPtr) == 0 {
 		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
@@ -26,7 +26,7 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 		for i := range inbound.ShadowsocksMultiPtr {
-			if !delete {
+			if !deletee {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.ShadowsocksMultiPtr[i].Tag() == model.Tag {
@@ -54,37 +54,29 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowsocksMultiPtr[i].Tag() + "]  User Added: " + dbUser.UserJson)
-					inbound.ShadowsocksMultiPtr[i].Users = append(inbound.ShadowsocksMultiPtr[i].Users, []option.ShadowsocksUser{convertedUser}...)
+					inbound.ShadowsocksMultiPtr[i].Users[convertedUser.Name] = convertedUser
 					_ = inbound.ShadowsocksMultiPtr[i].Service.AddUsersWithPasswords(
-						common.MapIndexed([]option.ShadowsocksUser{convertedUser}, func(index int, user option.ShadowsocksUser) int {
-							return len(inbound.ShadowsocksMultiPtr[i].Users) + index
+						common.MapIndexedString([]option.ShadowsocksUser{convertedUser}, func(index any, user option.ShadowsocksUser) string {
+							return user.Name
 						}), common.Map([]option.ShadowsocksUser{convertedUser}, func(user option.ShadowsocksUser) string {
 							return user.Password
 						}))
-					inbound.ShadowsocksMultiPtr[i].Users = append(inbound.ShadowsocksMultiPtr[i].Users, convertedUser)
+					inbound.ShadowsocksMultiPtr[i].Users[convertedUser.Name] = convertedUser
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.ShadowsocksMultiPtr[i].Tag() + "]  User already exist: " + dbUser.UserJson)
 				}
 			} else {
 				_ = inbound.ShadowsocksMultiPtr[i].Service.DeleteUsersWithPasswords(
-					common.MapIndexed([]option.ShadowsocksUser{convertedUser}, func(index int, user option.ShadowsocksUser) int {
-						return index
+					common.MapIndexedString([]option.ShadowsocksUser{convertedUser}, func(index any, user option.ShadowsocksUser) string {
+						return user.Name
 					}), common.Map([]option.ShadowsocksUser{convertedUser}, func(user option.ShadowsocksUser) string {
 						return user.Password
 					}))
-				for j := range newUsers {
-					for k := range inbound.ShadowsocksMultiPtr[i].Users {
-						if newUsers[j].Name == inbound.ShadowsocksMultiPtr[i].Users[k].Name {
-							inbound.ShadowsocksMultiPtr[i].Users = append(inbound.ShadowsocksMultiPtr[i].Users[:k],
-								inbound.ShadowsocksMultiPtr[i].Users[k+1:]...)
-							break
-						}
-					}
-				}
+				delete(inbound.ShadowsocksMultiPtr[i].Users, convertedUser.Name)
 			}
 
-			box.EditUserInV2rayApi(convertedUser.Name, delete)
-			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksMulti, delete)
+			box.EditUserInV2rayApi(convertedUser.Name, deletee)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeShadowsocksMulti, deletee)
 		}
 	}
 }

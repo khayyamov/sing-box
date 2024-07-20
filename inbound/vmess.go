@@ -18,7 +18,9 @@ import (
 	"github.com/sagernet/sing-box/transport/v2ray"
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
+	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
@@ -32,8 +34,8 @@ var (
 type VMess struct {
 	myInboundAdapter
 	ctx       context.Context
-	Service   *vmess.Service[int]
-	Users     []option.VMessUser
+	Service   *vmess.Service[string]
+	Users     map[string]option.VMessUser
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
 }
@@ -64,7 +66,10 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 			ListenOptions: options.ListenOptions,
 		},
 		ctx:   ctx,
-		Users: options.Users,
+		Users: map[string]option.VMessUser{},
+	}
+	for _, user := range options.Users {
+		inbound.Users[user.UUID] = user
 	}
 	var err error
 	inbound.router, err = mux.NewRouterWithOptions(inbound.router, logger, common.PtrValueOrDefault(options.Multiplex))
@@ -78,10 +83,10 @@ func NewVMess(ctx context.Context, router adapter.Router, logger log.ContextLogg
 	if options.Transport != nil && options.Transport.Type != "" {
 		serviceOptions = append(serviceOptions, vmess.ServiceWithDisableHeaderProtection())
 	}
-	service := vmess.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
+	service := vmess.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), serviceOptions...)
 	inbound.Service = service
-	err = service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.VMessUser) int {
-		return index
+	err = service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.VMessUser) string {
+		return it.UUID
 	}), common.Map(options.Users, func(it option.VMessUser) string {
 		return it.UUID
 	}), common.Map(options.Users, func(it option.VMessUser) int {
@@ -177,17 +182,37 @@ func (h *VMess) NewPacketConnection(ctx context.Context, conn N.PacketConn, meta
 }
 
 func (h *VMess) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
+	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
 func (h *VMess) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
 	if metadata.Destination.Fqdn == packetaddr.SeqPacketMagicAddress {
 		metadata.Destination = M.Socksaddr{}
 		conn = packetaddr.NewConn(conn.(vmess.PacketConn), metadata.Destination)
-		h.logger.InfoContext(ctx, "inbound packet addr connection")
+		h.logger.InfoContext(ctx, "[", user, "] inbound packet addr connection")
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

@@ -16,7 +16,9 @@ import (
 	"github.com/sagernet/sing-box/transport/trojan"
 	"github.com/sagernet/sing-box/transport/v2ray"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
+	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 )
@@ -28,8 +30,8 @@ var (
 
 type Trojan struct {
 	myInboundAdapter
-	Service                  *trojan.Service[int]
-	Users                    []option.TrojanUser
+	Service                  *trojan.Service[string]
+	Users                    map[string]option.TrojanUser
 	tlsConfig                tls.ServerConfig
 	fallbackAddr             M.Socksaddr
 	fallbackAddrTLSNextProto map[string]M.Socksaddr
@@ -61,7 +63,10 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 			tag:           tag,
 			ListenOptions: options.ListenOptions,
 		},
-		Users: options.Users,
+		Users: map[string]option.TrojanUser{},
+	}
+	for _, user := range options.Users {
+		inbound.Users[user.Name] = user
 	}
 	if options.TLS != nil {
 		tlsConfig, err := tls.NewServer(ctx, logger, common.PtrValueOrDefault(options.TLS))
@@ -94,9 +99,9 @@ func NewTrojan(ctx context.Context, router adapter.Router, logger log.ContextLog
 		}
 		fallbackHandler = adapter.NewUpstreamContextHandler(inbound.fallbackConnection, nil, nil)
 	}
-	service := trojan.NewService[int](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
-	err := service.UpdateUsers(common.MapIndexed(options.Users, func(index int, it option.TrojanUser) int {
-		return index
+	service := trojan.NewService[string](adapter.NewUpstreamContextHandler(inbound.newConnection, inbound.newPacketConnection, inbound), fallbackHandler)
+	err := service.UpdateUsers(common.MapIndexedString(options.Users, func(index any, it option.TrojanUser) string {
+		return it.Name
 	}), common.Map(options.Users, func(it option.TrojanUser) string {
 		return it.Password
 	}))
@@ -184,7 +189,17 @@ func (h *Trojan) NewPacketConnection(ctx context.Context, conn N.PacketConn, met
 }
 
 func (h *Trojan) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
+	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
@@ -212,7 +227,17 @@ func (h *Trojan) fallbackConnection(ctx context.Context, conn net.Conn, metadata
 }
 
 func (h *Trojan) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	userIndex, loaded := auth.UserFromContext[string](ctx)
+	if !loaded {
+		return os.ErrInvalid
+	}
+	user := h.Users[userIndex].Name
+	if user == "" {
+		user = F.ToString(userIndex)
+	} else {
+		metadata.User = user
+	}
+	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
 

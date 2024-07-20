@@ -13,13 +13,13 @@ import (
 	"github.com/sagernet/sing-box/option"
 )
 
-func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
+func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Tuic"
 	if len(inbound.TUICPtr) == 0 {
 		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
-	for index, user := range newUsers {
+	for _, user := range newUsers {
 		convertedUser := option.TUICUser{
 			Name:     user.Name,
 			UUID:     user.UUID,
@@ -27,11 +27,11 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 		for i := range inbound.TUICPtr {
-			var userList []int
+			var userList []string
 			var userNameList []string
 			var userUUIDList [][16]byte
 			var userPasswordList []string
-			if !delete {
+			if !deletee {
 				if len(user.ReplacementField) > 0 {
 					for _, model := range user.ReplacementField {
 						if inbound.TUICPtr[i].Tag() == model.Tag {
@@ -67,44 +67,31 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 				if !founded {
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User Added: " + dbUser.UserJson)
-					userList = append(userList, len(inbound.TUICPtr[i].UserNameList)+index)
+					userList = append(userList, convertedUser.UUID)
 					userNameList = append(userNameList, convertedUser.Name)
 					userUUIDList = append(userUUIDList, userUUID)
 					userPasswordList = append(userPasswordList, user.Password)
 					inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
-					inbound.TUICPtr[i].UserNameList = append(inbound.TUICPtr[i].UserNameList, convertedUser.Name)
-					inbound.TUICPtr[i].Users = append(inbound.TUICPtr[i].Users, convertedUser)
+					inbound.TUICPtr[i].Users[convertedUser.UUID] = convertedUser
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
 			} else {
 				userUUID, err := uuid.FromString(user.UUID)
 				if err != nil {
-					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User failed to delete uuid invalid: " + dbUser.UserJson)
+					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User failed to deletee uuid invalid: " + dbUser.UserJson)
 					continue
 				}
-				userList = append(userList, index)
+				userList = append(userList, convertedUser.UUID)
 				userNameList = append(userNameList, convertedUser.Name)
 				userUUIDList = append(userUUIDList, userUUID)
 				userPasswordList = append(userPasswordList, user.Password)
 				inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
-				for j := range newUsers {
-					for k := range inbound.TUICPtr[i].Users {
-						if newUsers[j].UUID == inbound.TUICPtr[i].Users[k].UUID {
-							inbound.TUICPtr[i].Users = append(
-								inbound.TUICPtr[i].Users[:k],
-								inbound.TUICPtr[i].Users[k+1:]...)
-							inbound.TUICPtr[i].UserNameList = append(
-								inbound.TUICPtr[i].UserNameList[:k],
-								inbound.TUICPtr[i].UserNameList[k+1:]...)
-							break
-						}
-					}
-				}
+				delete(inbound.TUICPtr[i].Users, convertedUser.UUID)
 			}
 
-			box.EditUserInV2rayApi(convertedUser.Name, delete)
-			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, delete)
+			box.EditUserInV2rayApi(convertedUser.Name, deletee)
+			db.GetDb().EditDbUser([]entity.DbUser{dbUser}, C.TypeTUIC, deletee)
 		}
 	}
 }
