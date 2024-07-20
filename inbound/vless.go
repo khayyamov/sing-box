@@ -173,7 +173,7 @@ func (h *VLESS) newConnection(ctx context.Context, conn net.Conn, metadata adapt
 	}
 	user := h.Users[userIndex].Name
 	if user == "" {
-		user = F.ToString(userIndex)
+		h.logger.InfoContext(ctx, "context user rejected [", userIndex, "]", "not found")
 		return os.ErrInvalid
 	} else {
 		metadata.User = user

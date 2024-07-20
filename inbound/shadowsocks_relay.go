@@ -133,10 +133,10 @@ func (h *ShadowsocksRelay) newPacketConnection(ctx context.Context, conn N.Packe
 	}
 	destination := h.Destinations[destinationIndex].Name
 	if destination == "" {
-		destination = F.ToString(destinationIndex)
+		h.logger.InfoContext(ctx, "context user rejected [", destinationIndex, "]", "not found")
+		return os.ErrInvalid
 	} else {
 		metadata.User = destination
-		return os.ErrInvalid
 	}
 	ctx = log.ContextWithNewID(ctx)
 	h.logger.InfoContext(ctx, "[", destination, "] inbound packet connection from ", metadata.Source)

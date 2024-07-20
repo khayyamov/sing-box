@@ -148,10 +148,10 @@ func (h *ShadowsocksMulti) newPacketConnection(ctx context.Context, conn N.Packe
 	}
 	user := h.Users[userIndex].Name
 	if user == "" {
-		user = F.ToString(userIndex)
+		h.logger.InfoContext(ctx, "context user rejected [", userIndex, "]", "not found")
+		return os.ErrInvalid
 	} else {
 		metadata.User = user
-		return os.ErrInvalid
 	}
 	ctx = log.ContextWithNewID(ctx)
 	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection from ", metadata.Source)

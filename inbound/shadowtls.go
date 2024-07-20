@@ -108,7 +108,7 @@ func (h *ShadowTLS) newConnection(ctx context.Context, conn net.Conn, metadata a
 		metadata.User = userName
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
-		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		h.logger.InfoContext(ctx, "context user rejected [", userName, "]", "not found")
 		return os.ErrInvalid
 	}
 	return h.router.RouteConnection(ctx, conn, metadata)

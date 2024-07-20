@@ -155,7 +155,7 @@ func (h *Hysteria) newPacketConnection(ctx context.Context, conn N.PacketConn, m
 		metadata.User = userName
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.InfoContext(ctx, "context user rejected [", userID, "]", "not found")
 		return os.ErrInvalid
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)

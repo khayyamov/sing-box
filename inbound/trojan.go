@@ -195,7 +195,8 @@ func (h *Trojan) newConnection(ctx context.Context, conn net.Conn, metadata adap
 	}
 	user := h.Users[userIndex].Name
 	if user == "" {
-		user = F.ToString(userIndex)
+		h.logger.InfoContext(ctx, "context user rejected [", userIndex, "]", "not found")
+		return os.ErrInvalid
 	} else {
 		metadata.User = user
 	}
