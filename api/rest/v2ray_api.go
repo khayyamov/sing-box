@@ -10,6 +10,7 @@ import (
 	rq "github.com/sagernet/sing-box/api/rest/rq"
 	"github.com/sagernet/sing-box/experimental/v2rayapi"
 	"net/http"
+	"strings"
 )
 
 func getAUserStat(uuid string) (rp.StatRp, error) {
@@ -27,10 +28,19 @@ func getAUserStat(uuid string) (rp.StatRp, error) {
 	} else {
 		if response.Stat != nil {
 			if len(response.Stat) == 2 {
+				uplink := int64(0)
+				downlink := int64(0)
+				if strings.Contains(response.Stat[0].Name, "uplink") {
+					uplink = response.Stat[0].Value
+					downlink = response.Stat[1].Value
+				} else {
+					uplink = response.Stat[1].Value
+					downlink = response.Stat[0].Value
+				}
 				return rp.StatRp{
 					Id:       uuid,
-					Uplink:   response.Stat[0].Value,
-					Downlink: response.Stat[1].Value,
+					Uplink:   uplink,
+					Downlink: downlink,
 				}, nil
 			} else if len(response.Stat) > 2 {
 				return rp.StatRp{}, errors.New("Found more than one in v2ay api with uuid " + uuid)

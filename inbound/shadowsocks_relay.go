@@ -120,6 +120,7 @@ func (h *ShadowsocksRelay) newConnection(ctx context.Context, conn net.Conn, met
 		destination = F.ToString(destinationIndex)
 	} else {
 		metadata.User = destination
+		return os.ErrInvalid
 	}
 	h.logger.InfoContext(ctx, "[", destination, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
@@ -135,6 +136,7 @@ func (h *ShadowsocksRelay) newPacketConnection(ctx context.Context, conn N.Packe
 		destination = F.ToString(destinationIndex)
 	} else {
 		metadata.User = destination
+		return os.ErrInvalid
 	}
 	ctx = log.ContextWithNewID(ctx)
 	h.logger.InfoContext(ctx, "[", destination, "] inbound packet connection from ", metadata.Source)

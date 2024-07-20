@@ -5,6 +5,7 @@ import (
 	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"net"
+	"os"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/dialer"
@@ -108,6 +109,7 @@ func (h *ShadowTLS) newConnection(ctx context.Context, conn net.Conn, metadata a
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		return os.ErrInvalid
 	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }

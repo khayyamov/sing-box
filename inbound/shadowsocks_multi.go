@@ -135,6 +135,7 @@ func (h *ShadowsocksMulti) newConnection(ctx context.Context, conn net.Conn, met
 		user = F.ToString(userIndex)
 	} else {
 		metadata.User = user
+		return os.ErrInvalid
 	}
 	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	return h.router.RouteConnection(ctx, conn, metadata)
@@ -150,6 +151,7 @@ func (h *ShadowsocksMulti) newPacketConnection(ctx context.Context, conn N.Packe
 		user = F.ToString(userIndex)
 	} else {
 		metadata.User = user
+		return os.ErrInvalid
 	}
 	ctx = log.ContextWithNewID(ctx)
 	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection from ", metadata.Source)

@@ -6,6 +6,7 @@ import (
 	"github.com/sagernet/sing-box/api/db"
 	"github.com/sagernet/sing/common/auth"
 	"net"
+	"os"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -140,6 +141,7 @@ func (h *Hysteria) newConnection(ctx context.Context, conn net.Conn, metadata ad
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		return os.ErrInvalid
 	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
@@ -154,6 +156,7 @@ func (h *Hysteria) newPacketConnection(ctx context.Context, conn N.PacketConn, m
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		return os.ErrInvalid
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/sagernet/sing-box/api/constant"
 	"github.com/sagernet/sing-box/api/db"
 	"net"
+	"os"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -121,6 +122,7 @@ func (h *TUIC) newConnection(ctx context.Context, conn net.Conn, metadata adapte
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		return os.ErrInvalid
 	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
@@ -135,6 +137,7 @@ func (h *TUIC) newPacketConnection(ctx context.Context, conn N.PacketConn, metad
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		return os.ErrInvalid
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }
