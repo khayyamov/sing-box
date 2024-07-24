@@ -14,10 +14,6 @@ import (
 
 func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	utils.CurrentInboundName = "ShadowTls"
-	if len(inbound.ShadowTlsPtr) == 0 {
-		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
-		return
-	}
 	for _, user := range newUsers {
 		convertedUser := shadowtls.User{
 			Name:     user.Name,

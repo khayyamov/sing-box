@@ -16,10 +16,6 @@ import (
 
 func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Vmess"
-	if len(inbound.VMessPtr) == 0 {
-		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
-		return
-	}
 	for _, user := range newUsers {
 		convertedUser := option.VMessUser{
 			Name:    user.Name,

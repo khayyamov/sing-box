@@ -15,10 +15,6 @@ import (
 
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "ShadowsocksMulti"
-	if len(inbound.ShadowsocksMultiPtr) == 0 {
-		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
-		return
-	}
 	for _, user := range newUsers {
 		convertedUser := option.ShadowsocksUser{
 			Name:     user.Name,
