@@ -15,7 +15,7 @@ import (
 func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Hysteria2"
 	if len(inbound.Hysteria2Ptr) == 0 {
-		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
+		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

@@ -15,7 +15,7 @@ import (
 func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	utils.CurrentInboundName = "Naive"
 	if len(inbound.NaivePtr) == 0 {
-		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
+		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {

@@ -18,7 +18,7 @@ import (
 func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Vless"
 	if len(inbound.VLESSPtr) == 0 {
-		utils.ApiLogError("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
+		utils.ApiLogInfo("No Active " + utils.CurrentInboundName + " outbound found to add users to it")
 		return
 	}
 	for _, user := range newUsers {
