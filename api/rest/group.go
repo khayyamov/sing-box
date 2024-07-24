@@ -34,6 +34,7 @@ func domesticLogicGroup(c *gin.Context, delete bool) {
 	if err == nil {
 		EditGroupUsers(c, rqArr, delete)
 	} else {
+		log.Error("http.StatusBadRequest: ", err.Error())
 		c.JSON(http.StatusBadRequest, err)
 	}
 }
