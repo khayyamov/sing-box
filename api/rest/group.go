@@ -27,7 +27,7 @@ func domesticLogicGroup(c *gin.Context, delete bool) {
 	var prettyJSON bytes.Buffer
 	error := json.Indent(&prettyJSON, []byte(jsonBody), "", "\t")
 	if error != nil {
-		utils.ApiLogError("http.StatusBadRequest: " + err.Error())
+		utils.ApiLogError("http.StatusBadRequest: " + error.Error())
 	}
 	log.Info("Request Body:")
 	utils.ApiLogInfo("Api Request Body: " + string(prettyJSON.Bytes()))
