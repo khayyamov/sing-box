@@ -1,10 +1,13 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	global_import "github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/log"
 	"io"
+	"net/http"
 )
 
 func AddToAll(c *gin.Context) {
@@ -15,19 +18,23 @@ func DeleteToAll(c *gin.Context) {
 }
 
 func domesticLogicGroup(c *gin.Context, delete bool) {
-	var rq global_import.GlobalModel
 	var rqArr []global_import.GlobalModel
 
 	bodyAsByteArray, _ := io.ReadAll(c.Request.Body)
 	jsonBody := string(bodyAsByteArray)
 
-	err := json.Unmarshal([]byte(jsonBody), &rq)
-	if err == nil {
-		EditGroupUsers(c, []global_import.GlobalModel{rq}, delete)
+	var prettyJSON bytes.Buffer
+	error := json.Indent(&prettyJSON, []byte(jsonBody), "", "\t")
+	if error != nil {
+		log.Error("JSON parse error: ", error)
 	}
-	err = json.Unmarshal([]byte(jsonBody), &rqArr)
+	log.Info("Request Body:", string(prettyJSON.Bytes()))
+
+	err := json.Unmarshal([]byte(jsonBody), &rqArr)
 	if err == nil {
 		EditGroupUsers(c, rqArr, delete)
+	} else {
+		c.JSON(http.StatusBadRequest, err)
 	}
 }
 

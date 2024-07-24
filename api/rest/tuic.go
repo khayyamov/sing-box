@@ -31,24 +31,24 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 			var userNameList []string
 			var userUUIDList [][16]byte
 			var userPasswordList []string
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.TUICPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.UUID) > 0 {
-								convertedUser.UUID = model.UUID
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.TUICPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.UUID) > 0 {
+							convertedUser.UUID = model.UUID
+						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
-				userUUID, err := uuid.FromString(user.UUID)
+			}
+			if !deletee {
+				userUUID, err := uuid.FromString(convertedUser.UUID)
 				if len(convertedUser.UUID) == 0 ||
 					len(convertedUser.Password) == 0 ||
 					len(convertedUser.Name) == 0 ||
@@ -70,14 +70,14 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 					userList = append(userList, convertedUser.UUID)
 					userNameList = append(userNameList, convertedUser.Name)
 					userUUIDList = append(userUUIDList, userUUID)
-					userPasswordList = append(userPasswordList, user.Password)
+					userPasswordList = append(userPasswordList, convertedUser.Password)
 					inbound.TUICPtr[i].Service.AddUser(userList, userUUIDList, userPasswordList)
 					inbound.TUICPtr[i].Users[convertedUser.UUID] = convertedUser
 				} else {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
 			} else {
-				userUUID, err := uuid.FromString(user.UUID)
+				userUUID, err := uuid.FromString(convertedUser.UUID)
 				if err != nil {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TUICPtr[i].Tag() + "] User failed to deletee uuid invalid: " + dbUser.UserJson)
 					continue
@@ -85,7 +85,7 @@ func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 				userList = append(userList, convertedUser.UUID)
 				userNameList = append(userNameList, convertedUser.Name)
 				userUUIDList = append(userUUIDList, userUUID)
-				userPasswordList = append(userPasswordList, user.Password)
+				userPasswordList = append(userPasswordList, convertedUser.Password)
 				inbound.TUICPtr[i].Service.DeleteUser(userList, userUUIDList)
 				delete(inbound.TUICPtr[i].Users, convertedUser.UUID)
 			}

@@ -28,23 +28,23 @@ func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VMessUser](convertedUser)
 		for i := range inbound.VMessPtr {
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.VMessPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.UUID) > 0 {
-								convertedUser.UUID = model.UUID
-							}
-							if len(model.Flow) > 0 {
-								convertedUser.AlterId = model.AlterId
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.VMessPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.UUID) > 0 {
+							convertedUser.UUID = model.UUID
+						}
+						if len(model.Flow) > 0 {
+							convertedUser.AlterId = model.AlterId
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 				_, err := uuid.FromString(user.UUID)
 				if len(convertedUser.UUID) == 0 || err != nil {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.VMessPtr[i].Tag() + "] User failed to add uuid invalid")

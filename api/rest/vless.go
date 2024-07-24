@@ -29,23 +29,23 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
 		for i := range inbound.VLESSPtr {
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.VLESSPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.UUID) > 0 {
-								convertedUser.UUID = model.UUID
-							}
-							if len(model.Flow) > 0 {
-								convertedUser.Flow = model.Flow
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.VLESSPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.UUID) > 0 {
+							convertedUser.UUID = model.UUID
+						}
+						if len(model.Flow) > 0 {
+							convertedUser.Flow = model.Flow
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 				_, err := uuid.FromString(user.UUID)
 				if len(convertedUser.UUID) == 0 || err != nil {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User failed to add name or password invalid: " + dbUser.UserJson)
@@ -73,7 +73,7 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User already exist: " + dbUser.UserJson)
 				}
 			} else {
-				_, err := uuid.FromString(user.UUID)
+				_, err := uuid.FromString(convertedUser.UUID)
 				if len(convertedUser.UUID) == 0 || err != nil {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User failed to delete uuid invalid")
 					continue

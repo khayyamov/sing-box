@@ -4,9 +4,53 @@ Content-Type: application/json
 
 [
   {
-    "uuid":"2064e030-0209-4aa5-88de-a3659e5c587c",
-    "name":"2064e030-0209-4aa5-88de-a3659e5c587c",
-    "password":"2064e030-0209-4aa5-88de-a3659e5c587c"
+    "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "replacement_field": [
+      {
+        "flow": null,
+        "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "tag": "vless-ws-2083"
+      },
+      {
+        "flow": null,
+        "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "tag": "vless-ws-80"
+      },
+      {
+        "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "password": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "tag": "hysteria2-4443"
+      },
+      {
+        "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "password": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "tag": "shadowtls-443"
+      },
+      {
+        "tag": "shadowsocks-in"
+      },
+      {
+        "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "password": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+        "tag": "tuic-in-4444"
+      }
+    ]
+  }
+]
+
+### /api/singbox/addToAll
+POST {{host}}/api/singbox/addToAll
+Content-Type: application/json
+
+[
+  {
+    "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "password": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8"
   }
 ]
 
@@ -14,8 +58,53 @@ Content-Type: application/json
 POST {{host}}/api/singbox/deleteFromAll
 Content-Type: application/json
 
+[
+  {
+    "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+    "password": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8"
+  }
+]
+
+
+### /api/singbox/GetStat
+GET {{host}}/api/singbox/GetStat
+Content-Type: application/json
+
 {
-  "uuid": "1064e030-0209-4aa5-88de-a3659e5c587c"
+  "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8"
+}
+
+### /api/singbox/addToAll
+POST {{host}}/api/singbox/addToAll
+Content-Type: application/json
+
+{
+  "uuid": "3064e030-0209-4aa5-88de-a3659e5c587c",
+  "name": "3064e030-0209-4aa5-88de-a3659e5c587c",
+  "replacement_field": [
+    {
+      "tag": "vless-ws-2083",
+      "uuid": "3064e030-0209-4aa5-88de-a3659e5c587c",
+      "name": "myCustomName"
+    }
+  ]
+}
+
+### /api/singbox/deleteFromAll
+POST {{host}}/api/singbox/deleteFromAll
+Content-Type: application/json
+
+{
+  "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+  "name": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+  "replacement_field": [
+    {
+      "tag": "vless-ws-2083",
+      "uuid": "2cb7c867-809b-4a1c-9f83-dbbba5ab80a8",
+      "name": "myCustomName"
+    }
+  ]
 }
 
 
@@ -24,7 +113,7 @@ GET {{host}}/api/singbox/GetStats
 Content-Type: application/json
 
 {
-  "reset": false
+  "reset": true
 }
 
 ### /api/singbox/GetStat
@@ -32,8 +121,10 @@ GET {{host}}/api/singbox/GetStat
 Content-Type: application/json
 
 {
-  "uuid": "0064e030-0209-4aa5-88de-a3659e5c587c"
+  "uuid": "myCustomName"
 }
+
+
 
 
 

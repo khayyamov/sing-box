@@ -27,20 +27,20 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, deletee bool)
 		for i := range inbound.Hysteria2Ptr {
 			userList := make([]string, 0, len(newUsers))
 			userPasswordList := make([]string, 0, len(newUsers))
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.Hysteria2Ptr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.Hysteria2Ptr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User failed to add password invalid")
 					continue
@@ -56,7 +56,7 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, deletee bool)
 					dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
 					utils.ApiLogInfo(utils.CurrentInboundName + "[" + inbound.Hysteria2Ptr[i].Tag() + "] User Added: " + dbUser.UserJson)
 					userList = append(userList, convertedUser.Name)
-					userPasswordList = append(userPasswordList, user.Password)
+					userPasswordList = append(userPasswordList, convertedUser.Password)
 					inbound.Hysteria2Ptr[i].Service.AddUser(userList, userPasswordList)
 					inbound.Hysteria2Ptr[i].Users[convertedUser.Name] = convertedUser
 				} else {
@@ -69,7 +69,7 @@ func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, deletee bool)
 					continue
 				}
 				userList = append(userList, convertedUser.Name)
-				userPasswordList = append(userPasswordList, user.Password)
+				userPasswordList = append(userPasswordList, convertedUser.Password)
 				inbound.Hysteria2Ptr[i].Service.DeleteUser(userList, userPasswordList)
 				delete(inbound.Hysteria2Ptr[i].Users, convertedUser.Name)
 			}

@@ -30,26 +30,26 @@ func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 		for i := range inbound.ShadowsocksRelayPtr {
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.ShadowsocksRelayPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							if model.ServerPort > 0 {
-								convertedUser.ServerPort = model.ServerPort
-							}
-							if len(model.ServerAddress) > 0 {
-								convertedUser.Server = model.ServerAddress
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.ShadowsocksRelayPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						if model.ServerPort > 0 {
+							convertedUser.ServerPort = model.ServerPort
+						}
+						if len(model.ServerAddress) > 0 {
+							convertedUser.Server = model.ServerAddress
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 
 				if len(convertedUser.Password) == 0 || len(convertedUser.Server) == 0 || convertedUser.ServerPort == 0 {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowsocksRelayPtr[i].Tag() + "]   User failed to add password or Server or ServerPort invalid")

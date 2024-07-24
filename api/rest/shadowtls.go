@@ -25,21 +25,21 @@ func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) 
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[shadowtls.User](convertedUser)
 		for i := range inbound.ShadowTlsPtr {
-			if !delete {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.ShadowTlsPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.ShadowTlsPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
+			}
 
+			if !delete {
 				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowTlsPtr[i].Tag() + "]   User failed to add name or password invalid: " + dbUser.UserJson)
 					continue

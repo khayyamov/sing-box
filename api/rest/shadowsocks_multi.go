@@ -26,20 +26,20 @@ func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, delete
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 		for i := range inbound.ShadowsocksMultiPtr {
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.ShadowsocksMultiPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.ShadowsocksMultiPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.ShadowsocksMultiPtr[i].Tag() + "]  User failed to add password invalid")
 					continue

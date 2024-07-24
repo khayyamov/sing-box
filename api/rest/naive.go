@@ -25,20 +25,20 @@ func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
 		for i := range inbound.NaivePtr {
-			if !delete {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.NaivePtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Username = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.NaivePtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Username = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
+			}
+			if !delete {
 				if len(convertedUser.Password) == 0 || len(convertedUser.Username) == 0 {
 					continue
 				}

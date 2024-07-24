@@ -26,20 +26,20 @@ func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 		}
 		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TrojanUser](convertedUser)
 		for i := range inbound.TrojanPtr {
-			if !deletee {
-				if len(user.ReplacementField) > 0 {
-					for _, model := range user.ReplacementField {
-						if inbound.TrojanPtr[i].Tag() == model.Tag {
-							if len(model.Name) > 0 {
-								convertedUser.Name = model.Name
-							}
-							if len(model.Password) > 0 {
-								convertedUser.Password = model.Password
-							}
-							break
+			if len(user.ReplacementField) > 0 {
+				for _, model := range user.ReplacementField {
+					if inbound.TrojanPtr[i].Tag() == model.Tag {
+						if len(model.Name) > 0 {
+							convertedUser.Name = model.Name
 						}
+						if len(model.Password) > 0 {
+							convertedUser.Password = model.Password
+						}
+						break
 					}
 				}
+			}
+			if !deletee {
 				if len(convertedUser.Password) == 0 || len(convertedUser.Name) == 0 {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.TrojanPtr[i].Tag() + "] User failed to add name or password invalid: " + dbUser.UserJson)
 					continue
