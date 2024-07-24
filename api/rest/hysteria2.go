@@ -15,12 +15,12 @@ import (
 func EditHysteria2Users(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Hysteria2"
 	for _, user := range newUsers {
-		convertedUser := option.Hysteria2User{
-			Name:     user.Name,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
 		for i := range inbound.Hysteria2Ptr {
+			convertedUser := option.Hysteria2User{
+				Name:     user.Name,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.Hysteria2User](convertedUser)
 			userList := make([]string, 0, len(newUsers))
 			userPasswordList := make([]string, 0, len(newUsers))
 			if len(user.ReplacementField) > 0 {

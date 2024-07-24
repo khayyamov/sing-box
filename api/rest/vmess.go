@@ -17,13 +17,13 @@ import (
 func EditVmessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Vmess"
 	for _, user := range newUsers {
-		convertedUser := option.VMessUser{
-			Name:    user.Name,
-			UUID:    user.UUID,
-			AlterId: user.AlterId,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VMessUser](convertedUser)
 		for i := range inbound.VMessPtr {
+			convertedUser := option.VMessUser{
+				Name:    user.Name,
+				UUID:    user.UUID,
+				AlterId: user.AlterId,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VMessUser](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.VMessPtr[i].Tag() == model.Tag {

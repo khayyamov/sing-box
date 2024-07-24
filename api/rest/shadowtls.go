@@ -15,12 +15,12 @@ import (
 func EditShadowtlsUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	utils.CurrentInboundName = "ShadowTls"
 	for _, user := range newUsers {
-		convertedUser := shadowtls.User{
-			Name:     user.Name,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[shadowtls.User](convertedUser)
 		for i := range inbound.ShadowTlsPtr {
+			convertedUser := shadowtls.User{
+				Name:     user.Name,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[shadowtls.User](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.ShadowTlsPtr[i].Tag() == model.Tag {

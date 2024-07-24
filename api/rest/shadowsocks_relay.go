@@ -16,16 +16,16 @@ import (
 func EditShadowsocksRelayUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "ShadowsocksRelay"
 	for _, user := range newUsers {
-		convertedUser := option.ShadowsocksDestination{
-			Name:     user.Name,
-			Password: user.Password,
-			ServerOptions: option.ServerOptions{
-				Server:     user.ServerAddress,
-				ServerPort: user.ServerPort,
-			},
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 		for i := range inbound.ShadowsocksRelayPtr {
+			convertedUser := option.ShadowsocksDestination{
+				Name:     user.Name,
+				Password: user.Password,
+				ServerOptions: option.ServerOptions{
+					Server:     user.ServerAddress,
+					ServerPort: user.ServerPort,
+				},
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksDestination](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.ShadowsocksRelayPtr[i].Tag() == model.Tag {

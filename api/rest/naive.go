@@ -15,12 +15,12 @@ import (
 func EditNaiveUsers(c *gin.Context, newUsers []rq.GlobalModel, delete bool) {
 	utils.CurrentInboundName = "Naive"
 	for _, user := range newUsers {
-		convertedUser := auth.User{
-			Username: user.Name,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
 		for i := range inbound.NaivePtr {
+			convertedUser := auth.User{
+				Username: user.Name,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[auth.User](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.NaivePtr[i].Tag() == model.Tag {

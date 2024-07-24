@@ -16,13 +16,13 @@ import (
 func EditTuicUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Tuic"
 	for _, user := range newUsers {
-		convertedUser := option.TUICUser{
-			Name:     user.Name,
-			UUID:     user.UUID,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 		for i := range inbound.TUICPtr {
+			convertedUser := option.TUICUser{
+				Name:     user.Name,
+				UUID:     user.UUID,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TUICUser](convertedUser)
 			var userList []string
 			var userNameList []string
 			var userUUIDList [][16]byte

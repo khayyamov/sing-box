@@ -18,18 +18,20 @@ import (
 func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Vless"
 	for _, user := range newUsers {
-		convertedUser := option.VLESSUser{
-			Name: user.Name,
-			UUID: user.UUID,
-			Flow: user.Flow,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
 		for i := range inbound.VLESSPtr {
+			convertedUser := option.VLESSUser{
+				Name: user.Name,
+				UUID: user.UUID,
+				Flow: user.Flow,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.VLESSUser](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.VLESSPtr[i].Tag() == model.Tag {
 						if len(model.Name) > 0 {
 							convertedUser.Name = model.Name
+						} else {
+							convertedUser.Name = convertedUser.Name
 						}
 						if len(model.UUID) > 0 {
 							convertedUser.UUID = model.UUID
@@ -42,7 +44,7 @@ func EditVlessUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 				}
 			}
 			if !deletee {
-				_, err := uuid.FromString(user.UUID)
+				_, err := uuid.FromString(convertedUser.UUID)
 				if len(convertedUser.UUID) == 0 || err != nil {
 					utils.ApiLogError(utils.CurrentInboundName + "[" + inbound.VLESSPtr[i].Tag() + "] User failed to add name or password invalid: " + dbUser.UserJson)
 					continue

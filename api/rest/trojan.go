@@ -16,12 +16,12 @@ import (
 func EditTrojanUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "Trojan"
 	for _, user := range newUsers {
-		convertedUser := option.TrojanUser{
-			Name:     user.Name,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TrojanUser](convertedUser)
 		for i := range inbound.TrojanPtr {
+			convertedUser := option.TrojanUser{
+				Name:     user.Name,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.TrojanUser](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.TrojanPtr[i].Tag() == model.Tag {

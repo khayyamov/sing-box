@@ -16,12 +16,12 @@ import (
 func EditShadowsocksMultiUsers(c *gin.Context, newUsers []rq.GlobalModel, deletee bool) {
 	utils.CurrentInboundName = "ShadowsocksMulti"
 	for _, user := range newUsers {
-		convertedUser := option.ShadowsocksUser{
-			Name:     user.Name,
-			Password: user.Password,
-		}
-		dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 		for i := range inbound.ShadowsocksMultiPtr {
+			convertedUser := option.ShadowsocksUser{
+				Name:     user.Name,
+				Password: user.Password,
+			}
+			dbUser, _ := db.ConvertSingleProtocolModelToDbUser[option.ShadowsocksUser](convertedUser)
 			if len(user.ReplacementField) > 0 {
 				for _, model := range user.ReplacementField {
 					if inbound.ShadowsocksMultiPtr[i].Tag() == model.Tag {
