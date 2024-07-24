@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	global_import "github.com/sagernet/sing-box/api/rest/rq"
+	"github.com/sagernet/sing-box/api/utils"
 	"github.com/sagernet/sing-box/log"
 	"io"
 	"net/http"
@@ -26,15 +27,16 @@ func domesticLogicGroup(c *gin.Context, delete bool) {
 	var prettyJSON bytes.Buffer
 	error := json.Indent(&prettyJSON, []byte(jsonBody), "", "\t")
 	if error != nil {
-		log.Error("JSON parse error: ", error)
+		utils.ApiLogError("http.StatusBadRequest: " + err.Error())
 	}
-	log.Info("Request Body:", string(prettyJSON.Bytes()))
+	log.Info("Request Body:")
+	utils.ApiLogInfo("Api Request Body: " + string(prettyJSON.Bytes()))
 
 	err := json.Unmarshal([]byte(jsonBody), &rqArr)
 	if err == nil {
 		EditGroupUsers(c, rqArr, delete)
 	} else {
-		log.Error("http.StatusBadRequest: ", err.Error())
+		utils.ApiLogError("http.StatusBadRequest: " + err.Error())
 		c.JSON(http.StatusBadRequest, err)
 	}
 }
