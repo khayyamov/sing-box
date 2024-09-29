@@ -36,6 +36,22 @@ func createPreStartedClient() (*box.Box, error) {
 	return instance, nil
 }
 
+func createPreStartedClientForApi(config string) (*box.Box, error) {
+	options, err := readEncryptedConfigAndMerge(config)
+	if err != nil {
+		return nil, err
+	}
+	instance, err := box.New(box.Options{Options: options})
+	if err != nil {
+		return nil, E.Cause(err, "create service")
+	}
+	err = instance.PreStart()
+	if err != nil {
+		return nil, E.Cause(err, "start service")
+	}
+	return instance, nil
+}
+
 func createDialer(instance *box.Box, network string, outboundTag string) (N.Dialer, error) {
 	if outboundTag == "" {
 		return instance.Router().DefaultOutbound(N.NetworkName(network))

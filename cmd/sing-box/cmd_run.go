@@ -54,6 +54,19 @@ func readConfigAt(path string) (*OptionsEntry, error) {
 	} else {
 		configContent, err = os.ReadFile(path)
 	}
+
+	if err != nil {
+		if C.ENCRYPTED_CONFIG {
+			configContent = []byte(box.Decrypt(path))
+			err = nil
+		}
+	} else {
+		if C.ENCRYPTED_CONFIG {
+			configContent = []byte(box.Decrypt(string(configContent)))
+			err = nil
+		}
+	}
+
 	if err != nil {
 		return nil, E.Cause(err, "read config at ", path)
 	}
@@ -93,6 +106,18 @@ func readConfig() ([]*OptionsEntry, error) {
 			optionsList = append(optionsList, optionsEntry)
 		}
 	}
+	sort.Slice(optionsList, func(i, j int) bool {
+		return optionsList[i].path < optionsList[j].path
+	})
+	return optionsList, nil
+}
+func ReadEncryptedConfig(config string) ([]*OptionsEntry, error) {
+	var optionsList []*OptionsEntry
+	optionsEntry, err := readConfigAt(config)
+	if err != nil {
+		return nil, err
+	}
+	optionsList = append(optionsList, optionsEntry)
 	sort.Slice(optionsList, func(i, j int) bool {
 		return optionsList[i].path < optionsList[j].path
 	})

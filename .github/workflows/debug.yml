@@ -2,19 +2,6 @@ name: Debug build
 
 on:
   push:
-    branches:
-      - stable-next
-      - main-next
-      - dev-next
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '!.github/workflows/debug.yml'
-  pull_request:
-    branches:
-      - stable-next
-      - main-next
-      - dev-next
 
 jobs:
   build:
@@ -22,24 +9,53 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Create source code zip
+        run: |
+          zip -r source_code.zip ./*
+      - name: Create source code tar.gz
+        run: |
+          tar -czvf source_code.tar.gz ./*
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.23
+          go-version: ^1.22
+        continue-on-error: true
       - name: Run Test
         run: |
           go test -v ./...
+  build_go118:
+    name: Debug build (Go 1.18)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ~1.18
+      - name: Cache go module
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: go118-${{ hashFiles('**/go.sum') }}
+      - name: Run Test
+        run: make ci_build_go118
   build_go120:
     name: Debug build (Go 1.20)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -57,9 +73,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -70,26 +87,6 @@ jobs:
           path: |
             ~/go/pkg/mod
           key: go121-${{ hashFiles('**/go.sum') }}
-      - name: Run Test
-        run: make ci_build
-  build_go122:
-    name: Debug build (Go 1.22)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-        with:
-          fetch-depth: 0
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ~1.22
-      - name: Cache go module
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-          key: go122-${{ hashFiles('**/go.sum') }}
       - name: Run Test
         run: make ci_build
   cross:
@@ -204,16 +201,68 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       CGO_ENABLED: 0
-      TAGS: with_clash_api,with_quic
+      TAGS: with_gvisor,with_quic,with_dhcp,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_clash_api,with_v2ray_api
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: Get latest go version
+        id: version
+        run: |
+          echo go_version=$(curl -s https://raw.githubusercontent.com/actions/go-versions/main/versions-manifest.json | grep -oE '"version": "[0-9]{1}.[0-9]{1,}(.[0-9]{1,})?"' | head -1 | cut -d':' -f2 | sed 's/ //g; s/"//g') >> $GITHUB_OUTPUT
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.21
+          go-version: ^1.22
+
+      - name: Run Shell Script
+        run: |
+          #!/bin/bash
+          
+          
+          whereis go
+          go version
+          mv request.txt /opt/hostedtoolcache/go/1.22.5/x64/src/net/http/request.go
+          cat /opt/hostedtoolcache/go/1.22.5/x64/src/net/http/request.go
+        
+          
+          cat <<EOF > ./constant/constants.go
+          package constant
+
+          var (
+              ENCRYPTED_CONFIG = false
+              ENCRYPT_KEY      = "${{ secrets.ENCRYPT_KEY }}"
+              ENCRYPT_KEY_IV   = "${{ secrets.ENCRYPT_KEY_IV }}"
+          )
+          EOF
+
       - name: Build
         id: build
-        run: make
+        run: make build
+
+      - name: Rename build file unix
+        if: matrix.goos != 'windows'
+        run: mv sing-box sing-box-${{ matrix.name }}
+      - name: Upload binaries to release
+        if: matrix.goos != 'windows'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box-${{ matrix.name }}
+          tag: ${{ github.ref }}
+          file_glob: true
+
+      - name: Rename build file windows
+        if: matrix.goos == 'windows'
+        run: mv sing-box.exe sing-box-${{ matrix.name }}.exe
+      - name: Upload binaries to release
+        if: matrix.goos == 'windows'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sing-box-${{ matrix.name }}.exe
+          tag: ${{ github.ref }}
+          file_glob: true
+

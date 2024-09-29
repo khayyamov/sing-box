@@ -74,6 +74,10 @@ func (s *BoxService) Start() error {
 	return s.instance.Start()
 }
 
+func (s *BoxService) GetRealPing(url string) int64 {
+	return fetchDomestic(url, s)
+}
+
 func (s *BoxService) Close() error {
 	done := make(chan struct{})
 	defer close(done)
