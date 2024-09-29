@@ -147,6 +147,29 @@ func readConfigAndMerge() (option.Options, error) {
 	return mergedOptions, nil
 }
 
+func readEncryptedConfigAndMerge(config string) (option.Options, error) {
+	optionsList, err := ReadEncryptedConfig(config)
+	if err != nil {
+		return option.Options{}, err
+	}
+	if len(optionsList) == 1 {
+		return optionsList[0].options, nil
+	}
+	var mergedMessage json.RawMessage
+	for _, options := range optionsList {
+		mergedMessage, err = badjson.MergeJSON(options.options.RawMessage, mergedMessage, false)
+		if err != nil {
+			return option.Options{}, E.Cause(err, "merge config at ", options.path)
+		}
+	}
+	var mergedOptions option.Options
+	err = mergedOptions.UnmarshalJSON(mergedMessage)
+	if err != nil {
+		return option.Options{}, E.Cause(err, "unmarshal merged config")
+	}
+	return mergedOptions, nil
+}
+
 func create() (*box.Box, context.CancelFunc, error) {
 	options, err := readConfigAndMerge()
 	if err != nil {
