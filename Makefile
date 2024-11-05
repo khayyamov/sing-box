@@ -68,6 +68,7 @@ release:
 		dist/*.zip \
 		dist/*.deb \
 		dist/*.rpm \
+		dist/*.ipk \
 		dist/*_amd64.pkg.tar.zst \
 		dist/*_arm64.pkg.tar.zst \
 		dist/release
