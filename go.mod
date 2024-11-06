@@ -44,7 +44,7 @@ require (
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	github.com/xtls/xray-core v0.0.0-00010101000000-000000000000
+	github.com/xtls/xray-core v1.8.24
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.28.0
@@ -59,7 +59,7 @@ require (
 	howett.net/plist v1.0.1
 )
 
-replace github.com/xtls/xray-core => github.com/khayyamov/xray-core v1.25.5
+replace github.com/xtls/xray-core v1.8.24 => github.com/khayyamov/xray-core v1.25.5
 
 require (
 	github.com/OmarTariq612/goech v0.0.0-20240405204721-8e2e1dafd3a0 // indirect

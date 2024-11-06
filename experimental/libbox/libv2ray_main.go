@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -204,9 +203,7 @@ func InitV2Env(envPath string, key string) {
 }
 
 func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error) {
-	log.Println("KILO 1")
 	config, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
-
 	if err != nil {
 		return -1, err
 	}
@@ -215,28 +212,16 @@ func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error
 	config.Inbound = nil
 	// config.App: (fakedns), log, dispatcher, InboundConfig, OutboundConfig, (stats), router, dns, (policy)
 	// keep only basic features
-	if len(config.App) >= 5 {
-		config.App = config.App[:5]
-	}
+	config.App = config.App[:5]
 
-	log.Println("KILO 2")
 	inst, err := v2core.New(config)
 	if err != nil {
 		return -1, err
 	}
 
-	log.Println("KILO 3")
-	err = inst.Start()
-	if err != nil {
-		return -1, err
-	}
-
+	inst.Start()
 	delay, err := measureInstDelay(context.Background(), inst, url)
-	err = inst.Close()
-	if err != nil {
-		return -1, err
-	}
-
+	inst.Close()
 	return delay, err
 }
 
@@ -267,80 +252,43 @@ func CheckVersionX() string {
 	return fmt.Sprintf("Lib v%d, Xray-core v%s", version, v2core.Version())
 }
 
-func measureInstDelay(ctx context.Context, inst *v2core.Instance, urll string) (int64, error) {
-	log.Println("KILO 4")
+func measureInstDelay(ctx context.Context, inst *v2core.Instance, url string) (int64, error) {
 	if inst == nil {
 		return -1, errors.New("core instance nil")
 	}
 
-	httpClientt = &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			OnProxyConnectResponse: func(ctx context.Context, proxyURL *url.URL, connectReq *http.Request, connectRes *http.Response) error {
-				log.Println("Request: OnProxyConnectResponse")
-				return nil
-			},
-			TLSHandshakeTimeout: 5 * time.Second,
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				dest, err := v2net.ParseDestination(fmt.Sprintf("%s:%s", network, addr))
-				if err != nil {
-					return nil, err
-				}
-				return v2core.Dial(ctx, inst, dest)
-			},
-			ForceAttemptHTTP2: true,
+	tr := &http.Transport{
+		TLSHandshakeTimeout: 6 * time.Second,
+		DisableKeepAlives:   true,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			dest, err := v2net.ParseDestination(fmt.Sprintf("%s:%s", network, addr))
+			if err != nil {
+				return nil, err
+			}
+			return v2core.Dial(ctx, inst, dest)
 		},
 	}
-	defer httpClientt.CloseIdleConnections()
 
-	log.Println("PING to " + urll)
-	log.Println("KILO 5")
-	if len(urll) <= 0 {
-		urll = "https://www.google.com/generate_204"
+	c := &http.Client{
+		Transport: tr,
+		Timeout:   12 * time.Second,
 	}
-	parsedURL, err := url.Parse(urll)
-	if err != nil {
-		return -1, nil
+
+	if len(url) <= 0 {
+		url = "https://www.google.com/generate_204"
 	}
-	request, err := http.NewRequestWithContext(ctx, "GET", parsedURL.String(), nil)
-	request.Header.Add("User-Agent", "curl/7.88.0")
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	start := time.Now()
-	if httpClientt == nil || request == nil {
-		return -1, nil
-	}
-	resp, err := httpClientt.Do(request)
+	resp, err := c.Do(req)
 	if err != nil {
 		return -1, err
 	}
-	if resp != nil {
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				log.Println("KILO 5")
-			}
-		}(resp.Body)
-		log.Println("KILO 6")
-		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-			log.Println("KILO 7")
-			return -1, fmt.Errorf("status != 20x: %s", resp.Status)
-		}
-		log.Println("KILO 8")
-		return time.Since(start).Milliseconds(), nil
-	} else {
-		return -1, nil
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return -1, fmt.Errorf("status != 20x: %s", resp.Status)
 	}
-}
-
-type measureResult struct {
-	delay int64
-	err   error
-}
-
-func measureInstDelayAsync(ctx context.Context, inst *v2core.Instance, urll string, resultChan chan<- measureResult) {
-	go func() {
-		delay, err := measureInstDelay(ctx, inst, urll)
-		resultChan <- measureResult{delay: delay, err: err}
-	}()
+	resp.Body.Close()
+	return time.Since(start).Milliseconds(), nil
 }
 
 // This struct creates our own log writer without datatime stamp
