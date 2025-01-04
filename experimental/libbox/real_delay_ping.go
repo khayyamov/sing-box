@@ -88,9 +88,9 @@ func ReadEncryptedConfig(config string) ([]*OptionsEntry, error) {
 
 func createDialer(instance *box.Box, network string, outboundTag string) (N.Dialer, error) {
 	if outboundTag == "" {
-		return instance.Router().DefaultOutbound(N.NetworkName(network))
+		return instance.Outbound().Default(), nil
 	} else {
-		outbound, loaded := instance.Router().Outbound(outboundTag)
+		outbound, loaded := instance.Outbound().Outbound(outboundTag)
 		if !loaded {
 			return nil, E.New("outbound not found: ", outboundTag)
 		}
