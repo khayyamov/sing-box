@@ -65,7 +65,7 @@ func fetchDomestic(args string, runFromApi bool) error {
 		Transport: &http.Transport{
 			TLSHandshakeTimeout: 5 * time.Second,
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				dialer, err := createDialer(instance, network, commandToolsFlagOutbound)
+				dialer, err := createDialer(instance, commandToolsFlagOutbound)
 				if err != nil {
 					return nil, err
 				}
