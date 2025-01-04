@@ -163,7 +163,7 @@ func readEncryptedConfigAndMerge(config string) (option.Options, error) {
 		}
 	}
 	var mergedOptions option.Options
-	err = mergedOptions.UnmarshalJSON(mergedMessage)
+	err = mergedOptions.UnmarshalJSONContext(globalCtx, mergedMessage)
 	if err != nil {
 		return option.Options{}, E.Cause(err, "unmarshal merged config")
 	}
