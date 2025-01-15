@@ -17,6 +17,7 @@ PREFIX ?= $(shell go env GOPATH)
 .PHONY: test release docs build
 
 build:
+	go mod tidy
 	go build $(MAIN_PARAMS) $(MAIN)
 
 ci_build_go120:
