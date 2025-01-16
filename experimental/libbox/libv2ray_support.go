@@ -249,17 +249,13 @@ func (d *ProtectedDialer) Dial(ctx context.Context,
 			return nil, err
 		}
 
-		log.Printf("Crash 1")
 		curIP := d.vServer.currentIP()
-		log.Printf("Crash 2")
-		conn, err := d.fdConn(ctx, curIP, d.vServer.Port, fd)
-		log.Printf("Crash 3")
+		conn, err := d.fdConn(ctx, curIP, d.vServer.Port, dest.Network, fd)
 		if err != nil {
 			d.vServer.NextIP()
-			log.Printf("Crash 4")
 			return nil, err
 		}
-		log.Printf("Crash 5")
+		log.Printf("Using Prepared: %s", curIP)
 		return conn, nil
 	}
 
@@ -277,14 +273,14 @@ func (d *ProtectedDialer) Dial(ctx context.Context,
 
 	// use the first resolved address.
 	// the result IP may vary, eg: IPv6 addrs comes first if client has ipv6 address
-	return d.fdConn(ctx, resolved.IPs[0], resolved.Port, fd)
+	return d.fdConn(ctx, resolved.IPs[0], resolved.Port, dest.Network, fd)
 }
 
 func (d *ProtectedDialer) DestIpAddress() net.IP {
 	return d.vServer.currentIP()
 }
 
-func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, fd int) (net.Conn, error) {
+func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, network v2net.Network, fd int) (net.Conn, error) {
 
 	defer unix.Close(fd)
 
@@ -299,9 +295,16 @@ func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, fd in
 	}
 	copy(sa.Addr[:], ip.To16())
 
-	if err := unix.Connect(fd, sa); err != nil {
-		log.Printf("fdConn unix.Connect err, Close Fd: %d Err: %v", fd, err)
-		return nil, err
+	if network == v2net.Network_UDP {
+		if err := unix.Bind(fd, &unix.SockaddrInet6{}); err != nil {
+			log.Printf("fdConn unix.Bind err, Close Fd: %d Err: %v", fd, err)
+			return nil, err
+		}
+	} else {
+		if err := unix.Connect(fd, sa); err != nil {
+			log.Printf("fdConn unix.Connect err, Close Fd: %d Err: %v", fd, err)
+			return nil, err
+		}
 	}
 
 	file := os.NewFile(uintptr(fd), "Socket")
@@ -312,11 +315,25 @@ func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, fd in
 
 	defer file.Close()
 	//Closing conn does not affect file, and closing file does not affect conn.
-	conn, err := net.FileConn(file)
-	if err != nil {
-		log.Printf("fdConn FileConn Close Fd: %d Err: %v", fd, err)
-		return nil, err
+	if network == v2net.Network_UDP {
+		packetConn, err := net.FilePacketConn(file)
+		if err != nil {
+			log.Printf("fdConn FilePacketConn Close Fd: %d Err: %v", fd, err)
+			return nil, err
+		}
+		return &v2internet.PacketConnWrapper{
+			Conn: packetConn,
+			Dest: &net.UDPAddr{
+				IP:   ip,
+				Port: port,
+			},
+		}, nil
+	} else {
+		conn, err := net.FileConn(file)
+		if err != nil {
+			log.Printf("fdConn FileConn Close Fd: %d Err: %v", fd, err)
+			return nil, err
+		}
+		return conn, nil
 	}
-
-	return conn, nil
 }
