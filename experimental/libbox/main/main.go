@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	libXray "github.com/sagernet/sing-box/experimental/libbox/libXray"
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
+	libXray "github.com/sagernet/sing-box/experimental/libbox"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
 )
 
 func ensureDir(dir string) error {

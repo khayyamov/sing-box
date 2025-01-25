@@ -7,7 +7,7 @@ import (
 	"path"
 	"sort"
 
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
 	"github.com/xtls/xray-core/app/router"
 	"google.golang.org/protobuf/proto"
 )

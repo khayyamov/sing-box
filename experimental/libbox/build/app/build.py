@@ -33,7 +33,7 @@ class Builder(object):
         clean_files = ["go.mod", "go.sum"]
         self.clean_lib_files(clean_files)
         os.chdir(self.lib_dir)
-        ret = subprocess.run(["go", "mod", "init", "github.com/sagernet/sing-box/experimental/libbox/libXray"])
+        ret = subprocess.run(["go", "mod", "init", "github.com/sagernet/sing-box/experimental/libbox"])
         if ret.returncode != 0:
             raise Exception("go mod init failed")
         self.append_lib_file_with_lines(
@@ -133,7 +133,7 @@ class Builder(object):
             for line in lines:
                 new_line = line
                 if re.match(r"^package\s+main", line):
-                    new_line = "package libXray\n"
+                    new_line = "package libbox\n"
                 new_lines.append(new_line)
         with open(file_path, "w") as f:
             f.writelines(new_lines)

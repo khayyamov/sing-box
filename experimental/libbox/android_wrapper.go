@@ -1,10 +1,10 @@
 //go:build android
 
-package libXray
+package libbox
 
 import (
-	c "github.com/sagernet/sing-box/experimental/libbox/libXray/controller"
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/dns"
+	c "github.com/sagernet/sing-box/experimental/libbox/controller"
+	"github.com/sagernet/sing-box/experimental/libbox/dns"
 )
 
 type DialerController interface {

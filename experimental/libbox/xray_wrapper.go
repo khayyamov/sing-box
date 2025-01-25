@@ -1,11 +1,11 @@
 // libXray is an Xray wrapper focusing on improving the experience of Xray-core mobile development.
-package libXray
+package libbox
 
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/xray"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
+	"github.com/sagernet/sing-box/experimental/libbox/xray"
 )
 
 type loadGeoDataRequest struct {

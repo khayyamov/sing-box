@@ -1,10 +1,10 @@
-package libXray
+package libbox
 
 import (
 	"encoding/base64"
 
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/share"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
+	"github.com/sagernet/sing-box/experimental/libbox/share"
 	"github.com/xtls/xray-core/infra/conf"
 )
 

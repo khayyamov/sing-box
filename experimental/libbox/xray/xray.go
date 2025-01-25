@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
 	"github.com/xtls/xray-core/common/cmdarg"
 	"github.com/xtls/xray-core/core"
 	_ "github.com/xtls/xray-core/main/distro/all"

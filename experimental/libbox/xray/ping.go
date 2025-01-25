@@ -1,7 +1,7 @@
 package xray
 
 import (
-	"github.com/sagernet/sing-box/experimental/libbox/libXray/nodep"
+	"github.com/sagernet/sing-box/experimental/libbox/nodep"
 )
 
 // Ping Xray config and find the delay and country code of its outbound.

@@ -1,4 +1,4 @@
-package libXray
+package libbox
 
 import (
 	"encoding/base64"
