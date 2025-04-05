@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/xtls/xray-core/main/commands/all/api"
+	"github.com/xtls/xray-core/main/commands/base"
 	"io"
 	"log"
 	"net"
@@ -339,6 +341,10 @@ func measureInstDelay(ctx context.Context, inst *v2core.Instance, urll string) (
 type measureResult struct {
 	delay int64
 	err   error
+}
+
+func ExecuteApiQueryStat(cmd *base.Command, args []string) {
+	api.ExecuteQueryStats(cmd, args)
 }
 
 func measureInstDelayAsync(ctx context.Context, inst *v2core.Instance, urll string, resultChan chan<- measureResult) {
