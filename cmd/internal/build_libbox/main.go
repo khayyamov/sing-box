@@ -10,9 +10,7 @@ import (
 	_ "github.com/sagernet/gomobile"
 	"github.com/sagernet/sing-box/cmd/internal/build_shared"
 	"github.com/sagernet/sing-box/log"
-	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/rw"
-	"github.com/sagernet/sing/common/shell"
 )
 
 var (
@@ -68,21 +66,21 @@ func init() {
 func buildAndroid() {
 	build_shared.FindSDK()
 
-	var javaPath string
-	javaHome := os.Getenv("JAVA_HOME")
-	if javaHome == "" {
-		javaPath = "java"
-	} else {
-		javaPath = filepath.Join(javaHome, "bin", "java")
-	}
+	//var javaPath string
+	//javaHome := os.Getenv("JAVA_HOME")
+	//if javaHome == "" {
+	//	javaPath = "java"
+	//} else {
+	//	javaPath = filepath.Join(javaHome, "bin", "java")
+	//}
 
-	javaVersion, err := shell.Exec(javaPath, "--version").ReadOutput()
-	if err != nil {
-		log.Fatal(E.Cause(err, "check java version"))
-	}
-	if !strings.Contains(javaVersion, "openjdk 17") {
-		log.Fatal("java version should be openjdk 17")
-	}
+	//javaVersion, err := shell.Exec(javaPath, "--version").ReadOutput()
+	//if err != nil {
+	//	log.Fatal(E.Cause(err, "check java version"))
+	//}
+	//if !strings.Contains(javaVersion, "openjdk 17") {
+	//	log.Fatal("java version should be openjdk 17")
+	//}
 
 	var bindTarget string
 	if platform != "" {
@@ -119,7 +117,7 @@ func buildAndroid() {
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	err = command.Run()
+	err := command.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -151,7 +149,6 @@ func buildApple() {
 		"-v",
 		"-target", bindTarget,
 		"-libname=box",
-		"-tags-macos=" + strings.Join(memcTags, ","),
 	}
 
 	if !debugEnabled {
