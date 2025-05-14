@@ -1,6 +1,7 @@
 package libbox
 
 import (
+	"github.com/sagernet/sing/common/byteformats"
 	"os"
 	"os/user"
 	"runtime/debug"
@@ -10,7 +11,6 @@ import (
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/locale"
 	"github.com/sagernet/sing-box/log"
-	"github.com/sagernet/sing/common/byteformats"
 )
 
 var (

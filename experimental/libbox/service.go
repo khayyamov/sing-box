@@ -2,6 +2,7 @@ package libbox
 
 import (
 	"context"
+	tun "github.com/sagernet/sing-tun"
 	"net/netip"
 	"os"
 	"runtime"
@@ -20,7 +21,6 @@ import (
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -92,6 +92,10 @@ func (s *BoxService) Start() error {
 	} else {
 		return s.instance.Start()
 	}
+}
+
+func (s *BoxService) GetRealPing(url string) int64 {
+	return fetchDomestic(url, s)
 }
 
 func (s *BoxService) Close() error {
