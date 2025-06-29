@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	C "github.com/sagernet/sing-box/constant"
 	"os"
 	"os/user"
 	"strconv"

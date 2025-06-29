@@ -119,7 +119,7 @@ func buildAndroid() {
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	err = command.Run()
+	err := command.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
