@@ -124,6 +124,7 @@ func NewService(ctx context.Context, logger log.ContextLogger, tag string, optio
 		configPath:           configPath,
 		verifyClientEndpoint: options.VerifyClientEndpoint,
 		verifyClientURL:      options.VerifyClientURL,
+		home:                 options.Home,
 		meshKey:              options.MeshPSK,
 		meshKeyPath:          options.MeshPSKFile,
 		meshWith:             options.MeshWith,
@@ -133,7 +134,7 @@ func NewService(ctx context.Context, logger log.ContextLogger, tag string, optio
 func (d *Service) Start(stage adapter.StartStage) error {
 	switch stage {
 	case adapter.StartStateStart:
-		config, err := readDERPConfig(d.configPath)
+		config, err := readDERPConfig(filemanager.BasePath(d.ctx, d.configPath))
 		if err != nil {
 			return err
 		}

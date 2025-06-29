@@ -1,6 +1,10 @@
 ---
-icon: material/alert-decagram
+icon: material/new-box
 ---
+
+!!! quote "sing-box 1.12.0 中的更改"
+
+    :material-plus: [loopback_address](#loopback_address)
 
 !!! quote "sing-box 1.11.0 中的更改"
 
@@ -56,9 +60,12 @@ icon: material/alert-decagram
   "auto_route": true,
   "iproute2_table_index": 2022,
   "iproute2_rule_index": 9000,
-  "auto_redirect": false,
+  "auto_redirect": true,
   "auto_redirect_input_mark": "0x2023",
   "auto_redirect_output_mark": "0x2024",
+  "loopback_address": [
+    "10.7.0.1"
+  ],
   "strict_route": true,
   "route_address": [
     "0.0.0.0/1",
@@ -270,6 +277,16 @@ tun 接口的 IPv6 前缀。
 
 默认使用 `0x2024`。
 
+#### loopback_address
+
+!!! question "自 sing-box 1.12.0 起"
+
+环回地址是用于使指向指定地址的 TCP 连接连接到来源地址的。
+
+将选项值设置为 `10.7.0.1` 可实现与 SideStore/StosVPN 相同的行为。
+
+当启用 `auto_redirect` 时，可以作为网关为局域网设备（而不仅仅是本地）实现相同的行为。
+
 #### strict_route
 
 当启用 `auto_route` 时，强制执行严格的路由规则：
@@ -398,11 +415,11 @@ UDP NAT 过期时间。
 
 TCP/IP 栈。
 
-| 栈      | 描述                                                               |
-|--------|------------------------------------------------------------------|
-| system | 基于系统网络栈执行 L3 到 L4 转换                                             |
-| gVisor | 基于 [gVisor](https://github.com/google/gvisor) 虚拟网络栈执行 L3 到 L4 转换 |
-| mixed  | 混合 `system` TCP 栈与 `gvisor` UDP 栈                                |
+| 栈       | 描述                                                                                                  | 
+|----------|-------------------------------------------------------------------------------------------------------|
+| `system` | 基于系统网络栈执行 L3 到 L4 转换                                                                        |
+| `gvisor` | 基于 [gVisor](https://github.com/google/gvisor) 虚拟网络栈执行 L3 到 L4 转换                            |
+| `mixed`  | 混合 `system` TCP 栈与 `gvisor` UDP 栈                                                                 |
 
 默认使用 `mixed` 栈如果 gVisor 构建标记已启用，否则默认使用 `system` 栈。
 

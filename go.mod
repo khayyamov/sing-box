@@ -10,6 +10,7 @@ require (
 	github.com/cretz/bine v0.2.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/render v1.0.3
+	github.com/godbus/dbus/v5 v5.1.1-0.20230522191255-76236955d466
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/insomniacslk/dhcp v0.0.0-20250417080101-5f8cf70e8c5f
 	github.com/libdns/alidns v1.0.4-libdns.v1.beta1
@@ -26,15 +27,15 @@ require (
 	github.com/sagernet/fswatch v0.1.1
 	github.com/sagernet/gomobile v0.1.6
 	github.com/sagernet/gvisor v0.0.0-20250325023245-7a9c0f5725fb
-	github.com/sagernet/quic-go v0.51.0-beta.5
-	github.com/sagernet/sing v0.6.10-0.20250505040842-ba62fee9470f
+	github.com/sagernet/quic-go v0.52.0-beta.1
+	github.com/sagernet/sing v0.6.11-0.20250521033217-30d675ea099b
 	github.com/sagernet/sing-mux v0.3.2
-	github.com/sagernet/sing-quic v0.4.1-0.20250511050139-d459f561c9c3
-	github.com/sagernet/sing-shadowsocks v0.2.7
-	github.com/sagernet/sing-shadowsocks2 v0.2.0
+	github.com/sagernet/sing-quic v0.5.0-beta.2
+	github.com/sagernet/sing-shadowsocks v0.2.8
+	github.com/sagernet/sing-shadowsocks2 v0.2.1
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11
-	github.com/sagernet/sing-tun v0.6.6-0.20250428031943-0686f8c4f210
-	github.com/sagernet/sing-vmess v0.2.2-0.20250503051933-9b4cf17393f8
+	github.com/sagernet/sing-tun v0.6.10-0.20250620051458-5e343c4b66b2
+	github.com/sagernet/sing-vmess v0.2.4-0.20250605032146-38cc72672c88
 	github.com/sagernet/smux v1.5.34-mod.2
 	github.com/sagernet/tailscale v1.80.3-mod.5
 	github.com/sagernet/wireguard-go v0.0.1-beta.7
@@ -78,7 +79,6 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/godbus/dbus/v5 v5.1.1-0.20230522191255-76236955d466 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect

@@ -22,7 +22,7 @@ func NewUserManager(inbound adapter.ManagedSSMServer, trafficManager *TrafficMan
 	}
 }
 
-func (m *UserManager) postUpdate() error {
+func (m *UserManager) postUpdate(updated bool) error {
 	users := make([]string, 0, len(m.usersMap))
 	uPSKs := make([]string, 0, len(m.usersMap))
 	for username, password := range m.usersMap {
@@ -33,7 +33,9 @@ func (m *UserManager) postUpdate() error {
 	if err != nil {
 		return err
 	}
-	m.trafficManager.UpdateUsers(users)
+	if updated {
+		m.trafficManager.UpdateUsers(users)
+	}
 	return nil
 }
 
@@ -55,10 +57,10 @@ func (m *UserManager) Add(username string, password string) error {
 	m.access.Lock()
 	defer m.access.Unlock()
 	if _, found := m.usersMap[username]; found {
-		return E.New("user", username, "already exists")
+		return E.New("user ", username, " already exists")
 	}
 	m.usersMap[username] = password
-	return m.postUpdate()
+	return m.postUpdate(true)
 }
 
 func (m *UserManager) Get(username string) (string, bool) {
@@ -74,12 +76,12 @@ func (m *UserManager) Update(username string, password string) error {
 	m.access.Lock()
 	defer m.access.Unlock()
 	m.usersMap[username] = password
-	return m.postUpdate()
+	return m.postUpdate(true)
 }
 
 func (m *UserManager) Delete(username string) error {
 	m.access.Lock()
 	defer m.access.Unlock()
 	delete(m.usersMap, username)
-	return m.postUpdate()
+	return m.postUpdate(true)
 }

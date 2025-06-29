@@ -19,6 +19,7 @@ See https://github.com/Shadowsocks-NET/shadowsocks-specs/blob/main/2023-1-shadow
   ... // Listen Fields
   
   "servers": {},
+  "cache_path": "",
   "tls": {}
 }
 ```
@@ -33,9 +34,11 @@ See [Listen Fields](/configuration/shared/listen/) for details.
 
 ==Required==
 
-A mapping Object from HTTP endpoints to Shadowsocks inbound tags.
+A mapping Object from HTTP endpoints to [Shadowsocks Inbound](/configuration/inbound/shadowsocks) tags.
 
-Example: 
+Selected Shadowsocks inbounds must be configured with [managed](/configuration/inbound/shadowsocks#managed) enabled.
+
+Example:
 
 ```json
 {
@@ -44,6 +47,11 @@ Example:
   }
 }
 ```
+
+#### cache_path
+
+If set, when the server is about to stop, traffic and user state will be saved to the specified JSON file
+to be restored on the next startup.
 
 #### tls
 

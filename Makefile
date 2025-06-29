@@ -1,11 +1,10 @@
 NAME = sing-box
 COMMIT = $(shell git rev-parse --short HEAD)
-TAGS ?= with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls,with_tailscale
-TAGS_TEST ?= with_gvisor,with_quic,with_wireguard,with_grpc,with_utls
+TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_acme,with_clash_api,with_tailscale
 
 GOHOSTOS = $(shell go env GOHOSTOS)
 GOHOSTARCH = $(shell go env GOHOSTARCH)
-VERSION=$(shell CGO_ENABLED=0 GOOS=$(GOHOSTOS) GOARCH=$(GOHOSTARCH) go run ./cmd/internal/read_tag)
+VERSION=$(shell CGO_ENABLED=0 GOOS=$(GOHOSTOS) GOARCH=$(GOHOSTARCH) go run github.com/sagernet/sing-box/cmd/internal/read_tag@latest)
 
 PARAMS = -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=$(VERSION)' -s -w -buildid="
 MAIN_PARAMS = $(PARAMS) -tags "$(TAGS)"
@@ -109,6 +108,16 @@ upload_ios_app_store:
 	cd ../sing-box-for-apple && \
 	xcodebuild -exportArchive -archivePath build/SFI.xcarchive -exportOptionsPlist SFI/Upload.plist -allowProvisioningUpdates
 
+export_ios_ipa:
+	cd ../sing-box-for-apple && \
+	xcodebuild -exportArchive -archivePath build/SFI.xcarchive -exportOptionsPlist SFI/Export.plist -allowProvisioningUpdates -exportPath build/SFI && \
+	cp build/SFI/sing-box.ipa dist/SFI.ipa
+
+upload_ios_ipa:
+	cd dist && \
+	cp SFI.ipa "SFI-${VERSION}.ipa" && \
+	ghr --replace --draft --prerelease "v${VERSION}" "SFI-${VERSION}.ipa"
+
 release_ios: build_ios upload_ios_app_store
 
 build_macos:
@@ -175,6 +184,16 @@ build_tvos:
 upload_tvos_app_store:
 	cd ../sing-box-for-apple && \
 	xcodebuild -exportArchive -archivePath "build/SFT.xcarchive" -exportOptionsPlist SFI/Upload.plist -allowProvisioningUpdates
+
+export_tvos_ipa:
+	cd ../sing-box-for-apple && \
+	xcodebuild -exportArchive -archivePath "build/SFT.xcarchive" -exportOptionsPlist SFI/Export.plist -allowProvisioningUpdates -exportPath build/SFT && \
+	cp build/SFT/sing-box.ipa dist/SFT.ipa
+
+upload_tvos_ipa:
+	cd dist && \
+	cp SFT.ipa "SFT-${VERSION}.ipa" && \
+	ghr --replace --draft --prerelease "v${VERSION}" "SFT-${VERSION}.ipa"
 
 release_tvos: build_tvos upload_tvos_app_store
 

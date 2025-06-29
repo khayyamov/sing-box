@@ -2,6 +2,72 @@
 icon: material/alert-decagram
 ---
 
+#### 1.12.0-beta.28
+
+* Fixes and improvements
+
+### 1.11.14
+
+* Fixes and improvements
+
+_We are temporarily unable to update sing-box apps on the App Store because the reviewer mistakenly found that we
+violated the rules (TestFlight users are not affected)._
+
+#### 1.12.0-beta.24
+
+* Allow `tls_fragment` and `tls_record_fragment` to be enabled together **1**
+* Also add fragment options for TLS client configuration **2**
+* Fixes and improvements
+
+**1**:
+
+For debugging only, it is recommended to disable if record fragmentation works.
+
+See [Route Action](/configuration/route/rule_action/#tls_fragment).
+
+**2**:
+
+See [TLS](/configuration/shared/tls/).
+
+#### 1.12.0-beta.23
+
+* Add loopback address support for tun **1**
+* Add cache support for ssm-api **2**
+* Fixes and improvements
+
+**1**:
+
+TUN now implements SideStore's StosVPN.
+
+See [Tun](/configuration/inbound/tun/#loopback_address).
+
+**2**:
+
+See [SSM API Service](/configuration/service/ssm-api/#cache_path).
+
+#### 1.12.0-beta.21
+
+* Fix missing `home` option for DERP service **1**
+* Fixes and improvements
+
+**1**:
+
+You can now choose what the DERP home page shows, just like with derper's `-home` flag.
+
+See [DERP](/configuration/service/derp/#home).
+
+### 1.11.13
+
+* Fixes and improvements
+
+_We are temporarily unable to update sing-box apps on the App Store because the reviewer mistakenly found that we
+violated the rules (TestFlight users are not affected)._
+
+#### 1.12.0-beta.17
+
+* Update quic-go to v0.52.0
+* Fixes and improvements
+
 #### 1.12.0-beta.15
 
 * Add DERP service **1**
