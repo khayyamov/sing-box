@@ -3,11 +3,14 @@ package transport
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/dialer"
@@ -22,7 +25,6 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-	aTLS "github.com/sagernet/sing/common/tls"
 	sHTTP "github.com/sagernet/sing/protocol/http"
 
 	mDNS "github.com/miekg/dns"
@@ -39,11 +41,13 @@ func RegisterHTTPS(registry *dns.TransportRegistry) {
 
 type HTTPSTransport struct {
 	dns.TransportAdapter
-	logger      logger.ContextLogger
-	dialer      N.Dialer
-	destination *url.URL
-	headers     http.Header
-	transport   *http.Transport
+	logger           logger.ContextLogger
+	dialer           N.Dialer
+	destination      *url.URL
+	headers          http.Header
+	transportAccess  sync.Mutex
+	transport        *HTTPSTransportWrapper
+	transportResetAt time.Time
 }
 
 func NewHTTPS(ctx context.Context, logger log.ContextLogger, tag string, options option.RemoteHTTPSDNSServerOptions) (adapter.DNSTransport, error) {
@@ -53,15 +57,12 @@ func NewHTTPS(ctx context.Context, logger log.ContextLogger, tag string, options
 	}
 	tlsOptions := common.PtrValueOrDefault(options.TLS)
 	tlsOptions.Enabled = true
-	tlsConfig, err := tls.NewClient(ctx, options.Server, tlsOptions)
+	tlsConfig, err := tls.NewClient(ctx, logger, options.Server, tlsOptions)
 	if err != nil {
 		return nil, err
 	}
-	if common.Error(tlsConfig.Config()) == nil && !common.Contains(tlsConfig.NextProtos(), http2.NextProtoTLS) {
-		tlsConfig.SetNextProtos(append(tlsConfig.NextProtos(), http2.NextProtoTLS))
-	}
-	if !common.Contains(tlsConfig.NextProtos(), "http/1.1") {
-		tlsConfig.SetNextProtos(append(tlsConfig.NextProtos(), "http/1.1"))
+	if len(tlsConfig.NextProtos()) == 0 {
+		tlsConfig.SetNextProtos([]string{http2.NextProtoTLS, "http/1.1"})
 	}
 	headers := options.Headers.Build()
 	host := headers.Get("Host")
@@ -119,39 +120,13 @@ func NewHTTPSRaw(
 	serverAddr M.Socksaddr,
 	tlsConfig tls.Config,
 ) *HTTPSTransport {
-	var transport *http.Transport
-	if tlsConfig != nil {
-		transport = &http.Transport{
-			IdleConnTimeout:   C.TCPKeepAliveInitial,
-			ForceAttemptHTTP2: true,
-			DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				tcpConn, hErr := dialer.DialContext(ctx, network, serverAddr)
-				if hErr != nil {
-					return nil, hErr
-				}
-				tlsConn, hErr := aTLS.ClientHandshake(ctx, tcpConn, tlsConfig)
-				if hErr != nil {
-					tcpConn.Close()
-					return nil, hErr
-				}
-				return tlsConn, nil
-			},
-		}
-	} else {
-		transport = &http.Transport{
-			IdleConnTimeout: C.TCPKeepAliveInitial,
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return dialer.DialContext(ctx, network, serverAddr)
-			},
-		}
-	}
 	return &HTTPSTransport{
 		TransportAdapter: adapter,
 		logger:           logger,
 		dialer:           dialer,
 		destination:      destination,
 		headers:          headers,
-		transport:        transport,
+		transport:        NewHTTPSTransportWrapper(tls.NewDialer(dialer, tlsConfig), serverAddr),
 	}
 }
 
@@ -163,12 +138,33 @@ func (t *HTTPSTransport) Start(stage adapter.StartStage) error {
 }
 
 func (t *HTTPSTransport) Close() error {
+	t.transportAccess.Lock()
+	defer t.transportAccess.Unlock()
 	t.transport.CloseIdleConnections()
 	t.transport = t.transport.Clone()
 	return nil
 }
 
 func (t *HTTPSTransport) Exchange(ctx context.Context, message *mDNS.Msg) (*mDNS.Msg, error) {
+	startAt := time.Now()
+	response, err := t.exchange(ctx, message)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			t.transportAccess.Lock()
+			defer t.transportAccess.Unlock()
+			if t.transportResetAt.After(startAt) {
+				return nil, err
+			}
+			t.transport.CloseIdleConnections()
+			t.transport = t.transport.Clone()
+			t.transportResetAt = time.Now()
+		}
+		return nil, err
+	}
+	return response, nil
+}
+
+func (t *HTTPSTransport) exchange(ctx context.Context, message *mDNS.Msg) (*mDNS.Msg, error) {
 	exMessage := *message
 	exMessage.Id = 0
 	exMessage.Compress = true

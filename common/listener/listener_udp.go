@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"strings"
 	"syscall"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -41,7 +42,7 @@ func (l *Listener) ListenUDP() (net.PacketConn, error) {
 	if l.tproxy {
 		listenConfig.Control = control.Append(listenConfig.Control, func(network, address string, conn syscall.RawConn) error {
 			return control.Raw(conn, func(fd uintptr) error {
-				return redir.TProxy(fd, !M.ParseSocksaddr(address).IsIPv4(), true)
+				return redir.TProxy(fd, !strings.HasSuffix(network, "4"), true)
 			})
 		})
 	}
@@ -164,9 +165,8 @@ func (l *Listener) loopUDPOut() {
 				if l.shutdown.Load() && E.IsClosed(err) {
 					return
 				}
-				l.udpConn.Close()
 				l.logger.Error("udp listener write back: ", destination, ": ", err)
-				return
+				continue
 			}
 			continue
 		case <-l.packetOutboundClosed:

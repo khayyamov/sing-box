@@ -13,6 +13,7 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
+	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/uot"
@@ -26,7 +27,7 @@ func RegisterOutbound(registry *outbound.Registry) {
 
 type Outbound struct {
 	outbound.Adapter
-	dialer    N.Dialer
+	dialer    tls.Dialer
 	server    M.Socksaddr
 	tlsConfig tls.Config
 	client    *anytls.Client
@@ -43,8 +44,15 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if options.TLS == nil || !options.TLS.Enabled {
 		return nil, C.ErrTLSRequired
 	}
+	// TCP Fast Open is incompatible with anytls because TFO creates a lazy connection
+	// that only establishes on first write. The lazy connection returns an empty address
+	// before establishment, but anytls SOCKS wrapper tries to access the remote address
+	// during handshake, causing a null pointer dereference crash.
+	if options.DialerOptions.TCPFastOpen {
+		return nil, E.New("tcp_fast_open is not supported with anytls outbound")
+	}
 
-	tlsConfig, err := tls.NewClient(ctx, options.Server, common.PtrValueOrDefault(options.TLS))
+	tlsConfig, err := tls.NewClient(ctx, logger, options.Server, common.PtrValueOrDefault(options.TLS))
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +66,8 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, err
 	}
-	outbound.dialer = outboundDialer
+
+	outbound.dialer = tls.NewDialer(outboundDialer, tlsConfig)
 
 	client, err := anytls.NewClient(ctx, anytls.ClientConfig{
 		Password:                 options.Password,
@@ -91,16 +100,7 @@ func (d anytlsDialer) ListenPacket(ctx context.Context, destination M.Socksaddr)
 }
 
 func (h *Outbound) dialOut(ctx context.Context) (net.Conn, error) {
-	conn, err := h.dialer.DialContext(ctx, N.NetworkTCP, h.server)
-	if err != nil {
-		return nil, err
-	}
-	tlsConn, err := tls.ClientHandshake(ctx, conn, h.tlsConfig)
-	if err != nil {
-		common.Close(tlsConn, conn)
-		return nil, err
-	}
-	return tlsConn, nil
+	return h.dialer.DialTLSContext(ctx, h.server)
 }
 
 func (h *Outbound) DialContext(ctx context.Context, network string, destination M.Socksaddr) (net.Conn, error) {
