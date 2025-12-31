@@ -21,10 +21,9 @@ import (
 type Router interface {
 	Lifecycle
 	ConnectionRouter
-	PreMatch(metadata InboundContext, context tun.DirectRouteContext, timeout time.Duration) (tun.DirectRouteDestination, error)
+	PreMatch(metadata InboundContext, context tun.DirectRouteContext, timeout time.Duration, supportBypass bool) (tun.DirectRouteDestination, error)
 	ConnectionRouterEx
 	RuleSet(tag string) (RuleSet, bool)
-	NeedWIFIState() bool
 	Rules() []Rule
 	AppendTracker(tracker ConnectionTracker)
 	ResetNetwork()

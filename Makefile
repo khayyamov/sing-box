@@ -1,12 +1,12 @@
 NAME = sing-box
 COMMIT = $(shell git rev-parse --short HEAD)
-TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_acme,with_clash_api,with_tailscale,with_ccm,badlinkname,tfogo_checklinkname0
+TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_acme,with_clash_api,with_tailscale,with_ccm,with_ocm,badlinkname,tfogo_checklinkname0
 
 GOHOSTOS = $(shell go env GOHOSTOS)
 GOHOSTARCH = $(shell go env GOHOSTARCH)
 VERSION=$(shell CGO_ENABLED=0 GOOS=$(GOHOSTOS) GOARCH=$(GOHOSTARCH) go run github.com/sagernet/sing-box/cmd/internal/read_tag@latest)
 
-PARAMS = -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=$(VERSION)' -s -w -buildid= -checklinkname=0"
+PARAMS = -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=$(VERSION)' -X 'internal/godebug.defaultGODEBUG=multipathtcp=0' -s -w -buildid= -checklinkname=0"
 MAIN_PARAMS = $(PARAMS) -tags "$(TAGS)"
 MAIN = ./cmd/sing-box
 PREFIX ?= $(shell go env GOPATH)
@@ -37,8 +37,11 @@ fmt:
 	@gofmt -s -w .
 	@gci write --custom-order -s standard -s "prefix(github.com/sagernet/)" -s "default" .
 
+fmt_docs:
+	go run ./cmd/internal/format_docs
+
 fmt_install:
-	go install -v mvdan.cc/gofumpt@v0.8.0
+	go install -v mvdan.cc/gofumpt@latest
 	go install -v github.com/daixiang0/gci@latest
 
 lint:
@@ -49,7 +52,7 @@ lint:
 	GOOS=freebsd golangci-lint run ./...
 
 lint_install:
-	go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
+	go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 proto:
 	@go run ./cmd/internal/protogen
@@ -249,8 +252,8 @@ lib:
 	go run ./cmd/internal/build_libbox -target ios
 
 lib_install:
-	go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.8
-	go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.8
+	go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.10
+	go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.10
 
 docs:
 	venv/bin/mkdocs serve

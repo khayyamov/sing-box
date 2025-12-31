@@ -3,6 +3,7 @@ package derp
 import (
 	"bufio"
 	"context"
+	stdTLS "crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,12 +32,14 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/common/ntp"
 	aTLS "github.com/sagernet/sing/common/tls"
 	"github.com/sagernet/sing/service"
 	"github.com/sagernet/sing/service/filemanager"
 	"github.com/sagernet/tailscale/client/local"
 	"github.com/sagernet/tailscale/derp"
 	"github.com/sagernet/tailscale/derp/derphttp"
+	"github.com/sagernet/tailscale/derp/derpserver"
 	"github.com/sagernet/tailscale/net/netmon"
 	"github.com/sagernet/tailscale/net/stun"
 	"github.com/sagernet/tailscale/net/wsconn"
@@ -60,7 +63,7 @@ type Service struct {
 	listener             *listener.Listener
 	stunListener         *listener.Listener
 	tlsConfig            tls.ServerConfig
-	server               *derp.Server
+	server               *derpserver.Server
 	configPath           string
 	verifyClientEndpoint []string
 	verifyClientURL      []*option.DERPVerifyClientURLOptions
@@ -139,7 +142,7 @@ func (d *Service) Start(stage adapter.StartStage) error {
 			return err
 		}
 
-		server := derp.NewServer(config.PrivateKey, func(format string, args ...any) {
+		server := derpserver.New(config.PrivateKey, func(format string, args ...any) {
 			d.logger.Debug(fmt.Sprintf(format, args...))
 		})
 
@@ -159,6 +162,10 @@ func (d *Service) Start(stage adapter.StartStage) error {
 				httpClients = append(httpClients, &http.Client{
 					Transport: &http.Transport{
 						ForceAttemptHTTP2: true,
+						TLSClientConfig: &stdTLS.Config{
+							RootCAs: adapter.RootPoolFromContext(d.ctx),
+							Time:    ntp.TimeFuncFromContext(d.ctx),
+						},
 						DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 							return verifyDialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
 						},
@@ -187,7 +194,7 @@ func (d *Service) Start(stage adapter.StartStage) error {
 		d.server = server
 
 		derpMux := http.NewServeMux()
-		derpHandler := derphttp.Handler(server)
+		derpHandler := derpserver.Handler(server)
 		derpHandler = addWebSocketSupport(server, derpHandler)
 		derpMux.Handle("/derp", derpHandler)
 
@@ -196,8 +203,8 @@ func (d *Service) Start(stage adapter.StartStage) error {
 			return E.New("invalid home value: ", d.home)
 		}
 
-		derpMux.HandleFunc("/derp/probe", derphttp.ProbeHandler)
-		derpMux.HandleFunc("/derp/latency-check", derphttp.ProbeHandler)
+		derpMux.HandleFunc("/derp/probe", derpserver.ProbeHandler)
+		derpMux.HandleFunc("/derp/latency-check", derpserver.ProbeHandler)
 		derpMux.HandleFunc("/bootstrap-dns", tsweb.BrowserHeaderHandlerFunc(handleBootstrapDNS(d.ctx)))
 		derpMux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tsweb.AddBrowserHeaders(w)
@@ -207,7 +214,7 @@ func (d *Service) Start(stage adapter.StartStage) error {
 			tsweb.AddBrowserHeaders(w)
 			io.WriteString(w, "User-agent: *\nDisallow: /\n")
 		}))
-		derpMux.Handle("/generate_204", http.HandlerFunc(derphttp.ServeNoContent))
+		derpMux.Handle("/generate_204", http.HandlerFunc(derpserver.ServeNoContent))
 
 		err = d.tlsConfig.Start()
 		if err != nil {
@@ -283,7 +290,7 @@ func checkMeshKey(meshKey string) error {
 	return nil
 }
 
-func (d *Service) startMeshWithHost(derpServer *derp.Server, server *option.DERPMeshOptions) error {
+func (d *Service) startMeshWithHost(derpServer *derpserver.Server, server *option.DERPMeshOptions) error {
 	meshDialer, err := dialer.NewWithOptions(dialer.Options{
 		Context:        d.ctx,
 		Options:        server.DialerOptions,
@@ -394,7 +401,7 @@ func getHomeHandler(val string) (_ http.Handler, ok bool) {
 	return nil, false
 }
 
-func addWebSocketSupport(s *derp.Server, base http.Handler) http.Handler {
+func addWebSocketSupport(s *derpserver.Server, base http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		up := strings.ToLower(r.Header.Get("Upgrade"))
 

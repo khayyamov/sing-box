@@ -28,7 +28,6 @@ import (
 	"github.com/sagernet/sing-box/adapter/endpoint"
 	"github.com/sagernet/sing-box/common/dialer"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/route/rule"
@@ -42,8 +41,10 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/common/ntp"
 	"github.com/sagernet/sing/service"
 	"github.com/sagernet/sing/service/filemanager"
+	_ "github.com/sagernet/tailscale/feature/relayserver"
 	"github.com/sagernet/tailscale/ipn"
 	tsDNS "github.com/sagernet/tailscale/net/dns"
 	"github.com/sagernet/tailscale/net/netmon"
@@ -79,7 +80,7 @@ type Endpoint struct {
 	logger            logger.ContextLogger
 	dnsRouter         adapter.DNSRouter
 	network           adapter.NetworkManager
-	platformInterface platform.Interface
+	platformInterface adapter.PlatformInterface
 	server            *tsnet.Server
 	stack             *stack.Stack
 	icmpForwarder     *tun.ICMPForwarder
@@ -91,11 +92,13 @@ type Endpoint struct {
 	routeDomains  common.TypedValue[map[string]bool]
 	routePrefixes atomic.Pointer[netipx.IPSet]
 
-	acceptRoutes           bool
-	exitNode               string
-	exitNodeAllowLANAccess bool
-	advertiseRoutes        []netip.Prefix
-	advertiseExitNode      bool
+	acceptRoutes               bool
+	exitNode                   string
+	exitNodeAllowLANAccess     bool
+	advertiseRoutes            []netip.Prefix
+	advertiseExitNode          bool
+	relayServerPort            *uint16
+	relayServerStaticEndpoints []netip.AddrPort
 
 	udpTimeout time.Duration
 }
@@ -177,25 +180,28 @@ func NewEndpoint(ctx context.Context, router adapter.Router, logger log.ContextL
 				},
 				TLSClientConfig: &tls.Config{
 					RootCAs: adapter.RootPoolFromContext(ctx),
+					Time:    ntp.TimeFuncFromContext(ctx),
 				},
 			},
 		},
 	}
 	return &Endpoint{
-		Adapter:                endpoint.NewAdapter(C.TypeTailscale, tag, []string{N.NetworkTCP, N.NetworkUDP, N.NetworkICMP}, nil),
-		ctx:                    ctx,
-		router:                 router,
-		logger:                 logger,
-		dnsRouter:              dnsRouter,
-		network:                service.FromContext[adapter.NetworkManager](ctx),
-		platformInterface:      service.FromContext[platform.Interface](ctx),
-		server:                 server,
-		acceptRoutes:           options.AcceptRoutes,
-		exitNode:               options.ExitNode,
-		exitNodeAllowLANAccess: options.ExitNodeAllowLANAccess,
-		advertiseRoutes:        options.AdvertiseRoutes,
-		advertiseExitNode:      options.AdvertiseExitNode,
-		udpTimeout:             udpTimeout,
+		Adapter:                    endpoint.NewAdapter(C.TypeTailscale, tag, []string{N.NetworkTCP, N.NetworkUDP, N.NetworkICMP}, nil),
+		ctx:                        ctx,
+		router:                     router,
+		logger:                     logger,
+		dnsRouter:                  dnsRouter,
+		network:                    service.FromContext[adapter.NetworkManager](ctx),
+		platformInterface:          service.FromContext[adapter.PlatformInterface](ctx),
+		server:                     server,
+		acceptRoutes:               options.AcceptRoutes,
+		exitNode:                   options.ExitNode,
+		exitNodeAllowLANAccess:     options.ExitNodeAllowLANAccess,
+		advertiseRoutes:            options.AdvertiseRoutes,
+		advertiseExitNode:          options.AdvertiseExitNode,
+		relayServerPort:            options.RelayServerPort,
+		relayServerStaticEndpoints: options.RelayServerStaticEndpoints,
+		udpTimeout:                 udpTimeout,
 	}, nil
 }
 
@@ -269,6 +275,14 @@ func (t *Endpoint) Start(stage adapter.StartStage) error {
 	if t.advertiseExitNode {
 		perfs.AdvertiseRoutes = append(perfs.AdvertiseRoutes, tsaddr.ExitRoutes()...)
 	}
+	if t.relayServerPort != nil {
+		perfs.RelayServerPort = t.relayServerPort
+		perfs.RelayServerPortSet = true
+	}
+	if len(t.relayServerStaticEndpoints) > 0 {
+		perfs.RelayServerStaticEndpoints = t.relayServerStaticEndpoints
+		perfs.RelayServerStaticEndpointsSet = true
+	}
 	_, err = localBackend.EditPrefs(perfs)
 	if err != nil {
 		return E.Cause(err, "update prefs")
@@ -288,7 +302,7 @@ func (t *Endpoint) watchState() {
 		if authURL != "" {
 			t.logger.Info("Waiting for authentication: ", authURL)
 			if t.platformInterface != nil {
-				err := t.platformInterface.SendNotification(&platform.Notification{
+				err := t.platformInterface.SendNotification(&adapter.Notification{
 					Identifier: "tailscale-authentication",
 					TypeName:   "Tailscale Authentication Notifications",
 					TypeID:     10,
@@ -462,10 +476,17 @@ func (t *Endpoint) PrepareConnection(network string, source M.Socksaddr, destina
 		Network:     network,
 		Source:      source,
 		Destination: destination,
-	}, routeContext, timeout)
+	}, routeContext, timeout, false)
 	if err != nil {
-		if !rule.IsRejected(err) {
-			t.logger.Warn(E.Cause(err, "link ", network, " connection from ", source.AddrString(), " to ", destination.AddrString()))
+		switch {
+		case rule.IsBypassed(err):
+			err = nil
+		case rule.IsRejected(err):
+			t.logger.Trace("reject ", network, " connection from ", source.AddrString(), " to ", destination.AddrString())
+		default:
+			if network == N.NetworkICMP {
+				t.logger.Warn(E.Cause(err, "link ", network, " connection from ", source.AddrString(), " to ", destination.AddrString()))
+			}
 		}
 	}
 	return routeDestination, err

@@ -4,7 +4,8 @@ icon: material/new-box
 
 !!! quote "Changes in sing-box 1.13.0"
 
-    :material-plus: [tcp_keep_alive](#tcp_keep_alive)    
+    :material-plus: [disable_tcp_keep_alive](#disable_tcp_keep_alive)  
+    :material-plus: [tcp_keep_alive](#tcp_keep_alive)  
     :material-plus: [tcp_keep_alive_interval](#tcp_keep_alive_interval)
 
 !!! quote "Changes in sing-box 1.12.0"
@@ -34,6 +35,7 @@ icon: material/new-box
   "connect_timeout": "",
   "tcp_fast_open": false,
   "tcp_multi_path": false,
+  "disable_tcp_keep_alive": false,
   "tcp_keep_alive": "",
   "tcp_keep_alive_interval": "",
   "udp_fragment": false,
@@ -119,13 +121,19 @@ Enable TCP Fast Open.
 
 Enable TCP Multi Path.
 
+#### disable_tcp_keep_alive
+
+!!! question "Since sing-box 1.13.0"
+
+Disable TCP keep alive.
+
 #### tcp_keep_alive
 
 !!! question "Since sing-box 1.13.0"
 
     Default value changed from `10m` to `5m`.
 
-TCP keep-alive initial period.
+TCP keep alive initial period.
 
 `5m` will be used by default.
 
@@ -133,7 +141,7 @@ TCP keep-alive initial period.
 
 !!! question "Since sing-box 1.13.0"
 
-TCP keep-alive interval.
+TCP keep alive interval.
 
 `75s` will be used by default.
 

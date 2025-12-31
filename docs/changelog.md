@@ -2,25 +2,159 @@
 icon: material/alert-decagram
 ---
 
-#### 1.13.0-alpha.28
+#### 1.13.0-alpha.35
 
-* Update quic-go to v0.57.1
-* Add `tcp_keep_alive` and `tcp_keep_alive_interval` options for dial fields **1**
-* Update default TCP keep-alive initial period from 10 minutes to 5 minutes
+* Add pre-match support for `auto_redirect` **1**
 * Fixes and improvements
 
 **1**:
 
+`auto_redirect` now allows you to bypass sing-box for connections based on routing rules.
+
+A new rule action `bypass` is introduced to support this feature. When matched during pre-match, the connection will bypass sing-box and connect directly.
+
+This feature requires Linux with `auto_redirect` enabled.
+
+See [Pre-match](/configuration/shared/pre-match/) and [Rule Action](/configuration/route/rule_action/#bypass).
+
+#### 1.13.0-alpha.34
+
+* Add Chrome Root Store certificate option **1**
+* Add new options for ACME DNS-01 challenge providers **2**
+* Add Wi-Fi state support for Linux and Windows **3**
+* Update naiveproxy to 143.0.7499.109
+* Update quic-go to v0.58.0
+* Update tailscale to v1.92.4
+* Drop support for go1.23 **4**
+* Drop support for Android 5.0 **5**
+
+**1**:
+
+Adds `chrome` as a new certificate store option alongside `mozilla`.
+Both stores filter out China-based CA certificates.
+
+See [Certificate](/configuration/certificate/#store).
+
+**2**:
+
+See [DNS-01 Challenge](/configuration/shared/dns01_challenge/).
+
+**3**:
+
+sing-box can now monitor Wi-Fi state on Linux and Windows to enable routing rules based on `wifi_ssid` and `wifi_bssid`.
+
+See [Wi-Fi State](/configuration/shared/wifi-state/).
+
+**4**:
+
+Due to maintenance difficulties, sing-box 1.13.0 requires at least Go 1.24 to compile.
+
+**5**:
+
+Due to maintenance difficulties, sing-box 1.13.0 will be the last version to support Android 5.0,
+and only through a separate legacy build (with `-legacy-android-5` suffix).
+
+For standalone binaries, the minimum Android version has been raised to Android 6.0,
+since Termux requires Android 7.0 or later.
+
+#### 1.12.14
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.33
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.32
+
+* Remove `certificate_public_key_sha256` option for NaiveProxy outbound **1**
+* Fixes and improvements
+
+**1**:
+
+Self-signed certificates change traffic behavior significantly, which defeats the purpose of NaiveProxy's design to resist traffic analysis.
+For this reason, and due to maintenance costs, there is no reason to continue supporting `certificate_public_key_sha256`, which was designed to simplify the use of self-signed certificates.
+
+#### 1.13.0-alpha.31
+
+* Add QUIC support for NaiveProxy outbound **1**
+* Add QUIC congestion control option for NaiveProxy **2**
+* Fixes and improvements
+
+**1**:
+
+NaiveProxy outbound now supports QUIC.
+
+See [NaiveProxy outbound](/configuration/outbound/naive/#quic).
+
+**2**:
+
+NaiveProxy inbound and outbound now supports configurable QUIC congestion control algorithms, including BBR and BBRv2.
+
+See [NaiveProxy inbound](/configuration/inbound/naive/#quic_congestion_control) and [NaiveProxy outbound](/configuration/outbound/naive/#quic_congestion_control).
+
+#### 1.13.0-alpha.30
+
+* Add ECH support for NaiveProxy outbound **1**
+* Add `tls.ech.query_server_name` option **2**
+* Fix NaiveProxy outbound on Windows **3**
+* Add OpenAI Codex Multiplexer service **4**
+* Fixes and improvements
+
+**1**:
+
+See [NaiveProxy outbound](/configuration/outbound/naive/#tls).
+
+**2**:
+
+See [TLS](/configuration/shared/tls/#query_server_name).
+
+**3**:
+
+Each Windows release now includes `libcronet.dll`.
+Ensure this file is in the same directory as `sing-box.exe` or in a directory listed in `PATH`.
+
+**4**:
+
+See [OCM](/configuration/service/ocm).
+
+#### 1.13.0-alpha.29
+
+* Add UDP over TCP support for naiveproxy outbound **1**
+* Fixes and improvements
+
+**1**:
+
+See [NaiveProxy outbound](/configuration/outbound/naive/#udp_over_tcp).
+
+#### 1.13.0-alpha.28
+
+* Add naiveproxy outbound **1**
+* Add `disable_tcp_keep_alive`, `tcp_keep_alive` and `tcp_keep_alive_interval` options for dial fields **2**
+* Update default TCP keep-alive initial period from 10 minutes to 5 minutes
+* Update quic-go to v0.57.1
+* Fixes and improvements
+
+**1**:
+
+Only available on Apple platforms, Android, Windows and some Linux architectures.
+
+See [NaiveProxy outbound](/configuration/outbound/naive/).
+
+**2**:
+
 See [Dial Fields](/configuration/shared/dial/#tcp_keep_alive).
 
-__Unfortunately, for non-technical reasons, we are currently unable to notarize the standalone version of the macOS client:
+* __Unfortunately, for non-technical reasons, we are currently unable to notarize the standalone version of the macOS client:
 because system extensions require signatures to function, we have had to temporarily halt its release.__
 
 __We plan to fix the App Store release issue and launch a new standalone desktop client, but until then,
 only clients on TestFlight will be available (unless you have an Apple Developer Program and compile from source code).__
 
+
 #### 1.12.13
 
+* Fix naive inbound
 * Fixes and improvements
 
 __Unfortunately, for non-technical reasons, we are currently unable to notarize the standalone version of the macOS client:
