@@ -2,16 +2,6 @@ package libbox
 
 import (
 	"errors"
-	box "github.com/sagernet/sing-box"
-	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/log"
-	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing/common/bufio"
-	E "github.com/sagernet/sing/common/exceptions"
-	"github.com/sagernet/sing/common/json"
-	M "github.com/sagernet/sing/common/metadata"
-	N "github.com/sagernet/sing/common/network"
-	"golang.org/x/net/context"
 	"io"
 	"net"
 	"net/http"
@@ -20,12 +10,22 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	box "github.com/sagernet/sing-box"
+	"github.com/sagernet/sing-box/adapter"
+	C "github.com/sagernet/sing-box/constant"
+	"github.com/sagernet/sing-box/log"
+	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing/common/bufio"
+	E "github.com/sagernet/sing/common/exceptions"
+	"github.com/sagernet/sing/common/json"
+	M "github.com/sagernet/sing/common/metadata"
+	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/service"
+	"golang.org/x/net/context"
 )
 
-var httpClientt *http.Client
-
 func GetRealDelayPing(url string, config string, platformInterface PlatformInterface) int64 {
-	log.Info("Crash 0")
 	C.ENCRYPTED_CONFIG = true
 	return fetchDomesticPlatformInterface(url, config, platformInterface)
 }
@@ -99,62 +99,70 @@ func createDialer(instance *box.Box, network string, outboundTag string) (N.Dial
 }
 
 func fetchDomesticPlatformInterface(url string, args string, platformInterface PlatformInterface) int64 {
-
-	instance, errr := NewService(args, platformInterface)
-	log.Info("Crash 1")
-	if errr != nil {
-		log.Info("Crash 2")
+	ctx := BaseContext(platformInterface)
+	options, err := parseConfig(ctx, args)
+	if err != nil {
 		log.Error("RealDelay:-1")
-		log.Error(errr.Error())
+		log.Error(err.Error())
+		return -1
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	ctx = service.ContextWith[adapter.PlatformInterface](ctx, &platformInterfaceWrapper{iif: platformInterface})
+
+	instance, err := box.New(box.Options{
+		Context: ctx,
+		Options: options,
+	})
+	if err != nil {
+		log.Error("RealDelay:-1")
+		log.Error(err.Error())
 		return -1
 	}
 	defer instance.Close()
 	return fetchDomestic(url, instance)
 }
-func fetchDomestic(urll string, instance *BoxService) int64 {
-	if instance != nil {
-		if instance.instance != nil {
-			httpClientt = &http.Client{
-				Timeout: 5 * time.Second,
-				Transport: &http.Transport{
-					TLSHandshakeTimeout: 5 * time.Second,
-					DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-						dialer, err := createDialer(instance.instance, network, "")
-						if err != nil {
-							log.Error(err.Error())
-							return nil, err
-						}
-						return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
-					},
-					ForceAttemptHTTP2: true,
-				},
-			}
-			defer httpClientt.CloseIdleConnections()
-			parsedURL, err := url.Parse(urll)
-			if err != nil {
-				log.Error(err.Error())
-				log.Info("Crash 3")
-				log.Error("RealDelay:-1")
-				return -1
-			}
-			switch parsedURL.Scheme {
-			case "":
-				parsedURL.Scheme = "http"
-				fallthrough
-			case "http", "https":
-				log.Info("Crash 4")
-				return fetchHTTP(parsedURL)
-			}
-			return -1
-		} else {
-			return -1
-		}
-	} else {
+func fetchDomestic(urll string, instance *box.Box) int64 {
+	if instance == nil {
 		return -1
 	}
+
+	httpClient := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSHandshakeTimeout: 5 * time.Second,
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				dialer, err := createDialer(instance, network, "")
+				if err != nil {
+					log.Error(err.Error())
+					return nil, err
+				}
+				return dialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
+			},
+			ForceAttemptHTTP2: true,
+		},
+	}
+	defer httpClient.CloseIdleConnections()
+
+	parsedURL, err := url.Parse(urll)
+	if err != nil {
+		log.Error(err.Error())
+		log.Error("RealDelay:-1")
+		return -1
+	}
+
+	switch parsedURL.Scheme {
+	case "":
+		parsedURL.Scheme = "http"
+		fallthrough
+	case "http", "https":
+		return fetchHTTPWithClient(httpClient, parsedURL)
+	}
+	return -1
 }
 
-func fetchHTTP(parsedURL *url.URL) int64 {
+func fetchHTTPWithClient(httpClient *http.Client, parsedURL *url.URL) int64 {
 	request, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		log.Error(err.Error())
@@ -162,7 +170,7 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 	}
 	request.Header.Add("User-Agent", "curl/7.88.0")
 	start := time.Now()
-	response, err := httpClientt.Do(request)
+	response, err := httpClient.Do(request)
 
 	if response != nil {
 		defer response.Body.Close()
@@ -174,21 +182,18 @@ func fetchHTTP(parsedURL *url.URL) int64 {
 		if err != nil {
 			log.Error(err.Error())
 			log.Error("RealDelay:-1")
-			log.Info("Crash 5")
 			return -1
-		} else {
-			if response.StatusCode != http.StatusNoContent {
-				log.Error("RealDelay:-1")
-				log.Info("Crash 6")
-			}
-			pingTime := time.Since(start).Milliseconds()
-			log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
-			return pingTime
 		}
+
+		if response.StatusCode != http.StatusNoContent {
+			log.Error("RealDelay:-1")
+		}
+		pingTime := time.Since(start).Milliseconds()
+		log.Info("RealDelay:" + strconv.FormatInt(pingTime, 10))
+		return pingTime
 	} else {
 		log.Error(err.Error())
 		log.Error("RealDelay:-1")
-		log.Info("Crash 7")
 		return -1
 	}
 
