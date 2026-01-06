@@ -158,7 +158,7 @@ func buildAndroidVariant(config AndroidBuildConfig, bindTarget string) {
 
 func buildAndroid() {
 	build_shared.FindSDK()
-	//checkJavaVersion()
+	checkJavaVersion()
 
 	bindTarget := getAndroidBindTarget()
 
